@@ -377,7 +377,7 @@ public final class Counter implements FactorAnimator.Target, CounterAnimator.Cal
 
   @Override
   public int outlineColor (boolean isPressed) {
-    return outlineColorId != 0 ? Theme.getColor(outlineColorId) : 0;
+    return colorSet != null ? colorSet.outlineColor(isPressed) : (outlineColorId != 0 ? Theme.getColor(outlineColorId) : 0);
   }
 
   @Override

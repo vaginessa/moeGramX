@@ -382,7 +382,7 @@ public class DrawAlgorithms {
     }
   }
 
-  public static void drawCounter (Canvas c, float cx, float cy, int gravity, CounterAnimator<Text> counter, float textSize, boolean needBackground, TextColorSet colorSet, Drawable drawable, int drawableGravity, int drawableColorId, int drawableMargin, float alpha, float drawableAlpha, float scale) {
+  public static void drawCounter (Canvas c, float cx, float cy, int gravity, CounterAnimator<Text> counter, float textSize, float textAlpha, boolean needBackground, TextColorSet colorSet, Drawable drawable, int drawableGravity, int drawableColorId, int drawableMargin, float backgroundAlpha, float drawableAlpha, float scale) {
     scale = .6f + .4f * scale;
     final boolean needScale = scale != 1f;
 
@@ -395,9 +395,6 @@ public class DrawAlgorithms {
     }
     final float contentWidth = counter.getWidth() + (drawable != null ? drawable.getMinimumWidth() + drawableMargin : 0);
     final float width = getCounterWidth(textSize, needBackground, counter, drawable != null ? drawable.getMinimumWidth() + drawableMargin : 0);
-
-    final int backgroundColor = colorSet.backgroundColor(false);
-    final int outlineColor = colorSet.outlineColor(false);
 
     RectF rectF = Paints.getRectF();
     switch (gravity) {
@@ -419,26 +416,47 @@ public class DrawAlgorithms {
       c.scale(scale, scale, rectF.centerX(), rectF.centerY());
     }
 
-    if (needBackground) {
-      boolean needOutline = Color.alpha(outlineColor) > 0 && addRadius > 0;
+    if (needBackground && backgroundAlpha > 0f) {
+      final int outlineColor = colorSet.outlineColor(false);
+      final int fillingColor = colorSet.backgroundColor(false);
+      boolean haveFilling = Color.alpha(fillingColor) > 0;
+      boolean haveOutline = Color.alpha(outlineColor) > 0 && addRadius > 0;
       if (rectF.width() == rectF.height()) {
-        if (needOutline) {
-          c.drawCircle(cx, cy, radius + addRadius, Paints.fillingPaint(ColorUtils.alphaColor(alpha, outlineColor)));
+        if (haveOutline) {
+          if (outlineColor == fillingColor) {
+            c.drawCircle(cx, cy, radius + addRadius, Paints.fillingPaint(ColorUtils.alphaColor(backgroundAlpha, fillingColor)));
+          } else if (Color.alpha(outlineColor) == 0xFF && Color.alpha(fillingColor) == 0xFF && backgroundAlpha == 1f) {
+            c.drawCircle(cx, cy, radius + addRadius, Paints.fillingPaint(outlineColor));
+            c.drawCircle(cx, cy, radius, Paints.fillingPaint(fillingColor));
+          } else {
+            if (haveFilling) {
+              c.drawCircle(cx, cy, radius, Paints.fillingPaint(ColorUtils.alphaColor(backgroundAlpha, fillingColor)));
+            }
+            c.drawCircle(cx, cy, radius + addRadius * 0.5f, Paints.getCounterOutlinePaint(addRadius, ColorUtils.alphaColor(backgroundAlpha, outlineColor)));
+          }
+        } else if (haveFilling) {
+          c.drawCircle(cx, cy, radius, Paints.fillingPaint(ColorUtils.alphaColor(backgroundAlpha, fillingColor)));
         }
-        c.drawCircle(cx, cy, radius, Paints.fillingPaint(ColorUtils.alphaColor(alpha, backgroundColor)));
       } else {
-        if (needOutline) {
-          rectF.left -= addRadius;
-          rectF.top -= addRadius;
-          rectF.right += addRadius;
-          rectF.bottom += addRadius;
-          c.drawRoundRect(rectF, radius + addRadius, radius + addRadius, Paints.fillingPaint(ColorUtils.alphaColor(alpha, outlineColor)));
-          rectF.left += addRadius;
-          rectF.top += addRadius;
-          rectF.right -= addRadius;
-          rectF.bottom -= addRadius;
+        if (haveOutline) {
+          if (outlineColor == fillingColor) {
+            rectF.inset(-addRadius, -addRadius);
+            c.drawRoundRect(rectF, radius + addRadius, radius + addRadius, Paints.fillingPaint(ColorUtils.alphaColor(backgroundAlpha, fillingColor)));
+          } else if (Color.alpha(outlineColor) == 0xFF && Color.alpha(fillingColor) == 0xFF && backgroundAlpha == 1f) {
+            rectF.inset(-addRadius, -addRadius);
+            c.drawRoundRect(rectF, radius + addRadius, radius + addRadius, Paints.fillingPaint(outlineColor));
+            rectF.inset(addRadius, addRadius);
+            c.drawRoundRect(rectF, radius, radius, Paints.fillingPaint(fillingColor));
+          } else {
+            if (haveFilling) {
+              c.drawRoundRect(rectF, radius, radius, Paints.fillingPaint(ColorUtils.alphaColor(backgroundAlpha, fillingColor)));
+            }
+            rectF.inset(-addRadius * 0.5f, -addRadius * 0.5f);
+            c.drawRoundRect(rectF, radius + addRadius * 0.5f, radius + addRadius * 0.5f, Paints.getCounterOutlinePaint(addRadius, ColorUtils.alphaColor(backgroundAlpha, outlineColor)));
+          }
+        } else if (haveFilling) {
+          c.drawRoundRect(rectF, radius, radius, Paints.fillingPaint(ColorUtils.alphaColor(backgroundAlpha, fillingColor)));
         }
-        c.drawRoundRect(rectF, radius, radius, Paints.fillingPaint(ColorUtils.alphaColor(alpha, backgroundColor)));
       }
     }
 
@@ -466,7 +484,7 @@ public class DrawAlgorithms {
       int textStartX = Math.round(startX + entry.getRectF().left);
       int textEndX = textStartX + entry.item.getWidth();
       int startY = Math.round(cy - entry.item.getHeight() / 2f + entry.item.getHeight() * .8f * entry.item.getVerticalPosition());
-      entry.item.text.draw(c, textStartX, textEndX, 0, startY, colorSet, alpha * entry.getVisibility() * (1f - Math.abs(entry.item.getVerticalPosition())));
+      entry.item.text.draw(c, textStartX, textEndX, 0, startY, colorSet, textAlpha * entry.getVisibility() * (1f - Math.abs(entry.item.getVerticalPosition())));
     }
 
     if (needScale) {

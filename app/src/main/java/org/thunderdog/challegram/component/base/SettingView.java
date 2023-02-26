@@ -32,6 +32,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.Px;
 import androidx.annotation.StringRes;
 
 import org.thunderdog.challegram.R;
@@ -233,6 +234,18 @@ public class SettingView extends FrameLayoutFix implements FactorAnimator.Target
 
   public ComplexReceiver getComplexReceiver () {
     return complexReceiver;
+  }
+
+  public @Px float getMeasuredNameTop () {
+    return pTop;
+  }
+
+  public @Px float getMeasuredNameStart () {
+    return pLeft;
+  }
+
+  public @Px int getMeasuredNameWidth () {
+    return displayItemNameWidth;
   }
 
   public void setTextColorId (@ThemeColorId int textColorId) {
@@ -679,6 +692,14 @@ public class SettingView extends FrameLayoutFix implements FactorAnimator.Target
       throw new IllegalStateException();
     }
     isEnabled.setValue(enabled, animated);
+  }
+
+  public boolean isVisuallyEnabled () {
+    return isEnabled.getValue();
+  }
+
+  public float getVisuallyEnabledFactor () {
+    return isEnabled.getFloatValue();
   }
 
   private static void drawText (Canvas c, CharSequence text, Layout layout, float x, float y, int textY, Paint paint, boolean rtl, int viewWidth, float textWidth, Text wrap, TextColorSet textColorSet) {

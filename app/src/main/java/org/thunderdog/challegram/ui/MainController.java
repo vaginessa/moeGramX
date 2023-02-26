@@ -14,6 +14,10 @@
  */
 package org.thunderdog.challegram.ui;
 
+import static org.thunderdog.challegram.telegram.TdlibSettingsManager.CHAT_FOLDER_STYLE_ICON_ONLY;
+import static org.thunderdog.challegram.telegram.TdlibSettingsManager.CHAT_FOLDER_STYLE_LABEL_AND_ICON;
+import static org.thunderdog.challegram.telegram.TdlibSettingsManager.CHAT_FOLDER_STYLE_LABEL_ONLY;
+
 import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -35,9 +39,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.DrawableRes;
+import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
+import androidx.annotation.StringRes;
+import androidx.core.util.ObjectsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.drinkless.td.libcore.telegram.TdApi;
@@ -50,6 +57,7 @@ import org.thunderdog.challegram.component.dialogs.SearchManager;
 import org.thunderdog.challegram.config.Config;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.TD;
+import org.thunderdog.challegram.emoji.Emoji;
 import org.thunderdog.challegram.filegen.PhotoGenerationInfo;
 import org.thunderdog.challegram.filegen.VideoGenerationInfo;
 import org.thunderdog.challegram.loader.ImageReader;
@@ -67,12 +75,17 @@ import org.thunderdog.challegram.navigation.ViewPagerController;
 import org.thunderdog.challegram.navigation.ViewPagerHeaderViewCompact;
 import org.thunderdog.challegram.navigation.ViewPagerTopView;
 import org.thunderdog.challegram.support.RippleSupport;
+import org.thunderdog.challegram.support.ViewSupport;
 import org.thunderdog.challegram.sync.SyncAdapter;
 import org.thunderdog.challegram.telegram.ChatFilter;
+import org.thunderdog.challegram.telegram.ChatFiltersListener;
 import org.thunderdog.challegram.telegram.CounterChangeListener;
 import org.thunderdog.challegram.telegram.Tdlib;
+import org.thunderdog.challegram.telegram.TdlibCounter;
 import org.thunderdog.challegram.telegram.TdlibManager;
 import org.thunderdog.challegram.telegram.TdlibOptionListener;
+import org.thunderdog.challegram.telegram.TdlibSettingsManager;
+import org.thunderdog.challegram.telegram.TdlibSettingsManager.ChatFolderStyle;
 import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.Fonts;
 import org.thunderdog.challegram.tool.Screen;
@@ -83,31 +96,43 @@ import org.thunderdog.challegram.tool.Views;
 import org.thunderdog.challegram.unsorted.Passcode;
 import org.thunderdog.challegram.unsorted.Settings;
 import org.thunderdog.challegram.unsorted.Test;
-import org.thunderdog.challegram.util.ActivityPermissionResult;
 import org.thunderdog.challegram.util.AppUpdater;
 import org.thunderdog.challegram.util.StringList;
+import org.thunderdog.challegram.util.text.Counter;
+import org.thunderdog.challegram.util.text.TextColorSet;
 import org.thunderdog.challegram.widget.BubbleLayout;
 import org.thunderdog.challegram.widget.NoScrollTextView;
 import org.thunderdog.challegram.widget.PopupLayout;
+import org.thunderdog.challegram.widget.ShadowView;
 import org.thunderdog.challegram.widget.SnackBar;
 import org.thunderdog.challegram.widget.ViewPager;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import me.vkryl.android.ViewUtils;
 import me.vkryl.android.widget.FrameLayoutFix;
+import me.vkryl.core.MathUtils;
 import me.vkryl.core.StringUtils;
 import me.vkryl.core.collection.IntList;
+import me.vkryl.core.collection.LongSparseIntArray;
 import me.vkryl.core.lambda.CancellableRunnable;
 import me.vkryl.td.ChatId;
 import me.vkryl.td.ChatPosition;
 import me.vkryl.td.TdConstants;
 
-public class MainController extends ViewPagerController<Void> implements Menu, MoreDelegate, OverlayButtonWrap.Callback, TdlibOptionListener, AppUpdater.Listener, CounterChangeListener {
+public class MainController extends ViewPagerController<Void> implements Menu, MoreDelegate, OverlayButtonWrap.Callback, TdlibOptionListener, AppUpdater.Listener, CounterChangeListener, ChatFiltersListener {
+  private static final long MAIN_PAGER_ITEM_ID = Long.MIN_VALUE;
+  private static final long ARCHIVE_PAGER_ITEM_ID = Long.MIN_VALUE + 1;
+  private static final long INVALID_PAGER_ITEM_ID = Long.MAX_VALUE;
+
   public MainController (Context context, Tdlib tdlib) {
     super(context, tdlib);
   }
@@ -118,7 +143,14 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
   }
 
   private FrameLayoutFix mainWrap;
+  private FrameLayoutFix pagerWrap;
   private OverlayButtonWrap composeWrap;
+
+  @Override
+  protected View onCreateView (Context context) {
+    initPagerSections();
+    return super.onCreateView(context);
+  }
 
   @Override
   protected void onCreateView (Context context, FrameLayoutFix contentView, ViewPager pager) {
@@ -126,9 +158,13 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
       Test.execute();
     }
 
+    pagerWrap = new FrameLayoutFix(context);
+    pagerWrap.setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    pagerWrap.addView(pager);
+
     mainWrap = new FrameLayoutFix(context);
     mainWrap.setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-    mainWrap.addView(pager);
+    mainWrap.addView(pagerWrap);
     generateChatSearchView(mainWrap);
 
     contentView.addView(mainWrap);
@@ -180,41 +216,60 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
     tdlib.wallpaper().ensureWallpaperAvailability();
     tdlib.listeners().addOptionsListener(this);
+    tdlib.listeners().subscribeToChatFiltersUpdates(this);
+    if (Config.CHAT_FOLDERS_ENABLED) {
+      if (this.chatFilterInfos != tdlib.chatFilterInfos()) {
+        updatePagerSections();
+      }
+      tdlib.settings().addChatListPositionListener(chatListPositionListener = new ChatListPositionListener());
+    }
 
     prepareControllerForPosition(0, this::executeScheduledAnimation);
 
     if (headerCell != null) {
       headerCell.getTopView().setOnSlideOffListener(new ViewPagerTopView.OnSlideOffListener() {
+
+        private long selectedPagerItemId = INVALID_PAGER_ITEM_ID;
+
         @Override
         public boolean onSlideOffPrepare (View view, MotionEvent event, int index) {
-          return index == 0 && unlockTabs();
+          return hasFolders() || getPagerItemId(index) == MAIN_PAGER_ITEM_ID;
         }
 
         @Override
         public void onSlideOffStart (View view, MotionEvent event, int index) {
-          setMenuVisible(view, true);
+          selectedPagerItemId = getPagerItemId(index);
+          setMenuVisible(view, selectedPagerItemId, true);
+          if (composeWrap != null && displayTabsAtBottom()) {
+            composeWrap.hide();
+          }
         }
 
         @Override
         public void onSlideOffFinish (View view, MotionEvent event, int index, boolean apply) {
+          float offsetX = getOffsetX(view);
+          float offsetY = getOffsetX(view);
           if (apply && selectedSection != -1) {
-            requestChatsSection(selectedSection);
-            setSelectedSection(-1, event, view.getMeasuredHeight(),true);
+            requestChatsSection(selectedSection, selectedPagerItemId);
+            setSelectedSection(-1, event, offsetX, offsetY, true);
           } else {
-            setSelectedSection(-1, event, view.getMeasuredHeight(),false);
+            setSelectedSection(-1, event, offsetX, offsetY, false);
           }
-          setMenuVisible(view, false);
+          setMenuVisible(view, selectedPagerItemId, false);
+          selectedPagerItemId = INVALID_PAGER_ITEM_ID;
         }
 
         @Override
         public void onSlideOffMovement (View view, MotionEvent event, int index) {
           float x = event.getX();
           float y = event.getY();
-          x += (menu.getMeasuredWidth() - view.getMeasuredWidth()) / 2;
-          y -= view.getMeasuredHeight() + mainWrap.getTranslationY();
+          float offsetX = getOffsetX(view);
+          float offsetY = getOffsetY(view);
+          x -= offsetX;
+          y -= offsetY + mainWrap.getTranslationY() + pagerWrap.getTranslationY();
           int selectedSection = -1;
           if (x >= 0 && x < menu.getMeasuredWidth()) {
-            int firstItemEnd = menu.getTop() + menu.getChildAt(0).getBottom();
+            int firstItemEnd = menu.getChildAt(0).getBottom();
             if (y <= firstItemEnd) {
               selectedSection = 0;
             } else if (y < menu.getHeight()) {
@@ -227,17 +282,63 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
               }
             }
           }
-          setSelectedSection(selectedSection, event, view.getMeasuredHeight(), false);
+          setSelectedSection(selectedSection, event, offsetX, offsetY, false);
+        }
+
+        private float getOffsetX (View view) {
+          return menu.getX() - getX(view, headerCell.getView());
+        }
+
+        private float getOffsetY (View view) {
+          FrameLayoutFix.LayoutParams lp = (FrameLayoutFix.LayoutParams) menu.getLayoutParams();
+          int verticalGravity = Gravity.VERTICAL_GRAVITY_MASK & lp.gravity;
+          return verticalGravity == Gravity.BOTTOM ? -menu.getHeight() : view.getHeight();
         }
       });
+      if (Config.CHAT_FOLDERS_ENABLED) {
+        headerCell.getTopView().setCounterAlphaProvider(new ViewPagerTopView.CounterAlphaProvider() {
+          @Override
+          public float getTextAlpha (Counter counter, float alphaFactor) {
+            return 1f;
+          }
+
+          @Override
+          public float getBackgroundAlpha (Counter counter, float alphaFactor) {
+            return MathUtils.fromTo(.7f, 1f, alphaFactor) * MathUtils.fromTo(1f, .7f, counter.getMuteFactor());
+          }
+        });
+      }
     }
 
     // tdlib.awaitConnection(this::unlockTabs);
+
+    checkTabs();
+    checkMargins();
 
     context().appUpdater().addListener(this);
     if (context().appUpdater().state() == AppUpdater.State.READY_TO_INSTALL) {
       onAppUpdateAvailable(context().appUpdater().flowType() == AppUpdater.FlowType.TELEGRAM_CHANNEL, true);
     }
+  }
+
+  @Override
+  public CharSequence getName () {
+    return Lang.getString(R.string.Chats);
+  }
+
+  @Override
+  public View getCustomHeaderCell () {
+    if (displayTabsAtBottom()) {
+      return null;
+    }
+    if (headerCell != null) {
+      View headerCellView = headerCell.getView();
+      if (bottomBar != null && headerCellView.getParent() == bottomBar) {
+        return null;
+      }
+      return headerCellView;
+    }
+    return null;
   }
 
   private boolean unlockTabs () {
@@ -279,29 +380,31 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
   private int selectedSection = -1;
   private long downTime;
 
-  private void setSelectedSection (int section, MotionEvent event, float yOffset, boolean apply) {
+  private void setSelectedSection (int section, MotionEvent event, float xOffset, float yOffset, boolean apply) {
+    float eventX = event.getX() - xOffset;
+    float eventY = event.getY() - yOffset;
     if (this.selectedSection != section) {
       if (this.selectedSection != -1) {
         View view = menu.getChildAt(this.selectedSection);
-        view.dispatchTouchEvent(MotionEvent.obtain(this.downTime, event.getEventTime(), apply ? MotionEvent.ACTION_UP : MotionEvent.ACTION_CANCEL, event.getX(), event.getY() - yOffset - view.getTop(), event.getMetaState()));
+        view.dispatchTouchEvent(MotionEvent.obtain(this.downTime, event.getEventTime(), apply ? MotionEvent.ACTION_UP : MotionEvent.ACTION_CANCEL, eventX, eventY - view.getTop(), event.getMetaState()));
       }
       this.selectedSection = section;
       if (section != -1) {
         View view = menu.getChildAt(this.selectedSection);
-        view.dispatchTouchEvent(MotionEvent.obtain(this.downTime = SystemClock.uptimeMillis(), event.getEventTime(), MotionEvent.ACTION_DOWN, event.getX(), event.getY() - yOffset - view.getTop(), event.getMetaState()));
+        view.dispatchTouchEvent(MotionEvent.obtain(this.downTime = SystemClock.uptimeMillis(), event.getEventTime(), MotionEvent.ACTION_DOWN, eventX, eventY - view.getTop(), event.getMetaState()));
       }
     } else if (section != -1) {
       View view = menu.getChildAt(this.selectedSection);
-      view.dispatchTouchEvent(MotionEvent.obtain(this.downTime, event.getEventTime(), MotionEvent.ACTION_MOVE, event.getX(), event.getY() - yOffset - view.getTop(), event.getMetaState()));
+      view.dispatchTouchEvent(MotionEvent.obtain(this.downTime, event.getEventTime(), MotionEvent.ACTION_MOVE, eventX, eventY - view.getTop(), event.getMetaState()));
     }
   }
 
-  private BubbleLayout menu;
-  private int menuSection;
+  private @Nullable BubbleLayout menu;
   private boolean menuNeedArchive;
   private View menuAnchor;
 
   private int pendingSection = -1;
+  private long pendingPagerItemId = INVALID_PAGER_ITEM_ID;
   private ChatsController pendingChatsController;
 
   private void cancelPendingSection () {
@@ -310,104 +413,156 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
       pendingChatsController = null;
     }
     this.pendingSection = -1;
+    this.pendingPagerItemId = INVALID_PAGER_ITEM_ID;
   }
 
-  private void applySection (int section) {
-    if (this.pendingSection != section)
-      return;
-    this.pendingSection = -1;
-    ChatsController chatsController = this.pendingChatsController;
-    this.pendingChatsController = null;
+  private int applySection (int section, long pagerItemId, ChatsController chatsController) {
+    if (pagerItemId == INVALID_PAGER_ITEM_ID || headerCell == null)
+      return NO_POSITION;
 
-    ((TextView) menu.getChildAt(FILTER_ARCHIVE)).setTextColor(menuNeedArchive ? Theme.getColor(R.id.theme_color_textNeutral) : Theme.textDecentColor());
+    setSelectedFilter(pagerItemId, section);
 
-    TextView textView = (TextView) menu.getChildAt(menuSection);
-    textView.setTextColor(Theme.textDecentColor());
-    removeThemeListenerByTarget(textView);
-    addThemeTextDecentColorListener(textView);
+    int pagerItemPosition = getPagerItemPosition(pagerItemId);
+    if (pagerItemPosition == NO_POSITION)
+      return NO_POSITION;
 
-    this.menuSection = section;
+    ViewPagerTopView.Item item;
+    if (hasFolders()) {
+      int chatFolderStyle = tdlib.settings().chatFolderStyle();
+      if (pagerItemId == MAIN_PAGER_ITEM_ID) {
+        item = buildMainSectionItem(chatFolderStyle);
+      } else if (pagerItemId == ARCHIVE_PAGER_ITEM_ID) {
+        item = buildArchiveSectionItem(chatFolderStyle);
+      } else {
+        TdApi.ChatList chatList = pagerChatLists.get(pagerItemPosition);
+        if (TD.isChatListFilter(chatList)) {
+          TdApi.ChatListFilter chatListFilter = (TdApi.ChatListFilter) chatList;
+          TdApi.ChatFilterInfo chatFilterInfo = tdlib.chatFilterInfo(chatListFilter.chatFilterId);
+          if (chatFilterInfo != null) {
+            item = buildSectionItem(pagerItemId, chatList, chatFilterInfo, chatFolderStyle);
+          } else {
+            chatsController.destroy();
+            return NO_POSITION;
+          }
+        } else {
+          throw new UnsupportedOperationException("chatList = " + chatList);
+        }
+      }
+    } else {
+      String sectionName = getMenuSectionName(pagerItemId, /* hasFolders */ false, CHAT_FOLDER_STYLE_LABEL_ONLY);
+      item = new ViewPagerTopView.Item(sectionName.toUpperCase());
+    }
+    headerCell.getTopView().setItemAt(pagerItemPosition, item);
 
-    textView = (TextView) menu.getChildAt(menuSection);
-    textView.setTextColor(menuSection != FILTER_NONE || !menuNeedArchive ? Theme.getColor(R.id.theme_color_textNeutral) : Theme.textDecentColor());
-    removeThemeListenerByTarget(textView);
-    addThemeTextColorListener(textView, R.id.theme_color_textNeutral);
-
-    headerCell.getTopView().setItemAt(POSITION_CHATS, Lang.getString(getMenuSectionName()).toUpperCase());
-
-    replaceController(POSITION_CHATS, chatsController);
-    if (getCurrentPagerItemPosition() == POSITION_CHATS) {
+    replaceController(pagerItemId, chatsController);
+    if (getCurrentPagerItemPosition() == pagerItemPosition) {
       showComposeWrap(null);
     }
+    return pagerItemPosition;
   }
 
   private void setNeedArchive (boolean needArchive) {
     if (this.menuNeedArchive != needArchive) {
       this.menuNeedArchive = needArchive;
-      // ((TextView) menu.getChildAt(FILTER_ARCHIVE)).setCompoundDrawables(needArchive ? Drawables.get(R.drawable.baseline_check_24) : null, null, null, null);
     }
   }
 
-  private void requestChatsSection (int requestedSection) {
-    if ((this.menuSection == requestedSection && (requestedSection != FILTER_NONE || !menuNeedArchive)) || (menuNeedArchive && this.menuSection == FILTER_NONE && requestedSection == FILTER_ARCHIVE)) {
+  private void requestChatsSection (int requestedSection, long pagerItemId) {
+    if (pagerItemId == INVALID_PAGER_ITEM_ID)
+      return;
+    int menuSection = getSelectedFilter(pagerItemId);
+    if ((menuSection == requestedSection && (requestedSection != FILTER_NONE || (pagerItemId == MAIN_PAGER_ITEM_ID && !menuNeedArchive))) ||
+        (pagerItemId == MAIN_PAGER_ITEM_ID && menuNeedArchive && menuSection == FILTER_NONE && requestedSection == FILTER_ARCHIVE)) {
       cancelPendingSection();
-      setCurrentPagerPosition(POSITION_CHATS, true);
+      int pagerItemPosition = getPagerItemPosition(pagerItemId);
+      if (pagerItemPosition != NO_POSITION) {
+        setCurrentPagerPosition(pagerItemPosition, true);
+      }
       return;
     }
-    if (this.pendingSection == requestedSection) {
+    if (this.pendingSection == requestedSection && this.pendingPagerItemId == pagerItemId) {
       return; // Still waiting to switch, do nothing
     }
     cancelPendingSection();
 
+    int position = getPagerItemPosition(pagerItemId);
+    if (position == NO_POSITION)
+      return;
     int section;
     if (requestedSection == FILTER_NONE) {
       section = FILTER_NONE;
-      setNeedArchive(false);
+      if (pagerItemId == MAIN_PAGER_ITEM_ID) {
+        setNeedArchive(false);
+      }
     } else if (requestedSection == FILTER_ARCHIVE) {
-      if (this.menuSection != FILTER_NONE) {
-        section = FILTER_NONE;
-        setNeedArchive(true);
-      } else {
-        setNeedArchive(!menuNeedArchive);
-        section = this.menuSection;
+      section = FILTER_NONE;
+      if (pagerItemId == MAIN_PAGER_ITEM_ID) {
+        setNeedArchive(menuSection != FILTER_NONE || !menuNeedArchive);
       }
     } else {
       section = requestedSection;
     }
-
-    ChatsController c = newChatsController(section, menuNeedArchive);
+    TdApi.ChatList chatList;
+    if (pagerItemId == MAIN_PAGER_ITEM_ID) {
+      chatList = menuNeedArchive ? ChatPosition.CHAT_LIST_ARCHIVE : ChatPosition.CHAT_LIST_MAIN;
+    } else {
+      chatList = pagerChatLists.get(position);
+    }
+    ChatsController c = newChatsController(chatList, section);
     this.pendingChatsController = c;
     this.pendingSection = section;
+    this.pendingPagerItemId = pagerItemId;
     c.postOnAnimationExecute(() -> {
-      if (this.pendingSection == section && this.pendingChatsController == c) {
-        applySection(section);
-        setCurrentPagerPosition(POSITION_CHATS, true);
+      if (this.pendingSection == section && this.pendingChatsController == c && this.pendingPagerItemId == pagerItemId) {
+        this.pendingSection = -1;
+        this.pendingPagerItemId = INVALID_PAGER_ITEM_ID;
+        this.pendingChatsController = null;
+        int pagerItemPosition = applySection(section, pagerItemId, c);
+        if (pagerItemPosition != NO_POSITION) {
+          setCurrentPagerPosition(pagerItemPosition, true);
+        }
       }
     });
-    modifyNewPagerItemController(c, POSITION_CHATS);
+    modifyNewPagerItemController(c);
   }
 
   private void layoutMenu (@NonNull View view) {
-    if (menu == null)
+    if (menu == null || headerCell == null)
       return;
     menuAnchor = view;
-    int left = view.getLeft();
+    int menuWidth = menu.getMeasuredWidth();
+    if (menuWidth == 0)
+      return;
+    float x = getX(view, headerCell.getView());
+    boolean displayTabsAtBottom = displayTabsAtBottom();
+    float translationX = x - menuWidth / 2 + view.getMeasuredWidth() / 2;
+    int dx = displayTabsAtBottom ? 0 : Screen.dp(14f);
+    menu.setTranslationX(MathUtils.clamp(translationX, -dx, Screen.currentWidth() - menuWidth + dx));
+    if (displayTabsAtBottom) {
+      int cornerCenterX = menuWidth / 2 + Math.round(translationX - menu.getTranslationX());
+      menu.setCornerCenterX(MathUtils.clamp(cornerCenterX, Screen.dp(18f), menuWidth - Screen.dp(18f)));
+    }
+  }
+
+  private static float getX (View view, View parent) {
+    float x = view.getX();
     View currentView = view;
     do {
       currentView = (View) currentView.getParent();
       if (currentView == null)
         break;
-      left += currentView.getLeft();
-    } while (currentView != headerCell);
-    menu.setTranslationX(Math.max(-Screen.dp(14f), left - menu.getMeasuredWidth()  / 2 + view.getMeasuredWidth() / 2));
+      x += currentView.getX();
+    } while (currentView != parent);
+    return x;
   }
 
-  private void setMenuVisible (View anchorView, boolean visible) {
+  private void setMenuVisible (View anchorView, long pagerItemId, boolean visible) {
     if (!visible && menu == null)
       return;
     View parent = null;
     if (menu == null) {
-      menu = new BubbleLayout(context, this, true) {
+      boolean top = !displayTabsAtBottom();
+      menu = new BubbleLayout(context, this, top) {
         @Override
         protected void onMeasure (int widthMeasureSpec, int heightMeasureSpec) {
           super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -416,7 +571,9 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
           }
         }
       };
-      menu.setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+      int gravity = (top ? Gravity.TOP : Gravity.BOTTOM) | Gravity.LEFT;
+      int marginBottom = top ? 0 : getHeaderHeight();
+      menu.setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, gravity, 0, 0, 0, marginBottom));
       int[] sections = new int[] {
         R.string.CategoryMain,
         R.string.CategoryArchive,
@@ -439,11 +596,8 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
         sectionView.setId(R.id.btn_send);
         sectionView.setLayoutParams(params);
         sectionView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15f);
-        int textColorId = menuSection == index ? R.id.theme_color_textNeutral : R.id.theme_color_textLight;
-        sectionView.setTextColor(Theme.getColor(textColorId));
         sectionView.setGravity(Gravity.CENTER);
         sectionView.setPadding(Screen.dp(18f), Screen.dp(13f), Screen.dp(18f), Screen.dp(14f));
-        addThemeTextColorListener(sectionView, textColorId);
         sectionView.setTypeface(Fonts.getRobotoMedium());
         sectionView.setTag(index);
         sectionView.setOnClickListener(v -> { });
@@ -452,16 +606,50 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
         menu.addView(sectionView);
         index++;
       }
-      mainWrap.addView(menu, 1);
-      parent = mainWrap;
+      pagerWrap.addView(menu, 1);
+      parent = pagerWrap;
       tdlib.listeners().addTotalChatCounterListener(this);
     }
     if (visible) {
-      menu.getChildAt(FILTER_ARCHIVE).setVisibility(tdlib.hasArchivedChats() ? View.VISIBLE : View.GONE);
+      int selectedFilter = getSelectedFilter(pagerItemId);
 
-      boolean needUnread = tdlib.getMainCounter().chatCount > 0 || menuSection == FILTER_UNREAD;
+      boolean needArchive = pagerItemId == MAIN_PAGER_ITEM_ID && (menuNeedArchive || (!tdlib.settings().isArchiveChatListEnabled() && tdlib.hasArchivedChats()));
+      menu.getChildAt(FILTER_ARCHIVE).setVisibility(needArchive ? View.VISIBLE : View.GONE);
+
+      TdApi.ChatList chatList;
+      if (pagerItemId == MAIN_PAGER_ITEM_ID) {
+        chatList = needArchive ? ChatPosition.CHAT_LIST_ARCHIVE : ChatPosition.CHAT_LIST_MAIN;
+      } else if (pagerItemId == ARCHIVE_PAGER_ITEM_ID) {
+        chatList = ChatPosition.CHAT_LIST_ARCHIVE;
+      } else {
+        int pagerItemPosition = getPagerItemPosition(pagerItemId);
+        chatList = pagerItemPosition != NO_POSITION ? pagerChatLists.get(pagerItemPosition) : null;
+      }
+      boolean hasUnreadChats = chatList != null && tdlib.hasUnreadChats(chatList);
+      boolean needUnread = selectedFilter == FILTER_UNREAD || hasUnreadChats;
       menu.getChildAt(FILTER_UNREAD).setVisibility(needUnread ? View.VISIBLE : View.GONE);
+
+      for (int index = 0; index < menu.getChildCount(); index++) {
+        TextView sectionView = (TextView) menu.getChildAt(index);
+        if (sectionView.getVisibility() != View.VISIBLE)
+          continue;
+        boolean isSelected;
+        if (index == FILTER_NONE && pagerItemId == MAIN_PAGER_ITEM_ID) {
+          isSelected = selectedFilter == FILTER_NONE && !menuNeedArchive;
+        } else if (index == FILTER_ARCHIVE && pagerItemId == MAIN_PAGER_ITEM_ID) {
+          isSelected = menuNeedArchive;
+        } else {
+          isSelected = selectedFilter == index;
+        }
+        int textColorId = isSelected ? R.id.theme_color_textNeutral : R.id.theme_color_textLight;
+        sectionView.setTextColor(Theme.getColor(textColorId));
+        addThemeTextColorListener(sectionView, textColorId);
+      }
       layoutMenu(anchorView);
+    } else {
+      for (int index = 0; index < menu.getChildCount(); index++) {
+        removeThemeListenerByTarget(menu.getChildAt(index));
+      }
     }
     menu.setBubbleVisible(visible, parent);
   }
@@ -549,7 +737,7 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
   @Override
   protected View getSearchAntagonistView () {
-    return getViewPager();
+    return pagerWrap;
   }
 
   @Override
@@ -564,29 +752,51 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
   @Override
   protected TdApi.ChatList getChatMessagesSearchChatList () {
-    if (menuNeedArchive) {
+    ChatsController c = findChatsControllerForSearchMessages();
+    if (c != null && TD.isChatListArchive(c.chatList())) {
       return ChatPosition.CHAT_LIST_ARCHIVE;
     }
     return null;
   }
 
   @Nullable
-  public final ChatsController findChatsController () {
-    return (ChatsController) getCachedControllerForPosition(0);
+  public final ChatsController findMainChatsController () {
+    return (ChatsController) getCachedControllerForItemId(MAIN_PAGER_ITEM_ID);
+  }
+
+  @Nullable
+  public final ChatsController getCurrentChatsController () {
+    ViewController<?> current = getCurrentPagerItem();
+    return current instanceof ChatsController ? (ChatsController) current : null;
+  }
+
+  @Nullable
+  public final ChatsController findChatsControllerForSearchMessages () {
+    return hasFolders() ? getCurrentChatsController() : findMainChatsController();
   }
 
   @Override
   protected boolean filterChatMessageSearchResult (TdApi.Chat chat) {
-    ChatsController c = findChatsController();
-    ChatFilter filter = c != null ? c.getFilter() : null;
-    return filter != null && filter.canFilterMessages() ? filter.accept(chat) : super.filterChatMessageSearchResult(chat);
+    ChatsController c = findChatsControllerForSearchMessages();
+    if (c != null) {
+      TdApi.ChatList chatList = c.chatList();
+      if (TD.isChatListFilter(chatList) && Config.SEARCH_MESSAGES_ONLY_IN_SELECTED_FOLDER) {
+        if (ChatPosition.findPosition(chat, chatList) == null)
+          return false;
+      }
+      ChatFilter filter = c.getFilter();
+      if (filter != null && filter.canFilterMessages()) {
+        return filter.accept(chat);
+      }
+    }
+    return super.filterChatMessageSearchResult(chat);
   }
 
   @Override
   protected int getChatMessagesSearchTitle () {
-    ChatsController c = findChatsController();
+    ChatsController c = findChatsControllerForSearchMessages();
     ChatFilter filter = c != null ? c.getFilter() : null;
-    boolean isArchive = c != null && c.chatList().getConstructor() == TdApi.ChatListArchive.CONSTRUCTOR;
+    boolean isArchive = c != null && TD.isChatListArchive(c.chatList());
     if (filter != null && filter.canFilterMessages())
       return filter.getMessagesStringRes(isArchive);
     if (isArchive)
@@ -678,6 +888,10 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
     if (!inSearchMode()) {
       composeWrap.show();
     }
+    if (hasFolders()) {
+      composeWrap.replaceMainButton(R.id.btn_float_compose, R.drawable.baseline_create_24);
+      return;
+    }
     switch (position) {
       case POSITION_CHATS: {
         composeWrap.replaceMainButton(R.id.btn_float_compose, R.drawable.baseline_create_24);
@@ -700,27 +914,64 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
     if (headerView != null) {
       headerView.updateLockButton(getMenuId());
     }
+    checkTabs();
+    checkMenu();
+    checkMargins();
+  }
+
+  private void checkMargins () {
+    checkPagerMargins();
     checkHeaderMargins();
+    checkComposeWrapPaddings();
+  }
+
+  private void checkComposeWrapPaddings () {
+    if (composeWrap != null) {
+      int paddingBottom = displayTabsAtBottom() ? getHeaderHeight() : 0;
+      composeWrap.setPadding(composeWrap.getPaddingLeft(), composeWrap.getPaddingTop(), composeWrap.getPaddingRight(), paddingBottom);
+    }
+  }
+
+  private void checkPagerMargins () {
+    boolean displayTabsAtBottom = displayTabsAtBottom();
+    int marginBottom = displayTabsAtBottom ? getHeaderHeight() : 0;
+    Views.setBottomMargin(getViewPager(), marginBottom);
+    if (displayTabsAtBottom) {
+      Views.setBottomMargin(pagerWrap, updateSnackBar != null ? Math.round(updateSnackBar.getHeight() * updateSnackBar.getVisibilityFactor()) : 0); // FIXME
+    } else {
+      Views.setBottomMargin(pagerWrap, 0);
+    }
   }
 
   private void checkHeaderMargins () {
-    if (headerCell != null) {
-      RecyclerView recyclerView = ((ViewPagerHeaderViewCompact) headerCell).getRecyclerView();
-      FrameLayoutFix.LayoutParams params = (FrameLayoutFix.LayoutParams) recyclerView.getLayoutParams();
-      int menuWidth = getMenuButtonsWidth();
-      int marginLeft, marginRight;
+    if (headerCell == null)
+      return;
+    ViewPagerHeaderViewCompact headerCellView = ((ViewPagerHeaderViewCompact) headerCell.getView());
+    RecyclerView recyclerView = headerCellView.getRecyclerView();
+    ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) recyclerView.getLayoutParams();
+    if (params.rightMargin != 0 || params.leftMargin != 0) {
+      params.leftMargin = 0;
+      params.rightMargin = 0;
+      recyclerView.setLayoutParams(params);
+    }
+    int paddingLeft, paddingRight;
+    if (displayTabsAtBottom()) {
+      paddingLeft = paddingRight = 0;
+    } else {
+      int menuWidth = Screen.dp(42f);
+      if (Passcode.instance().isEnabled()) {
+        menuWidth += Screen.dp(48f);
+      }
       if (Lang.rtl()) {
-        marginLeft = menuWidth;
-        marginRight = Screen.dp(56f);
+        paddingLeft = menuWidth;
+        paddingRight = Screen.dp(42f);
       } else {
-        marginLeft = Screen.dp(56f);
-        marginRight = menuWidth;
+        paddingLeft = Screen.dp(42f);
+        paddingRight = menuWidth;
       }
-      if (params.rightMargin != marginRight || params.leftMargin != marginLeft) {
-        params.leftMargin = marginLeft;
-        params.rightMargin = marginRight;
-        recyclerView.setLayoutParams(params);
-      }
+    }
+    if (headerCellView.getPaddingLeft() != paddingLeft || headerCellView.getPaddingRight() != paddingRight) {
+      headerCellView.setPadding(paddingLeft, headerCellView.getPaddingTop(), paddingRight, headerCellView.getPaddingBottom());
     }
   }
 
@@ -733,10 +984,14 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
         @Override
         public void onSnackBarTransition (SnackBar v, float factor) {
           composeWrap.setTranslationY(-v.getMeasuredHeight() * factor);
+          if (displayTabsAtBottom()) {
+            Views.setBottomMargin(pagerWrap, Math.round(v.getMeasuredHeight() * factor)); // FIXME
+          }
         }
 
         @Override
         public void onDestroySnackBar (SnackBar v) {
+          Views.setBottomMargin(pagerWrap, 0); // FIXME
           if (updateSnackBar == v) {
             mainWrap.removeView(updateSnackBar);
             updateSnackBar.removeThemeListeners(MainController.this);
@@ -767,6 +1022,15 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
     tdlib.listeners().removeOptionListener(this);
     context().appUpdater().removeListener(this);
     tdlib.listeners().removeTotalChatCounterListener(this);
+    tdlib.listeners().unsubscribeFromChatFiltersUpdates(this);
+    if (chatListUnreadCountListener != null) {
+      tdlib.listeners().removeTotalChatCounterListener(chatListUnreadCountListener);
+      chatListUnreadCountListener = null;
+    }
+    if (chatListPositionListener != null) {
+      tdlib.settings().removeChatListPositionListener(chatListPositionListener);
+      chatListPositionListener = null;
+    }
   }
 
   private void showSuggestions () {
@@ -887,17 +1151,6 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
   }
 
   @Override
-  public void onChatCounterChanged(@NonNull TdApi.ChatList chatList, boolean availabilityChanged, int totalCount, int unreadCount, int unreadUnmutedCount) {
-    if (chatList instanceof TdApi.ChatListArchive && availabilityChanged) {
-      tdlib.ui().post(() -> {
-        if (!isDestroyed() && menu != null) {
-          menu.getChildAt(FILTER_ARCHIVE).setVisibility(tdlib.hasArchivedChats() ? View.VISIBLE : View.GONE);
-        }
-      });
-    }
-  }
-
-  @Override
   public void onFocus () {
     super.onFocus();
     // FIXME check tdlib.isUnauthorized()
@@ -931,8 +1184,16 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
       return false;
     }
     if (headerCell != null) {
-      if (y < HeaderView.getSize(true) && y >= HeaderView.getTopOffset() && x < ((View) headerCell).getMeasuredWidth()) {
-        return !((ViewPagerHeaderViewCompact) headerCell).canScrollLeft();
+      int top, bottom;
+      if (displayTabsAtBottom()) {
+        top = Views.getLocationInWindow(headerCell.getView())[1];
+        bottom = top + headerCell.getView().getHeight();
+      } else {
+        top = HeaderView.getTopOffset();
+        bottom = HeaderView.getSize(true);
+      }
+      if (y < bottom && y >= top && x < headerCell.getView().getMeasuredWidth()) {
+        return !((ViewPagerHeaderViewCompact) headerCell.getView()).canScrollLeft();
       }
     }
     return true;
@@ -940,11 +1201,7 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
   @Override
   protected int getMenuButtonsWidth () {
-    int width = Screen.dp(56f);
-    if (Passcode.instance().isEnabled()) {
-      width += Screen.dp(28f);
-    }
-    return width;
+    return 0; // disable header margins
   }
 
   public boolean showComposeWrap (ViewController<?> controller) {
@@ -955,13 +1212,13 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
     return false;
   }
 
-  private boolean showHideCompose (int position, boolean show) {
-    if (getCurrentPagerItemPosition() == position) {
+  private boolean showHideCompose (ViewController<?> controller, boolean show) {
+    if (getCurrentPagerItem() == controller) {
       if (show) {
         return showComposeWrap(null);
       } else {
-        if (getCurrentPagerItemPosition() == POSITION_CHATS) {
-          ChatsController c = findChatsController();
+        if (getCurrentPagerItemId() == MAIN_PAGER_ITEM_ID) {
+          ChatsController c = findMainChatsController();
           if (c != null && c.isPullingArchive()) {
             return false;
           }
@@ -979,6 +1236,10 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
   private static final int POSITION_CALLS = 1;
   private static final int POSITION_PEOPLE = 2;
 
+  @Retention(RetentionPolicy.SOURCE)
+  @IntDef({FILTER_NONE, FILTER_ARCHIVE, FILTER_PRIVATE, FILTER_GROUPS, FILTER_CHANNELS, FILTER_BOTS, FILTER_UNREAD})
+  private @interface Filter { }
+
   private static final int FILTER_NONE = 0;
   private static final int FILTER_ARCHIVE = 1;
   private static final int FILTER_PRIVATE = 2;
@@ -987,42 +1248,122 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
   private static final int FILTER_BOTS = 5;
   private static final int FILTER_UNREAD = 6;
 
-  @Override
-  protected int getPagerItemCount () {
-    return 2;
+  private @Filter int getSelectedFilter (long pagerItemId) {
+    return pagerChatListFilters.get(pagerItemId, FILTER_NONE);
   }
 
-  private ChatsController newChatsController (int section, boolean needArchive) {
+  private void setSelectedFilter (long pagerItemId, @Filter int filter) {
+    pagerChatListFilters.put(pagerItemId, filter);
+  }
+
+  @Override
+  protected int getPagerItemCount () {
+    return hasFolders() ? pagerChatLists.size() : 2;
+  }
+
+  protected long getPagerItemId (int position) {
+    if (hasFolders()) {
+      return getPagerItemId(pagerChatLists.get(position));
+    }
+    if (position == POSITION_CHATS) {
+      return MAIN_PAGER_ITEM_ID;
+    }
+    return position;
+  }
+
+  private long getPagerItemId (TdApi.ChatList chatList) {
+    switch (chatList.getConstructor()) {
+      case TdApi.ChatListMain.CONSTRUCTOR:
+        return MAIN_PAGER_ITEM_ID;
+      case TdApi.ChatListArchive.CONSTRUCTOR:
+        return ARCHIVE_PAGER_ITEM_ID;
+      case TdApi.ChatListFilter.CONSTRUCTOR:
+        return ((TdApi.ChatListFilter) chatList).chatFilterId;
+      default:
+        throw new UnsupportedOperationException();
+    }
+  }
+
+  @Override
+  public boolean onPagerItemLongClick (int index) {
+    if (hasFolders()) {
+      TdApi.ChatList chatList = pagerChatLists.get(index);
+      String title;
+      if (TD.isChatListMain(chatList)) {
+        title = Lang.getString(R.string.CategoryMain);
+      } else if (TD.isChatListArchive(chatList)) {
+        title = Lang.getString(R.string.CategoryArchive);
+      } else if (TD.isChatListFilter(chatList)) {
+        int chatFilterId = ((TdApi.ChatListFilter) chatList).chatFilterId;
+        TdApi.ChatFilterInfo chatFilterInfo = tdlib.chatFilterInfo(chatFilterId);
+        title = chatFilterInfo != null ? chatFilterInfo.title : null;
+      } else {
+        title = null;
+      }
+      showChatListOptions(title, chatList);
+      return true;
+    }
+    return false;
+  }
+
+  private ChatsController newChatsController (TdApi.ChatList chatList, @Filter int filter) {
     ChatsController chats = new ChatsController(this.context, tdlib).setParent(this);
-    ChatFilter filter = null;
-    switch (section) {
+    ChatFilter chatFilter;
+    switch (filter) {
+      case FILTER_NONE:
+        chatFilter = null;
+        break;
       case FILTER_UNREAD:
-        filter = ChatFilter.unreadFilter(tdlib);
+        chatFilter = ChatFilter.unreadFilter(tdlib);
         break;
       case FILTER_PRIVATE:
-        filter = ChatFilter.privateFilter(tdlib);
+        chatFilter = ChatFilter.privateFilter(tdlib);
         break;
       case FILTER_GROUPS:
-        filter = ChatFilter.groupsFilter(tdlib);
+        chatFilter = ChatFilter.groupsFilter(tdlib);
         break;
       case FILTER_CHANNELS:
-        filter = ChatFilter.channelsFilter(tdlib);
+        chatFilter = ChatFilter.channelsFilter(tdlib);
         break;
       case FILTER_BOTS:
-        filter = ChatFilter.botsFilter(tdlib);
+        chatFilter = ChatFilter.botsFilter(tdlib);
         break;
+      case FILTER_ARCHIVE:
+      default:
+        throw new IllegalArgumentException();
     }
-    if (filter != null) {
-      chats.setArguments(new ChatsController.Arguments(filter).setChatList(needArchive ? ChatPosition.CHAT_LIST_ARCHIVE : null).setIsBase(true));
-    } else if (needArchive) {
-      chats.setArguments(new ChatsController.Arguments(ChatPosition.CHAT_LIST_ARCHIVE).setIsBase(true));
+    if (chatFilter != null) {
+      chats.setArguments(new ChatsController.Arguments(chatFilter).setChatList(chatList).setIsBase(true));
+    } else if (chatList != null) {
+      chats.setArguments(new ChatsController.Arguments(chatList).setIsBase(true));
     }
     return chats;
   }
 
-  private int getMenuSectionName () {
-    if (menuNeedArchive) {
-      switch (menuSection) {
+  private String getMenuSectionName (long pagerItemId, boolean hasFolders, @ChatFolderStyle int chatFolderStyle) {
+    return Lang.getString(getMenuSectionNameRes(pagerItemId, hasFolders, chatFolderStyle));
+  }
+
+  private int getMenuSectionNameRes (long pagerItemId, boolean hasFolders, @ChatFolderStyle int chatFolderStyle) {
+    int selectedFilter = getSelectedFilter(pagerItemId);
+    boolean isMain = pagerItemId == MAIN_PAGER_ITEM_ID;
+    boolean isArchive = pagerItemId == ARCHIVE_PAGER_ITEM_ID;
+    if (!isMain && !isArchive) {
+      throw new UnsupportedOperationException();
+    }
+    //noinspection ConstantConditions
+    if (isArchive || (isMain && menuNeedArchive && !hasFolders)) {
+      return getArchiveSectionName(selectedFilter, chatFolderStyle);
+    }
+    if (selectedFilter != FILTER_NONE) {
+      return getFilterName(selectedFilter);
+    }
+    return hasFolders ? R.string.CategoryMain : R.string.Chats;
+  }
+
+  private int getArchiveSectionName (int selectedFilter, @ChatFolderStyle int chatFolderStyle) {
+    if (chatFolderStyle == CHAT_FOLDER_STYLE_LABEL_ONLY) {
+      switch (selectedFilter) {
         case FILTER_UNREAD:
           return R.string.CategoryArchiveUnread;
         case FILTER_PRIVATE:
@@ -1033,26 +1374,50 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
           return R.string.CategoryArchiveChannels;
         case FILTER_BOTS:
           return R.string.CategoryArchiveBots;
+        case FILTER_NONE:
+        case FILTER_ARCHIVE:
+          return R.string.CategoryArchive;
+        default:
+          throw new UnsupportedOperationException("selectedFilter=" + selectedFilter);
       }
-      return R.string.CategoryArchive;
-    } else {
-      switch (menuSection) {
-        case FILTER_UNREAD:
-          return R.string.CategoryUnread;
-        case FILTER_PRIVATE:
-          return R.string.CategoryPrivate;
-        case FILTER_GROUPS:
-          return R.string.CategoryGroup;
-        case FILTER_CHANNELS:
-          return R.string.CategoryChannels;
-        case FILTER_BOTS:
-          return R.string.CategoryBots;
+    }
+    return selectedFilter == FILTER_NONE ? R.string.CategoryArchive : getFilterName(selectedFilter);
+  }
+
+  private String getMenuSectionName (long pagerItemId, String folderName, int chatFolderStyle) {
+    int selectedFilter = getSelectedFilter(pagerItemId);
+    if (selectedFilter != FILTER_NONE) {
+      String filterName = Lang.getString(getFilterName(selectedFilter));
+      if (chatFolderStyle == CHAT_FOLDER_STYLE_LABEL_ONLY) {
+        return Lang.getString(R.string.format_folderAndFilter, folderName, filterName);
       }
-      return R.string.Chats;
+      return filterName;
+    }
+    return folderName;
+  }
+
+  private @StringRes int getFilterName (int filter) {
+    switch (filter) {
+      case FILTER_UNREAD:
+        return R.string.CategoryUnread;
+      case FILTER_PRIVATE:
+        return R.string.CategoryPrivate;
+      case FILTER_GROUPS:
+        return R.string.CategoryGroup;
+      case FILTER_CHANNELS:
+        return R.string.CategoryChannels;
+      case FILTER_BOTS:
+        return R.string.CategoryBots;
+      case FILTER_ARCHIVE:
+        return R.string.CategoryArchive;
+      case FILTER_NONE:
+        return 0;
+      default:
+        throw new UnsupportedOperationException("filter=" + filter);
     }
   }
 
-  private void modifyNewPagerItemController (final ViewController<?> c, final int position) {
+  private void modifyNewPagerItemController (final ViewController<?> c) {
     if (c instanceof RecyclerViewProvider) {
       c.get();
       ((RecyclerViewProvider) c).provideRecyclerView().addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -1060,13 +1425,13 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
         private float lastShowY;
 
         @Override
-        public void onScrolled (RecyclerView recyclerView, int dx, int dy) {
+        public void onScrolled (@NonNull RecyclerView recyclerView, int dx, int dy) {
           lastY += dy;
           if (dy < 0 && lastShowY - lastY >= Screen.getTouchSlop()) {
-            showHideCompose(position, true);
+            showHideCompose(c, true);
             lastShowY = lastY;
           } else if (lastY - lastShowY > Screen.getTouchSlopBig()) {
-            showHideCompose(position, false);
+            showHideCompose(c, false);
             lastShowY = lastY;
           }
           if (Math.abs(lastY - lastShowY) > Screen.getTouchSlopBig()) {
@@ -1080,28 +1445,45 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
   @Override
   protected ViewController<?> onCreatePagerItemForPosition (Context context, final int position) {
-    ViewController<?> c;
-    switch (position) {
-      case POSITION_CHATS: {
-        c = newChatsController(this.menuSection, this.menuNeedArchive);
-        break;
-      }
-      case POSITION_CALLS:
-        c = new CallListController(this.context, tdlib);
-        break;
-      case POSITION_PEOPLE:
-        c = new PeopleController(this.context, tdlib);
-        break;
-      default:
-        throw new IllegalArgumentException("position == " + position);
+    final ViewController<?> c;
+    long pagerItemId = getPagerItemId(position);
+    if (pagerItemId == MAIN_PAGER_ITEM_ID) {
+      TdApi.ChatList chatList = this.menuNeedArchive ? ChatPosition.CHAT_LIST_ARCHIVE : ChatPosition.CHAT_LIST_MAIN;
+      c = newChatsController(chatList, getSelectedFilter(MAIN_PAGER_ITEM_ID));
+    } else if (hasFolders()) {
+      TdApi.ChatList chatList = pagerChatLists.get(position);
+      c = newChatsController(chatList, getSelectedFilter(pagerItemId));
+    } else if (position == POSITION_CALLS) {
+      c = new CallListController(this.context, tdlib);
+    } else if (position == POSITION_PEOPLE) {
+      c = new PeopleController(this.context, tdlib);
+    } else {
+      throw new IllegalArgumentException("position == " + position);
     }
-    modifyNewPagerItemController(c, position);
+    modifyNewPagerItemController(c);
     return c;
+  }
+
+  private @Nullable TdApi.ChatFilterInfo[] chatFilterInfos;
+  private List<ViewPagerTopView.Item> pagerSections = Collections.emptyList();
+  private List<TdApi.ChatList> pagerChatLists = Collections.emptyList();
+  private final LongSparseIntArray pagerChatListFilters = new LongSparseIntArray();
+
+  private boolean hasFolders () {
+    return Config.CHAT_FOLDERS_ENABLED && !pagerChatLists.isEmpty();
   }
 
   @Override
   protected String[] getPagerSections () {
-    return new String[] {Lang.getString(getMenuSectionName()).toUpperCase(), Lang.getString(R.string.Calls).toUpperCase()/*, UI.getString(R.string.Contacts).toUpperCase()*/};
+    if (hasFolders()) {
+      throw new UnsupportedOperationException();
+    }
+    return new String[] {getMenuSectionName(MAIN_PAGER_ITEM_ID, /* hasFolders */ false, CHAT_FOLDER_STYLE_LABEL_ONLY).toUpperCase(), Lang.getString(R.string.Calls).toUpperCase()/*, UI.getString(R.string.Contacts).toUpperCase()*/};
+  }
+
+  @Override
+  protected List<ViewPagerTopView.Item> getPagerSectionItems () {
+    return hasFolders() ? pagerSections : super.getPagerSectionItems(); // calls String[] getPagerSections()
   }
 
   // Menu
@@ -1609,6 +1991,453 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
       showSyncAlert();
     } else {
       hideSyncAlert();
+    }
+  }
+
+  // Chat folders
+
+  private void showChatListOptions (@Nullable CharSequence title, TdApi.ChatList chatList) {
+    boolean isMain = TD.isChatListMain(chatList);
+    boolean isFilter = TD.isChatListFilter(chatList);
+    boolean isArchive = TD.isChatListArchive(chatList);
+    int chatFilterId = isFilter ? ((TdApi.ChatListFilter) chatList).chatFilterId : 0;
+    Options.Builder options = new Options.Builder();
+    if (!StringUtils.isEmptyOrBlank(title)) {
+      options.info(title);
+    }
+    if (isFilter) {
+      options.item(new OptionItem(R.id.btn_editFolder, Lang.getString(R.string.EditFolder), OPTION_COLOR_NORMAL, R.drawable.baseline_edit_24));
+      int chatFolderStyle = tdlib.settings().chatFolderStyle();
+      if (chatFolderStyle == CHAT_FOLDER_STYLE_ICON_ONLY || chatFolderStyle == CHAT_FOLDER_STYLE_LABEL_AND_ICON) {
+        options.item(new OptionItem(R.id.btn_changeFolderIcon, Lang.getString(R.string.ChatFolderChangeIcon), OPTION_COLOR_NORMAL, R.drawable.baseline_image_24));
+      }
+      options.item(new OptionItem(R.id.btn_folderIncludeChats, Lang.getString(R.string.ChatFolderAddChats), OPTION_COLOR_NORMAL, R.drawable.baseline_add_24));
+    }
+    if (isFilter || isArchive || isMain) {
+      options.item(new OptionItem(R.id.btn_hideFolder, Lang.getString(R.string.HideFolder), OPTION_COLOR_NORMAL, R.drawable.baseline_eye_off_24));
+    }
+    if (isFilter) {
+      options.item(new OptionItem(R.id.btn_removeFolder, Lang.getString(R.string.RemoveFolder), OPTION_COLOR_RED, R.drawable.baseline_delete_24));
+    }
+    if (options.itemCount() > 0) {
+      options.item(OptionItem.SEPARATOR);
+    }
+    options.item(new OptionItem(R.id.btn_chatFolders, Lang.getString(R.string.EditFolders), OPTION_COLOR_NORMAL, Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? R.drawable.baseline_edit_folders :  R.drawable.baseline_rule_folder_24));
+    showOptions(options.build(), (v, id) -> {
+      if (id == R.id.btn_editFolder) {
+        tdlib.send(new TdApi.GetChatFilter(chatFilterId), (result) -> runOnUiThreadOptional(() -> {
+          switch (result.getConstructor()) {
+            case TdApi.ChatFilter.CONSTRUCTOR:
+              TdApi.ChatFilter chatFilter = (TdApi.ChatFilter) result;
+              EditChatFolderController controller = new EditChatFolderController(context, tdlib);
+              controller.setArguments(new EditChatFolderController.Arguments(chatFilterId, chatFilter));
+              navigateTo(controller);
+              break;
+            case TdApi.Error.CONSTRUCTOR:
+              UI.showError(result);
+              break;
+          }
+        }));
+      } else if (id == R.id.btn_hideFolder) {
+        if (isFilter) {
+          tdlib.settings().setChatFilterEnabled(chatFilterId, false);
+        } else if (isMain) {
+          tdlib.settings().setMainChatListEnabled(false);
+        } else if (isArchive) {
+          tdlib.settings().setArchiveChatListEnabled(false);
+        }
+        if (headerCell != null && !StringUtils.isEmptyOrBlank(title)) {
+          context()
+            .tooltipManager()
+            .builder(headerCell.getTopView())
+            .locate((targetView, outRect) -> outRect.left = outRect.right = Screen.dp(56f) - (int) targetView.getX())
+            .controller(this)
+            .show(tdlib, Lang.getString(R.string.HideFolderInfo, title, Lang.getString(R.string.Settings), Lang.getString(R.string.ChatFolders)))
+            .hideDelayed(3500, TimeUnit.MILLISECONDS);
+        }
+      } else if (id == R.id.btn_folderIncludeChats) {
+        tdlib.send(new TdApi.GetChatFilter(chatFilterId), (result) -> runOnUiThreadOptional(() -> {
+          switch (result.getConstructor()) {
+            case TdApi.ChatFilter.CONSTRUCTOR:
+              TdApi.ChatFilter chatFilter = (TdApi.ChatFilter) result;
+              SelectChatsController controller = new SelectChatsController(context, tdlib);
+              controller.setArguments(SelectChatsController.Arguments.includedChats(chatFilterId, chatFilter));
+              navigateTo(controller);
+              break;
+            case TdApi.Error.CONSTRUCTOR:
+              UI.showError(result);
+              break;
+          }
+        }));
+      } else if (id == R.id.btn_changeFolderIcon) {
+        ChatFolderIconSelector.show(this, iconName -> {
+          tdlib.send(new TdApi.GetChatFilter(chatFilterId), (result) -> {
+            switch (result.getConstructor()) {
+              case TdApi.ChatFilter.CONSTRUCTOR:
+                TdApi.ChatFilter chatFilter = (TdApi.ChatFilter) result;
+                if (!ObjectsCompat.equals(chatFilter.iconName, iconName)) {
+                  chatFilter.iconName = iconName;
+                  tdlib.send(new TdApi.EditChatFilter(chatFilterId, chatFilter), TdApi.ChatFilterInfo.class);
+                }
+                break;
+              case TdApi.Error.CONSTRUCTOR:
+                UI.showError(result);
+                break;
+            }
+          });
+        });
+      } else if (id == R.id.btn_removeFolder) {
+        showConfirm(Lang.getString(R.string.RemoveFolderConfirm), Lang.getString(R.string.Remove), R.drawable.baseline_delete_24, OPTION_COLOR_RED, () -> {
+          tdlib.send(new TdApi.DeleteChatFilter(chatFilterId), tdlib.okHandler());
+        });
+      } else if (id == R.id.btn_chatFolders) {
+        navigateTo(new ChatFoldersController(context, tdlib));
+      }
+      return true;
+    });
+  }
+
+  private @Nullable ViewGroup bottomBar;
+
+  @Override
+  protected boolean applyPlayerOffset (float factor, float top) {
+    boolean result = super.applyPlayerOffset(factor, top);
+    if (result && bottomBar != null) {
+      bottomBar.setTranslationY(factor < 1f ? -top : 0);
+    }
+    return result;
+  }
+
+  private void checkTabs () {
+    if (headerCell == null)
+      return;
+    ViewPagerHeaderViewCompact headerCellView = (ViewPagerHeaderViewCompact) headerCell.getView();
+    boolean hasFolders = hasFolders();
+    boolean displayTabsAtBottom = displayTabsAtBottom();
+    headerCell.getTopView().setUseDarkBackground(displayTabsAtBottom);
+    headerCell.getTopView().setDrawSelectionAtTop(displayTabsAtBottom);
+    headerCell.getTopView().setSlideOffDirection(displayTabsAtBottom ? ViewPagerTopView.SLIDE_OFF_DIRECTION_TOP : ViewPagerTopView.SLIDE_OFF_DIRECTION_BOTTOM);
+    headerCell.getTopView().setItemPadding(Screen.dp(hasFolders ? ViewPagerTopView.COMPACT_ITEM_PADDING : ViewPagerTopView.DEFAULT_ITEM_PADDING));
+    headerCell.getTopView().setItemSpacing(Screen.dp(hasFolders ? ViewPagerTopView.COMPACT_ITEM_SPACING : ViewPagerTopView.DEFAULT_ITEM_SPACING));
+    headerCellView.setFadingEdgeLength(displayTabsAtBottom ? 0f : 16f);
+
+    if (displayTabsAtBottom) {
+      if (bottomBar == null) {
+        ViewGroup parent = (ViewGroup) headerCellView.getParent();
+        if (parent != null) {
+          if (headerView != null && isFocused() && !inTransformMode()) {
+            headerView.setTitle(this);
+            View titleView = headerView.findViewById(getId());
+            if (titleView != null) {
+              titleView.setAlpha(1f);
+              titleView.setTranslationX(0);
+              titleView.setTranslationY(0);
+              titleView.setVisibility(View.VISIBLE);
+            }
+          } else {
+            parent.removeView(headerCellView);
+          }
+        }
+        int shadowHeight = Screen.dp(3f);
+        ShadowView shadowView = new ShadowView(context);
+        shadowView.setVerticalShadow(new int[]{0x00000000, 0x40000000}, null, shadowHeight);
+        shadowView.setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, shadowHeight));
+        Views.setTopMargin(headerCellView, shadowHeight - Screen.dp(1f));
+
+        ViewSupport.setThemedBackground(headerCellView, R.id.theme_color_headerLightBackground, this);
+        headerCell.getTopView().setSelectionColorId(R.id.theme_color_headerLightText);
+        headerCell.getTopView().setTextFromToColorId(R.id.theme_color_headerLightText, R.id.theme_color_headerLightText);
+
+        int headerHeight = getHeaderHeight();
+        bottomBar = new FrameLayoutFix(context);
+        bottomBar.addView(shadowView);
+        bottomBar.addView(headerCellView);
+        pagerWrap.addView(bottomBar, FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, headerHeight + Views.getTopMargin(headerCellView), Gravity.BOTTOM));
+      }
+      headerCellView.setAlpha(1f);
+      headerCellView.setTranslationX(0f);
+      headerCellView.setTranslationY(0f);
+      headerCellView.setVisibility(View.VISIBLE);
+      headerCellView.setScaleFactor(0f, 0f, 0f, false);
+    } else {
+      if (bottomBar != null) {
+        pagerWrap.removeView(bottomBar);
+        bottomBar.removeView(headerCellView);
+        bottomBar = null;
+        headerCell.getTopView().setSelectionColorId(R.id.theme_color_headerTabActive);
+        headerCell.getTopView().setTextFromToColorId(R.id.theme_color_headerTabInactiveText, R.id.theme_color_headerTabActiveText);
+        ViewUtils.setBackground(headerCellView, null);
+        Views.setTopMargin(headerCellView, 0);
+        if (headerView != null && isFocused() && !inTransformMode()) {
+          headerView.setTitle(this);
+        }
+      }
+    }
+  }
+
+  private void checkMenu () {
+    if (menu != null) {
+      FrameLayoutFix.LayoutParams layoutParams = (FrameLayoutFix.LayoutParams) menu.getLayoutParams();
+      boolean displayTabsAtBottom = displayTabsAtBottom();
+      int gravity = (displayTabsAtBottom ? Gravity.BOTTOM : Gravity.TOP) | Gravity.LEFT;
+      int bottomMargin = displayTabsAtBottom ? getHeaderHeight() : 0;
+      if (menu.setTop(!displayTabsAtBottom)) {
+        menu.setDefaultPadding();
+        menu.setPadding(menu.getPaddingLeft(), menu.getPaddingTop() + Screen.dp(14f), menu.getPaddingRight(), menu.getPaddingBottom() + Screen.dp(13f));
+      }
+      if (gravity != layoutParams.gravity || bottomMargin != layoutParams.bottomMargin) {
+        layoutParams.gravity = gravity;
+        layoutParams.bottomMargin = bottomMargin;
+      }
+    }
+  }
+
+  private boolean displayTabsAtBottom () {
+    return hasFolders() && !tdlib.settings().displayFoldersAtTop();
+  }
+
+  private void initPagerSections () {
+    if (Config.CHAT_FOLDERS_ENABLED) {
+      updatePagerSections();
+    }
+  }
+
+  private void updatePagerSections () {
+    updatePagerSections(tdlib.chatFilterInfos(), tdlib.mainChatListPosition(), tdlib.settings().archiveChatListPosition());
+  }
+
+  private void updatePagerSections (TdApi.ChatFilterInfo[] chatFilters, int mainChatListPosition, int archiveChatListPosition) {
+    boolean oldHasFolders = hasFolders();
+    List<TdApi.ChatList> chatLists;
+    List<ViewPagerTopView.Item> sections;
+    if (chatFilters.length > 0 || tdlib.settings().isArchiveChatListEnabled()) {
+      int chatListCount = chatFilters.length;
+      if (tdlib.settings().isMainChatListEnabled()) {
+        mainChatListPosition = MathUtils.clamp(mainChatListPosition, 0, chatListCount);
+        chatListCount++;
+      } else {
+        mainChatListPosition = NO_POSITION;
+      }
+      if (tdlib.settings().isArchiveChatListEnabled()) {
+        archiveChatListPosition = MathUtils.clamp(archiveChatListPosition, 0, chatListCount);
+        chatListCount++;
+        if (mainChatListPosition == archiveChatListPosition) {
+          mainChatListPosition++;
+        }
+      } else {
+        archiveChatListPosition = NO_POSITION;
+      }
+      int chatFolderStyle = tdlib.settings().chatFolderStyle();
+      chatLists = new ArrayList<>(chatListCount);
+      sections = new ArrayList<>(chatListCount);
+      int chatFilterIndex = 0;
+      for (int position = 0; position < chatListCount; position++) {
+        TdApi.ChatList chatList;
+        ViewPagerTopView.Item sectionItem;
+        if (position == mainChatListPosition) {
+          chatList = ChatPosition.CHAT_LIST_MAIN;
+          sectionItem = buildMainSectionItem(chatFolderStyle);
+        } else if (position == archiveChatListPosition) {
+          chatList = ChatPosition.CHAT_LIST_ARCHIVE;
+          sectionItem = buildArchiveSectionItem(chatFolderStyle);
+        } else {
+          TdApi.ChatFilterInfo chatFilter = chatFilters[chatFilterIndex++];
+          if (!tdlib.settings().isChatFilterEnabled(chatFilter.id))
+            continue;
+          chatList = new TdApi.ChatListFilter(chatFilter.id);
+          sectionItem = buildSectionItem(getPagerItemId(chatList), chatList, chatFilter, chatFolderStyle);
+        }
+        chatLists.add(chatList);
+        sections.add(sectionItem);
+      }
+    } else {
+      sections = Collections.emptyList();
+      chatLists = Collections.emptyList();
+    }
+    if (chatLists.size() > 1 || (!chatLists.isEmpty() && !TD.isChatListMain(chatLists.get(0)))) {
+      this.pagerSections = sections;
+      this.pagerChatLists = chatLists;
+      this.chatFilterInfos = chatFilters;
+      if (chatListUnreadCountListener == null) {
+        chatListUnreadCountListener = new ChatListUnreadCountListener();
+        tdlib.listeners().addTotalChatCounterListener(chatListUnreadCountListener);
+      }
+    } else {
+      this.pagerSections = Collections.emptyList();
+      this.pagerChatLists = Collections.emptyList();
+      this.chatFilterInfos = null;
+      if (chatListUnreadCountListener != null) {
+        tdlib.listeners().removeTotalChatCounterListener(chatListUnreadCountListener);
+        chatListUnreadCountListener = null;
+      }
+    }
+    notifyPagerItemPositionsChanged();
+    ViewPager pager = getViewPager();
+    if (pager != null) {
+      onPageSelected(getCurrentPagerItemPosition(), pager.getCurrentItem());
+    }
+    if (oldHasFolders != hasFolders() && pagerWrap != null) {
+      checkTabs();
+      checkMenu();
+      checkMargins();
+    }
+  }
+
+  private ViewPagerTopView.Item buildMainSectionItem (@ChatFolderStyle int chatFolderStyle) {
+    CharSequence sectionName = getMenuSectionName(MAIN_PAGER_ITEM_ID, /* hasFolders */ true, chatFolderStyle);
+    int iconResource = menuNeedArchive ? R.drawable.baseline_archive_24 : R.drawable.baseline_forum_24;
+    return buildSectionItem(MAIN_PAGER_ITEM_ID, ChatPosition.CHAT_LIST_MAIN, sectionName, iconResource, chatFolderStyle);
+  }
+
+  private ViewPagerTopView.Item buildArchiveSectionItem (@ChatFolderStyle int chatFolderStyle) {
+    CharSequence sectionName = getMenuSectionName(ARCHIVE_PAGER_ITEM_ID, /* hasFolders */ true, chatFolderStyle);
+    int iconResource = R.drawable.baseline_archive_24;
+    return buildSectionItem(ARCHIVE_PAGER_ITEM_ID, ChatPosition.CHAT_LIST_ARCHIVE, sectionName, iconResource, chatFolderStyle);
+  }
+
+  private ViewPagerTopView.Item buildSectionItem (long pagerItemId, TdApi.ChatList chatList, TdApi.ChatFilterInfo chatFilterInfo, @ChatFolderStyle int chatFolderStyle) {
+    CharSequence sectionName = Emoji.instance().replaceEmoji(getMenuSectionName(pagerItemId, chatFilterInfo.title, chatFolderStyle));
+    int iconResource = TD.iconByName(chatFilterInfo.iconName, R.drawable.baseline_folder_24);
+    return buildSectionItem(pagerItemId, chatList, sectionName, iconResource, chatFolderStyle);
+  }
+
+  private ViewPagerTopView.Item buildSectionItem (long pagerItemId, TdApi.ChatList chatList, CharSequence sectionName, @DrawableRes int iconResource, @ChatFolderStyle int chatFolderStyle) {
+    int selectedFilter = getSelectedFilter(pagerItemId);
+    Counter unreadCounter = buildUnreadCounter(pagerItemId, selectedFilter);
+    if (unreadCounter != null) {
+      TdlibCounter counter = tdlib.getCounter(chatList);
+      int unreadCount = Math.max(counter.chatCount, 0);
+      int unreadUnmutedCount = Math.max(counter.chatUnmutedCount, 0);
+      updateCounter(unreadCounter, unreadCount, unreadUnmutedCount, /* animated */ false);
+    }
+    ViewPagerTopView.Item item;
+    if (pagerItemId == MAIN_PAGER_ITEM_ID) {
+      if (selectedFilter != FILTER_NONE && selectedFilter != FILTER_ARCHIVE) {
+        item = new ViewPagerTopView.Item(sectionName, iconResource, unreadCounter);
+      } else {
+        item = new ViewPagerTopView.Item(iconResource, unreadCounter);
+      }
+    } else if (chatFolderStyle == CHAT_FOLDER_STYLE_LABEL_AND_ICON ||
+      chatFolderStyle == CHAT_FOLDER_STYLE_ICON_ONLY && selectedFilter != FILTER_NONE) {
+      item = new ViewPagerTopView.Item(sectionName, iconResource, unreadCounter);
+    } else if (chatFolderStyle == CHAT_FOLDER_STYLE_ICON_ONLY) {
+      item = new ViewPagerTopView.Item(iconResource, unreadCounter);
+    } else {
+      item = new ViewPagerTopView.Item(sectionName, unreadCounter);
+    }
+    item.setMinWidth(Screen.dp(56f - ViewPagerTopView.COMPACT_ITEM_PADDING * 2));
+    return item;
+  }
+
+  private @Nullable Counter buildUnreadCounter (long pagerItemId, int selectedFilter) {
+    if (selectedFilter != FILTER_NONE || (pagerItemId == MAIN_PAGER_ITEM_ID && menuNeedArchive)) {
+      return null;
+    }
+    return new Counter.Builder()
+      .textSize(12f)
+      .colorSet(unreadCounterColorSet)
+      .callback(unreadCounterCallback(pagerItemId))
+      .build();
+  }
+
+  private Counter.Callback unreadCounterCallback (long pagerItemId) {
+    return (counter, sizeChanged) -> {
+      if (headerCell != null) {
+        int position = getPagerItemPosition(pagerItemId);
+        if (position != NO_POSITION) {
+          ViewPagerTopView topView = headerCell.getTopView();
+          if (sizeChanged) {
+            topView.requestItemLayoutAt(position);
+          }
+          topView.invalidate();
+        }
+      }
+    };
+  }
+
+  private void updateCounter (Counter counter, int unreadCount, int unreadUnmutedCount, boolean animated) {
+    if (tdlib.settings().shouldCountMutedChats()) {
+      boolean muted = unreadCount > 0 ? unreadUnmutedCount == 0 : counter.isMuted();
+      counter.setCount(unreadCount, muted, animated);
+    } else {
+      counter.setCount(unreadUnmutedCount, /* muted */ false, animated);
+    }
+  }
+
+  private final TextColorSet unreadCounterColorSet = new TextColorSet() {
+    @Override
+    public int defaultTextColor () {
+      return Theme.getColor(displayTabsAtBottom() ? R.id.theme_color_headerLightBackground : R.id.theme_color_headerBackground);
+    }
+
+    @Override
+    public int backgroundColor (boolean isPressed) {
+      return Theme.getColor(displayTabsAtBottom() ? R.id.theme_color_headerLightText : R.id.theme_color_headerText);
+    }
+  };
+
+  private @Nullable ChatListPositionListener chatListPositionListener;
+  private @Nullable ChatListUnreadCountListener chatListUnreadCountListener;
+
+  private class ChatListPositionListener implements TdlibSettingsManager.ChatListPositionListener {
+    @Override
+    public void onMainChatListStateChanged (boolean isEnabled) {
+      updatePagerSections();
+    }
+
+    @Override
+    public void onArchiveChatListStateChanged (boolean isEnabled) {
+      updatePagerSections();
+    }
+
+    @Override
+    public void onArchiveChatListPositionChanged (int archiveChatListPosition) {
+      if (tdlib.settings().isArchiveChatListEnabled()) {
+        updatePagerSections(tdlib.chatFilterInfos(), tdlib.mainChatListPosition(), archiveChatListPosition);
+      }
+    }
+
+    @Override
+    public void onChatFolderStyleChanged (@ChatFolderStyle int chatFolderStyle) {
+      if (hasFolders()) {
+        updatePagerSections();
+      }
+    }
+
+    @Override
+    public void onChatFilterStateChanged (int chatFilterId, boolean isEnabled) {
+      updatePagerSections();
+    }
+
+    @Override
+    public void onShouldCountMutedChatsChanged (boolean shouldCountMutedChats) {
+      if (hasFolders()) {
+        updatePagerSections();
+      }
+    }
+  }
+
+  private class ChatListUnreadCountListener implements CounterChangeListener {
+    @Override
+    public void onChatCounterChanged (@NonNull TdApi.ChatList chatList, boolean availabilityChanged, int totalCount, int unreadCount, int unreadUnmutedCount) {
+      runOnUiThreadOptional(() -> {
+        int positionToUpdate = getPagerItemPosition(getPagerItemId(chatList));
+        if (positionToUpdate != NO_POSITION) {
+          ViewPagerTopView.Item pagerSection = pagerSections.get(positionToUpdate);
+          if (pagerSection.counter != null) {
+            updateCounter(pagerSection.counter, unreadCount, unreadUnmutedCount, isFocused());
+          }
+        }
+      });
+    }
+  }
+
+  @Override
+  public void onChatFiltersChanged (TdApi.ChatFilterInfo[] chatFilters, int mainChatListPosition) {
+    if (Config.CHAT_FOLDERS_ENABLED) {
+      runOnUiThreadOptional(() -> {
+        updatePagerSections(chatFilters, mainChatListPosition, tdlib.settings().archiveChatListPosition());
+      });
     }
   }
 }

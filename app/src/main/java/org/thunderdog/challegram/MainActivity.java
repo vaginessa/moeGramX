@@ -106,6 +106,7 @@ import me.vkryl.core.StringUtils;
 import me.vkryl.core.lambda.CancellableRunnable;
 import me.vkryl.core.lambda.RunnableData;
 import me.vkryl.td.MessageId;
+import moe.kirao.mgx.MoexConfig;
 
 @SuppressWarnings(value = "SpellCheckingInspection")
 public class MainActivity extends BaseActivity implements GlobalAccountListener, GlobalCountersListener, GlobalResolvableProblemListener {
@@ -252,7 +253,7 @@ public class MainActivity extends BaseActivity implements GlobalAccountListener,
       backButton.setMenuBadge(ColorId.headerBadgeFailed, animated);
     } else {
       TdlibBadgeCounter counter = TdlibManager.instance().getTotalUnreadBadgeCounter(tdlib.accountId());
-      if (counter.getCount() > 0) {
+      if (!MoexConfig.hideMessagesBadge && counter.getCount() > 0) {
         backButton.setMenuBadge(
           counter.isMuted() ? ColorId.headerBadgeMuted : ColorId.headerBadge,
           animated

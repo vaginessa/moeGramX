@@ -59,4 +59,6 @@
   <string name="CopySticker">Copy sticker</string>
   <string name="CopiedSticker">Sticker has been copied to the clipboard</string>
   <string name="Repeat">Repeat</string>
+  <string name="moexHeaderClient">moeGramX</string>
+  <string name="changeHeaderText">Header text</string>
 </resources>

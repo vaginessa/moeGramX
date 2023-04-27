@@ -44,6 +44,8 @@ public class GeneralSettingsMoexController extends RecyclerViewController<Void> 
       adapter.updateValuedSettingById(R.id.btn_hideMessagesBadge);
     } else if (viewId == R.id.btn_changeSizeLimit) {
       showChangeSizeLimit();
+    } else if (viewId == R.id.btn_headerText) {
+      showChangeHeader();
     }
   }
 
@@ -68,6 +70,30 @@ public class GeneralSettingsMoexController extends RecyclerViewController<Void> 
     }));
   }
 
+  private void showChangeHeader () {
+    int headerTextOption = MoexConfig.instance().getHeaderText();
+    showSettings(new SettingsWrapBuilder(R.id.btn_headerText).setRawItems(new ListItem[] {
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextChats, 0, R.string.Chats, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_CHATS),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextMoex, 0, R.string.moexHeaderClient, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_MOEX),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextUsername, 0, R.string.Username, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_USERNAME),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextName, 0, R.string.login_FirstName, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_NAME),
+    }).setIntDelegate((id, result) -> {
+      int defaultOption;
+      int headerText = result.get(R.id.btn_headerText);
+      if (headerText == R.id.btn_headerTextChats) {
+        defaultOption = MoexConfig.HEADER_TEXT_CHATS;
+      } else if (headerText == R.id.btn_headerTextName) {
+        defaultOption = MoexConfig.HEADER_TEXT_NAME;
+      } else if (headerText == R.id.btn_headerTextUsername) {
+        defaultOption = MoexConfig.HEADER_TEXT_USERNAME;
+      } else {
+        defaultOption = MoexConfig.HEADER_TEXT_MOEX;
+      }
+      MoexConfig.instance().setHeaderText(defaultOption);
+      adapter.updateValuedSettingById(R.id.btn_headerText);
+    }));
+  }
+
   @Override public int getId () {
     return R.id.controller_moexSettings;
   }
@@ -86,20 +112,36 @@ public class GeneralSettingsMoexController extends RecyclerViewController<Void> 
         } else if (itemId == R.id.btn_hideMessagesBadge) {
           view.getToggler().setRadioEnabled(MoexConfig.hideMessagesBadge, isUpdate);
         } else if (itemId == R.id.btn_changeSizeLimit) {
-            int size = MoexConfig.instance().getSizeLimit();
-            switch (size) {
-              case MoexConfig.SIZE_LIMIT_800:
-                view.setData(R.string.px800);
-                break;
-              case MoexConfig.SIZE_LIMIT_1280:
-                view.setData(R.string.px1280);
-                break;
-              case MoexConfig.SIZE_LIMIT_2560:
-                view.setData(R.string.px2560);
-                break;
-            }
+          int size = MoexConfig.instance().getSizeLimit();
+          switch (size) {
+            case MoexConfig.SIZE_LIMIT_800:
+              view.setData(R.string.px800);
+              break;
+            case MoexConfig.SIZE_LIMIT_1280:
+              view.setData(R.string.px1280);
+              break;
+            case MoexConfig.SIZE_LIMIT_2560:
+              view.setData(R.string.px2560);
+              break;
+          }
+        } else if (itemId == R.id.btn_headerText) {
+          int mode = MoexConfig.instance().getHeaderText();
+          switch (mode) {
+            case MoexConfig.HEADER_TEXT_CHATS:
+              view.setData(R.string.Chats);
+              break;
+            case MoexConfig.HEADER_TEXT_MOEX:
+              view.setData(R.string.moexHeaderClient);
+              break;
+            case MoexConfig.HEADER_TEXT_USERNAME:
+              view.setData(R.string.Username);
+              break;
+            case MoexConfig.HEADER_TEXT_NAME:
+              view.setData(R.string.login_FirstName);
+              break;
           }
         }
+      }
     };
 
     ArrayList<ListItem> items = new ArrayList<>();
@@ -111,6 +153,8 @@ public class GeneralSettingsMoexController extends RecyclerViewController<Void> 
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_showIdProfile, 0, R.string.showIdProfile));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_hideMessagesBadge, 0, R.string.hideMessagesBadge));
+    items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
+    items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_headerText, 0, R.string.changeHeaderText));
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
 
     items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.ExperimentalOptions));

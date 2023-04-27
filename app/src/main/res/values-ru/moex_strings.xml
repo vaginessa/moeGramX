@@ -42,4 +42,5 @@
   <string name="CopySticker">Копировать стикер</string>
   <string name="CopiedSticker">Стикер был скопирован в буфер</string>
   <string name="Repeat">Повторить</string>
+  <string name="changeHeaderText">Текст заголовка</string>
 </resources>

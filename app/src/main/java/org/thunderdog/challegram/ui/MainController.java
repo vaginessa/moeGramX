@@ -130,6 +130,7 @@ import me.vkryl.td.ChatId;
 import me.vkryl.td.ChatPosition;
 import me.vkryl.td.Td;
 import me.vkryl.td.TdConstants;
+import moe.kirao.mgx.MoexConfig;
 
 public class MainController extends ViewPagerController<Void> implements Menu, MoreDelegate, OverlayButtonWrap.Callback, TdlibOptionListener, AppUpdater.Listener, CounterChangeListener, ChatFoldersListener {
   private static final long MAIN_PAGER_ITEM_ID = Long.MIN_VALUE;
@@ -321,7 +322,25 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
   @Override
   public CharSequence getName () {
-    return Lang.getString(R.string.Chats);
+    String title = "";
+    switch (MoexConfig.instance().getHeaderText()) {
+      case 0:
+        title = Lang.getString(R.string.Chats);
+        break;
+      case 1:
+        title = Lang.getString(R.string.moexHeaderClient);
+        break;
+      case 2:
+        title = tdlib.account().getUsername();
+        if (title == null || StringUtils.isEmpty(title)) {
+          title = tdlib.account().getFirstName();
+        }
+        break;
+      case 3:
+        title = tdlib.account().getFirstName();
+        break;
+    }
+    return title;
   }
 
   @Override

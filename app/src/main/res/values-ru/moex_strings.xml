@@ -47,4 +47,5 @@
   <string name="SquareAvatar">Квадратные углы аватарок</string>
   <string name="MoexDrawerOptions">Боковое меню</string>
   <string name="MoexBlurDrawer">Размыть аввтар</string>
+  <string name="changeHeaderText">Текст заголовка</string>
 </resources>

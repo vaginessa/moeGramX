@@ -33,4 +33,9 @@
   <item name="btn_rememberOptions" type="id" />
   <item name="btn_squareAvatar" type="id"/>
   <item name="btn_blurDrawer" type="id" />
+  <item name="btn_headerText" type="id" />
+  <item name="btn_headerTextChats" type="id" />
+  <item name="btn_headerTextMoex" type="id" />
+  <item name="btn_headerTextUsername" type="id" />
+  <item name="btn_headerTextName" type="id" />
 </resources>

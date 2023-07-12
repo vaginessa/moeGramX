@@ -4,7 +4,7 @@
   <item name="btn_InterfaceMoexSettings" type="id" />
   <item name="btn_ChatsMoexSettings" type="id" />
   <item name="controller_moexSettings" type="id" />
-  <item name="btn_moexChannelLink" type="id" />
+  <item name="btn_moexCrowdinLink" type="id" />
   <item name="btn_moexChatLink" type="id" />
   <item name="btn_moexUpdatesLink" type="id" />
   <item name="btn_moexSourceLink" type="id" />

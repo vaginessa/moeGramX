@@ -1506,7 +1506,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
         }
         ids.append(R.id.btn_saveToGallery);
         strings.append(R.string.SaveToGallery);
-        if (item.isPhoto() || item.isAvatar()) {
+        if (item.isPhoto() || (item.isAvatar() && !item.isGifType())) {
           ids.append(R.id.btn_copyPhoto);
           strings.append(R.string.CopyPhoto);
         }

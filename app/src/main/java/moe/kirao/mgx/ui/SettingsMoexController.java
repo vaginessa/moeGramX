@@ -36,8 +36,8 @@ public class SettingsMoexController extends RecyclerViewController<Void> impleme
       navigateTo(new InterfaceSettingsMoexController(context, tdlib));
     } else if (viewId == R.id.btn_ChatsMoexSettings) {
       navigateTo(new ChatsSettingsMoexController(context, tdlib));
-    } else if (viewId == R.id.btn_moexChannelLink) {
-      tdlib.ui().openUrl(this, Lang.getStringSecure(R.string.MoexChannelLink), new TdlibUi.UrlOpenParameters().forceInstantView());
+    } else if (viewId == R.id.btn_moexCrowdinLink) {
+      tdlib.ui().openUrl(this, Lang.getStringSecure(R.string.MoexCrowdinLink), new TdlibUi.UrlOpenParameters().forceInstantView());
     } else if (viewId == R.id.btn_moexChatLink) {
       tdlib.ui().openUrl(this, Lang.getStringSecure(R.string.MoexChatLink), new TdlibUi.UrlOpenParameters().forceInstantView());
     } else if (viewId == R.id.btn_moexUpdatesLink) {
@@ -66,7 +66,7 @@ public class SettingsMoexController extends RecyclerViewController<Void> impleme
       @Override protected void setValuedSetting (ListItem item, SettingView view, boolean isUpdate) {
         view.setDrawModifier(item.getDrawModifier());
         int itemId = item.getId();
-        if (itemId == R.id.btn_moexChannelLink) {
+        if (itemId == R.id.btn_moexCrowdinLink) {
           view.setData(R.string.moexChannel);
         } else if (itemId == R.id.btn_moexChatLink) {
           view.setData(R.string.moexChat);
@@ -96,7 +96,7 @@ public class SettingsMoexController extends RecyclerViewController<Void> impleme
 
     items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.MoexLinks));
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
-    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexChannelLink, R.drawable.baseline_link_24, R.string.MoexChannelText));
+    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexCrowdinLink, R.drawable.baseline_language_24, R.string.MoexCrowdinText));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexChatLink, R.drawable.baseline_forum_24, R.string.MoexChatText));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR));

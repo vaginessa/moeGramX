@@ -932,6 +932,7 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
             }
 
             if (msg.canBeSaved()) {
+              String mime = baseDownloadedFile.getMimeType();
               ids.append(R.id.btn_saveFile);
               if (allMessages.length == 1) {
                 strings.append(R.string.SaveToDownloads);
@@ -939,6 +940,15 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
                 strings.append(Lang.plural(R.string.SaveXToDownloads, downloadedFiles.size()));
               }
               icons.append(R.drawable.baseline_file_download_24);
+              if (mime != null && mime.startsWith("image/")) {
+                ids.append(R.id.btn_savePhoto);
+                if (allMessages.length == 1) {
+                  strings.append(R.string.SaveToGallery);
+                } else {
+                  strings.append(Lang.plural(R.string.SaveXToGallery, downloadedFiles.size()));
+                }
+                icons.append(R.drawable.baseline_image_24);
+              }
             }
             break;
           }

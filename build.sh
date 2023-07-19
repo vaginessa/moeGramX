@@ -17,8 +17,8 @@ send_dew() { curl -F text="$dewider_text" "$msg" -F "parse_mode=html"; }
 
 start=$(date +"%s")
 #./gradlew assembleUniversalRelease 2>&1 | tee -a loguni.txt
-./gradlew assembleArm64Release 2>&1 | tee -a loga64.txt
-./gradlew assembleArm32Release 2>&1 | tee -a loga32.txt
+./gradlew --no-configuration-cache --no-daemon assembleArm64Release 2>&1 | tee -a loga64.txt
+./gradlew --no-configuration-cache --no-daemon assembleArm32Release 2>&1 | tee -a loga32.txt
 end=$(date +"%s")
 bt=$(($end - $start))
 #apkuni=$(find app/build/outputs/apk -name '*universal.apk')

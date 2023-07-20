@@ -1,18 +1,12 @@
 #!/bin/bash
 
 doc_fail="https://api.telegram.org/bot$token/sendDocument?chat_id=1773117711"
-if [[ $isstable==1 ]]; then # from secrets
-    chlog="https://api.telegram.org/bot$token/sendMessage?chat_id=$chatid_chlog" # send changelog to the client channel
-    doc="https://api.telegram.org/bot$token/sendDocument?chat_id=$chatid_release" # send apk to the release apks channel
-else
-    chlog="$msg" # send changelog to the ci channel
-    doc="https://api.telegram.org/bot$token/sendDocument?chat_id=$chatid" # send apks to the ci channel
-fi
+doc="https://api.telegram.org/bot$token/sendDocument?chat_id=$chatid" # send apks to the ci channel
 msg="https://api.telegram.org/bot$token/sendMessage?chat_id=$chatid"
 
 send_build() { curl -F document=@"$1" "$doc" -F "parse_mode=html" -F caption="$text"; }
 build_failed() { curl -F document=@"$1" "$doc_fail" -F "parse_mode=html" -F caption="$text_failed"; }
-send_chlog() { curl -F text="$chlog_text" "$chlog" -F "parse_mode=html"; }
+send_chlog() { curl -F text="$chlog_text" "$msg" -F "parse_mode=html"; }
 send_dew() { curl -F text="$dewider_text" "$msg" -F "parse_mode=html"; }
 
 start=$(date +"%s")
@@ -47,34 +41,24 @@ texta64="
 texta32="
 <b>MD5:</b> <code>$(md5sum $apka32 | cut -d' ' -f1)</code>
 "
-
-if [[ $isstable==1 ]]; then
-    chlog_text="
-    <b>New client update is available! Changelog will be published later.</b>
-    <code>Download:</code> @moex_log
-    "
-else
-    chlog_text="
-    <b>$commit</b>
-    <b>Author:</b> <code>$commit_author</code>
-    <b>SHA:</b> <code>$commit_sha</code>
-    <b>Build Time:</b> <code>$(($bt / 60)):$(($bt % 60))</code>
-    "
-fi
-
-dewider_text="~~~~ ~~~~"
+chlog_text="
+<b>$commit</b>
+<b>Author:</b> <code>$commit_author</code>
+<b>SHA:</b> <code>$commit_sha</code>
+<b>Build Time:</b> <code>$(($bt / 60)):$(($bt % 60))</code>
+"
 
 if [[ -f $apka64 && -f $apka32 ]]; then
-    send_dew
     #text="$textuni"
     #send_build "$apkuni"
+    send_dew
     text="$texta64"
     send_build "$apka64"
     text="$texta32"
     send_build "$apka32"
     send_chlog
 else
-    build_failed loguni.txt
+    #build_failed loguni.txt
     build_failed loga64.txt
     build_failed loga32.txt
     exit 1

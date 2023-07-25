@@ -67,7 +67,7 @@ public class SettingsMoexController extends RecyclerViewController<Void> impleme
         view.setDrawModifier(item.getDrawModifier());
         int itemId = item.getId();
         if (itemId == R.id.btn_moexCrowdinLink) {
-          view.setData(R.string.moexChannel);
+          view.setData(R.string.MoexCrowdinText);
         } else if (itemId == R.id.btn_moexChatLink) {
           view.setData(R.string.moexChat);
         } else if (itemId == R.id.btn_moexUpdatesLink) {
@@ -96,7 +96,7 @@ public class SettingsMoexController extends RecyclerViewController<Void> impleme
 
     items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.MoexLinks));
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
-    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexCrowdinLink, R.drawable.baseline_language_24, R.string.MoexCrowdinText));
+    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexCrowdinLink, R.drawable.baseline_translate_24, R.string.Translate));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexChatLink, R.drawable.baseline_forum_24, R.string.MoexChatText));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR));

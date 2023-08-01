@@ -3048,7 +3048,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
       }
     };
 
-    if (!(tdlib.isSelfChat(chat) && forwardInfo != null) && !hasBot) {
+    if (!(tdlib.isSelfChat(chat) && forwardInfo != null) && !hasBot && !isForward && sender.isUser()) {
       hAuthorEmojiStatus = EmojiStatusHelper.makeDrawable(null, tdlib, tdlib.cache().user(sender.getUserId()), colorTheme, (text1, specificMedia) -> invalidateEmojiStatusReceiver());
       hAuthorEmojiStatus.invalidateTextMedia();
       maxWidth -= hAuthorEmojiStatus.getWidth(Screen.dp(3));
@@ -7260,7 +7260,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
 
   protected static int xViewsPaddingRight, xViewsOffset, xViewsPaddingLeft;
 
-  protected static int xQuickPadding, xQuickTextPadding, xQuickTextOffset, xQuickShareWidth, xQuickReplyWidth;
+  protected static int xQuickPadding, xQuickTextPadding, xQuickTextOffset, xQuickShareWidth, xQuickReplyWidth, xQuickTranslateWidth, xQuickTranslateStopWidth;
 
   // protected static int xCaptionTouchOffset, xCaptionAddition;
 
@@ -7352,8 +7352,8 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
 
   // Icons
 
-  private static Drawable iQuickReply, iQuickShare, iBadge;
-  private static String shareText, replyText;
+  private static Drawable iQuickTranslate, iQuickStopTranslate, iQuickReply, iQuickShare, iBadge;
+  private static String shareText, replyText, translateText, translateStopText;
   private static boolean initialized;
 
   private static void initResources () {
@@ -7361,6 +7361,8 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
     iBadge = Drawables.get(res, R.drawable.baseline_keyboard_arrow_down_20);
     iQuickReply = Drawables.get(res, R.drawable.baseline_reply_24);
     iQuickShare = Drawables.get(res, R.drawable.baseline_forward_24);
+    iQuickTranslate = Drawables.get(res, R.drawable.baseline_translate_24);
+    iQuickStopTranslate = Drawables.get(res, R.drawable.baseline_translate_off_24);
     initBubbleResources();
   }
 
@@ -7368,8 +7370,12 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
     if (mQuickText != null) {
       shareText = Lang.getString(R.string.SwipeShare);
       replyText = Lang.getString(R.string.SwipeReply);
+      translateText = Lang.getString(R.string.Translate);
+      translateStopText = Lang.getString(R.string.TranslateOff);
       xQuickReplyWidth = (int) U.measureText(replyText, mQuickText);
       xQuickShareWidth = (int) U.measureText(shareText, mQuickText);
+      xQuickTranslateWidth = (int) U.measureText(translateText, mQuickText);
+      xQuickTranslateStopWidth = (int) U.measureText(translateStopText, mQuickText);
     }
   }
 
@@ -7897,6 +7903,18 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         messagesController().showReply(getNewestMessage(), true, true);
       }, true, false);
       rightActions.add(replyButton);
+    }
+
+    if (Settings.instance().needUseQuickTranslation()) {
+      if (isTranslated()) {
+        rightActions.add(new SwipeQuickAction(translateStopText, iQuickStopTranslate, () -> {
+          stopTranslated();
+        }, true, false));
+      } else if (isTranslatable() && translationStyleMode() != Settings.TRANSLATE_MODE_NONE) {
+        rightActions.add(new SwipeQuickAction(translateText, iQuickTranslate, () -> {
+          messagesController().startTranslateMessages(this);
+        }, true, false));
+      }
     }
 
     final String[] quickReactions = Settings.instance().getQuickReactions(tdlib);
@@ -8546,7 +8564,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
       }
     }
 
-    TranslationControllerV2.LanguageSelectorPopup languagePopupLayout = new TranslationControllerV2.LanguageSelectorPopup(v.getContext(), this::onLanguageChanged, mTranslationsManager.getCurrentTranslatedLanguage(), getOriginalMessageLanguage());
+    TranslationControllerV2.LanguageSelectorPopup languagePopupLayout = new TranslationControllerV2.LanguageSelectorPopup(v.getContext(), null, this::onLanguageChanged, mTranslationsManager.getCurrentTranslatedLanguage(), getOriginalMessageLanguage());
     // languagePopupLayout.languageRecyclerWrap.setAnchorMode(MenuMoreWrap.ANCHOR_MODE_RIGHT);
     languagePopupLayout.languageRecyclerWrap.setTranslationX(x);
     languagePopupLayout.languageRecyclerWrap.setTranslationY(y);

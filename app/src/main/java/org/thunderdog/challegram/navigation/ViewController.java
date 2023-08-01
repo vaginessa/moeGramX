@@ -2073,6 +2073,7 @@ public abstract class ViewController<T> implements Future<View>, ThemeChangeList
     popupLayout.addThemeListeners(this);
     popupLayout.showSimplePopupView(popupView, Math.min(Screen.currentHeight() / 2 + Screen.dp(56f), popupHeight));
 
+    onCreatePopupLayout(popupLayout);
     return settings;
   }
 
@@ -2406,8 +2407,8 @@ public abstract class ViewController<T> implements Future<View>, ThemeChangeList
 
     // Window
 
-    popupLayout.showSimplePopupView(optionsWrap, totalHeight);
-
+    popupLayout.showSimplePopupView(optionsWrap, shadowView.getLayoutParams().height + Screen.dp(54f) * options.items.length + optionsWrap.getTextHeight() + popupAdditionalHeight);
+    onCreatePopupLayout(popupLayout);
     return popupLayout;
   }
 
@@ -2443,6 +2444,7 @@ public abstract class ViewController<T> implements Future<View>, ThemeChangeList
     }
 
     popupLayout.showSimplePopupView(optionsWrap, totalHeight);
+    onCreatePopupLayout(popupLayout);
     return popupLayout;
   }
 
@@ -3368,6 +3370,10 @@ public abstract class ViewController<T> implements Future<View>, ThemeChangeList
   }
 
   protected void onTranslationChanged (float newTranslationX) {
+    // Override
+  }
+
+  protected void onCreatePopupLayout (PopupLayout popupLayout) {
     // Override
   }
 

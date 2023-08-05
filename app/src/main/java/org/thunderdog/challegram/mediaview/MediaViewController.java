@@ -648,7 +648,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
     if (emojiShown) {
       removeEmojiView();
       setEmojiShown(false);
-      captionEmojiButton.setImageResource(R.drawable.deproko_baseline_insert_emoticon_26);
+      captionEmojiButton.setImageResource(getTargetIcon());
       setInCaption();
     }
   }
@@ -662,7 +662,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
         }
       }
       setEmojiShown(false);
-      captionEmojiButton.setImageResource(R.drawable.deproko_baseline_insert_emoticon_26);
+      captionEmojiButton.setImageResource(getTargetIcon());
     }
   }
 

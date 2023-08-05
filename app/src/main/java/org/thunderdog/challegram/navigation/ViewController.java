@@ -2407,8 +2407,9 @@ public abstract class ViewController<T> implements Future<View>, ThemeChangeList
 
     // Window
 
-    popupLayout.showSimplePopupView(optionsWrap, shadowView.getLayoutParams().height + Screen.dp(54f) * options.items.length + optionsWrap.getTextHeight() + popupAdditionalHeight);
+    popupLayout.showSimplePopupView(optionsWrap, totalHeight);
     onCreatePopupLayout(popupLayout);
+
     return popupLayout;
   }
 

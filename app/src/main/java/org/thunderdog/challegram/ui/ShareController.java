@@ -128,6 +128,7 @@ import me.vkryl.core.lambda.RunnableBool;
 import me.vkryl.td.ChatId;
 import me.vkryl.td.ChatPosition;
 import me.vkryl.td.Td;
+import moe.kirao.mgx.MoexConfig;
 
 public class ShareController extends TelegramViewController<ShareController.Args> implements
   FactorAnimator.Target, Runnable, PopupLayout.PopupHeightProvider,
@@ -2960,13 +2961,20 @@ public class ShareController extends TelegramViewController<ShareController.Args
       needHideAuthor = result.get(R.id.btn_hideAuthor) == R.id.btn_hideAuthor;
       needRemoveCaptions = result.get(R.id.btn_removeCaptions) == R.id.btn_removeCaptions;
       forceSendWithoutSound = result.get(R.id.btn_sendNoSound) == R.id.btn_sendNoSound;
+
+      if (rememberSendOptions) {
+        MoexConfig.instance().SendAsCopy(needHideAuthor);
+        MoexConfig.instance().SendWithoutCaption(needRemoveCaptions);
+        MoexConfig.instance().SendSilent(forceSendWithoutSound);
+      }
     });
   }
 
   // Send messages
 
   private boolean isSent;
-  private boolean needHideAuthor, needRemoveCaptions, forceSendWithoutSound;
+  private final boolean rememberSendOptions = MoexConfig.rememberOptions;
+  private boolean needHideAuthor = rememberSendOptions && MoexConfig.rememberOptions_author, needRemoveCaptions = rememberSendOptions && MoexConfig.rememberOptions_captions, forceSendWithoutSound = rememberSendOptions && MoexConfig.rememberOptions_silent;
 
   private void sendMessages (boolean forceGoToChat, boolean isSingleTap, @Nullable TdApi.MessageSendOptions finalSendOptions) {
     if (selectedChats.size() == 0 || isSent) {

@@ -38,6 +38,10 @@ public class MoexConfig {
   public static final String KEY_HIDE_MESSAGES_BADGE = "hide messages badge";
   public static final String KEY_ENABLE_REORDER_STICKERS = "reorder stickers";
   public static final String KEY_CHANGE_SIZE_LIMIT = "change size limit";
+  public static final String KEY_REMEMBER_SEND_OPTIONS = "remember_send_options";
+  public static final String KEY_REMEMBER_SEND_OPTIONS_AUTHOR = "remember_send_options_author";
+  public static final String KEY_REMEMBER_SEND_OPTIONS_CAPTIONS = "remember_send_options_captions";
+  public static final String KEY_REMEMBER_SEND_OPTIONS_SOUND = "remember_send_options_sound";
 
   public static final int SIZE_LIMIT_800 = 0;
   public static final int SIZE_LIMIT_1280 = 1;
@@ -55,6 +59,10 @@ public class MoexConfig {
   public static boolean increaseRecents = instance().getBoolean(KEY_INCREASE_RECENTS_COUNT, false);
   public static boolean hideMessagesBadge = instance().getBoolean(KEY_HIDE_MESSAGES_BADGE, false);
   public static boolean reorderStickers = instance().getBoolean(KEY_ENABLE_REORDER_STICKERS, false);
+  public static boolean rememberOptions = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS, false);
+  public static boolean rememberOptions_author = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, false);
+  public static boolean rememberOptions_captions = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS_CAPTIONS, false);
+  public static boolean rememberOptions_silent = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS_SOUND, false);
 
   private MoexConfig () {
     File configDir = new File(UI.getAppContext().getFilesDir(), "moexconf");
@@ -231,6 +239,7 @@ public class MoexConfig {
   public void toggleEnableReorderStickers () {
     putBoolean(KEY_ENABLE_REORDER_STICKERS, reorderStickers ^= true);
   }
+
   public int getSizeLimit () {
     return getInt(KEY_CHANGE_SIZE_LIMIT, SIZE_LIMIT_1280);
   }
@@ -241,5 +250,21 @@ public class MoexConfig {
     } else {
       putInt(KEY_CHANGE_SIZE_LIMIT, size);
     }
+  }
+
+  public void toggleRememberSendOptions () {
+    putBoolean(KEY_REMEMBER_SEND_OPTIONS, rememberOptions ^= true);
+  }
+
+  public void SendAsCopy (boolean state) {
+    putBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, state);
+  }
+
+  public void SendWithoutCaption (boolean state) {
+    putBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, state);
+  }
+
+  public void SendSilent (boolean state) {
+    putBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, state);
   }
 }

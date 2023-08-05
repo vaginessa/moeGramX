@@ -30,4 +30,5 @@
   <item name="btn_copySticker" type="id" />
   <item name="btn_msgRepeat" type="id" />
   <item name="btn_savePhoto" type="id" />
+  <item name="btn_rememberOptions" type="id" />
 </resources>

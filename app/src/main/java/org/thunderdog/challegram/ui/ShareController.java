@@ -3100,7 +3100,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
       needRemoveCaptions = result.get(R.id.btn_removeCaptions) == R.id.btn_removeCaptions;
       forceSendWithoutSound = result.get(R.id.btn_sendNoSound) == R.id.btn_sendNoSound;
 
-      if (rememberSendOptions) {
+      if (rememberOptions) {
         MoexConfig.instance().SendAsCopy(needHideAuthor);
         MoexConfig.instance().SendWithoutCaption(needRemoveCaptions);
         MoexConfig.instance().SendSilent(forceSendWithoutSound);
@@ -3111,8 +3111,8 @@ public class ShareController extends TelegramViewController<ShareController.Args
   // Send messages
 
   private boolean isSent;
-  private final boolean rememberSendOptions = MoexConfig.rememberOptions;
-  private boolean needHideAuthor = rememberSendOptions && MoexConfig.rememberOptions_author, needRemoveCaptions = rememberSendOptions && MoexConfig.rememberOptions_captions, forceSendWithoutSound = rememberSendOptions && MoexConfig.rememberOptions_silent;
+  private final boolean rememberOptions = MoexConfig.rememberOptions;
+  private boolean needHideAuthor = rememberOptions && MoexConfig.rememberOptions_author, needRemoveCaptions = rememberOptions && MoexConfig.rememberOptions_captions, forceSendWithoutSound = rememberOptions && MoexConfig.rememberOptions_silent;
 
   private void sendMessages (boolean forceGoToChat, boolean isSingleTap, @Nullable TdApi.MessageSendOptions finalSendOptions) {
     if (selectedChats.size() == 0 || isSent) {

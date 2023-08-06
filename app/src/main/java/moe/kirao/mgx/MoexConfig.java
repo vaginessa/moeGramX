@@ -278,10 +278,10 @@ public class MoexConfig {
   }
 
   public void SendWithoutCaption (boolean state) {
-    putBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, state);
+    putBoolean(KEY_REMEMBER_SEND_OPTIONS_CAPTIONS, state);
   }
 
   public void SendSilent (boolean state) {
-    putBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, state);
+    putBoolean(KEY_REMEMBER_SEND_OPTIONS_SOUND, state);
   }
 }

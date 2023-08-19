@@ -6,6 +6,7 @@
   <string name="ChatsMoexSettings">Chats</string>
   <string name="MoexLinks">Enlaces</string>
   <string name="MoexChatText">Chat</string>
+  <string name="MoexUpdatesText">Updates</string>
   <string name="MoexSourceText">Fuente</string>
   <string name="MoexCategories">Categorías</string>
   <string name="MoexGeneralSettings">Opciones generales</string>
@@ -25,11 +26,12 @@
   <string name="FeaturesButtonInfo">Muestra el botón de ajustes experimentales en el cajón</string>
   <string name="ExperimentalOptions">Opciones experimentales</string>
   <string name="PhoneHidden">Número oculto</string>
+  <string name="ChatId">ID</string>
   <string name="showIdProfile">Mostrar ID de usuario en perfiles</string>
   <string name="DisableSendAsButton">Ocultar botón \"Enviar como canal\"</string>
   <string name="MobileHidden">Número oculto</string>
   <string name="MoexAbout">Acerca de</string>
-  <string name="MoexAboutText">**moeGramX** — es un lindo cliente experimental rico en funciones basado en las fuentes oficiales y TDlib. ¡Siéntase libre de sugerir algunas funciones, reportar problemas o simplemente chatear en nuestro grupo de Discusión!</string>
+  <string name="MoexAboutText" formatted="true">**moeGramX** — es un lindo cliente experimental rico en funciones basado en las fuentes oficiales y TDlib. ¡Siéntase libre de sugerir algunas funciones, reportar problemas o simplemente chatear en nuestro grupo de Discusión!</string>
   <string name="HideCameraButtonInfo">Esta opción mueve el botón de la cámara del panel de mensajes al menú adjuntar.</string>
   <string name="IncreaseRecents">Incrementar stickers recientes</string>
   <string name="hideMessagesBadge">Ocultar icono de mensajes no leídos</string>
@@ -43,4 +45,8 @@
   <string name="CopyPhoto">Copiar foto</string>
   <string name="CopySticker">Copiar sticker</string>
   <string name="CopiedSticker">Sticker copiado al portapapeles</string>
+  <string name="Repeat">Repeat</string>
+  <string name="changeHeaderText">Header text</string>
+  <string name="RememberOptions">Remember send options</string>
+  <string name="RememberOptionsInfo">Remember previously selected send option and set it by default</string>
 </resources>

@@ -64,4 +64,21 @@
   <string name="changeHeaderText">Header text</string>
   <string name="RememberOptions">Remember send options</string>
   <string name="RememberOptionsInfo">Remember previously selected send option and set it by default</string>
+  <string name="MsgDetails">Details</string>
+  <string name="sentDateDetails">Sent at</string>
+  <string name="openPath">Open</string>
+  <string name="Date">Date</string>
+  <string name="SetId">Author</string>
+  <string name="FilePath">Path</string>
+  <string name="FileSize">Size</string>
+  <string name="EditDate">Edit</string>
+  <string name="SenderId">Sender</string>
+  <string name="MimeType">Mime</string>
+  <string name="FileRes">Resolution</string>
+  <string name="FileDuration">Duration</string>
+  <string name="FilePerformer">Performer</string>
+  <string name="FileSongName">Song Name</string>
+  <string name="HiddenMoexSettings">Hidden</string>
+  <string name="editDateDetails">"Edit at"</string>
+  <string name="Document">Document</string>
 </resources>

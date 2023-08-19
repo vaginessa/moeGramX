@@ -1,0 +1,5 @@
+files:
+  - source: /app/src/main/res/values/moex_strings.xml
+    translation: /app/src/main/res/values-%two_letters_code%/moex_strings.xml
+  - source: /app/src/main/res/values/folders_strings.xml
+    translation: /app/src/main/res/values-%two_letters_code%/folders_strings.xml

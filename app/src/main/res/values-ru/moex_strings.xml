@@ -47,7 +47,7 @@
   <string name="CopiedSticker">Стикер был скопирован в буфер</string>
   <string name="Repeat">Повторить</string>
   <string name="changeHeaderText">Текст заголовка</string>
-  <string name="RememberOptions">Запомнить параметры отправки</string>
+  <string name="RememberOptions">Запомнить опции отправки</string>
   <string name="RememberOptionsInfo">Запомнить ранее выбранные опции и установить их по умолчанию</string>
   <string name="MsgDetails">Детали</string>
   <string name="sentDateDetails">Отправлено в</string>

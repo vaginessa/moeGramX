@@ -47,6 +47,23 @@
   <string name="CopiedSticker">Sticker copiado al portapapeles</string>
   <string name="Repeat">Repetir</string>
   <string name="changeHeaderText">Texto de cabecera</string>
-  <string name="RememberOptions">Texto de cabecera</string>
-  <string name="RememberOptionsInfo">Remember previously selected send option and set it by default</string>
+  <string name="RememberOptions">Recordar opciones de envío</string>
+  <string name="RememberOptionsInfo">Recordar la opción de envío previamente seleccionada y establecerla por defecto</string>
+  <string name="MsgDetails">Detalles</string>
+  <string name="sentDateDetails">Enviado a las</string>
+  <string name="openPath">Abrir</string>
+  <string name="Date">Fecha</string>
+  <string name="SetId">Autor</string>
+  <string name="FilePath">Ruta</string>
+  <string name="FileSize">Tamaño</string>
+  <string name="EditDate">Editar</string>
+  <string name="SenderId">Remitente</string>
+  <string name="MimeType">Mimo</string>
+  <string name="FileRes">Resolución</string>
+  <string name="FileDuration">Duración</string>
+  <string name="FilePerformer">Intérprete</string>
+  <string name="FileSongName">Nombre de la cancion</string>
+  <string name="HiddenMoexSettings">Oculto</string>
+  <string name="editDateDetails">"Editado en"</string>
+  <string name="Document">Documento</string>
 </resources>

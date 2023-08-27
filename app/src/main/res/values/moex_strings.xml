@@ -64,4 +64,5 @@
   <string name="changeHeaderText">Header text</string>
   <string name="RememberOptions">Remember send options</string>
   <string name="RememberOptionsInfo">Remember previously selected send option and set it by default</string>
+  <string name="SquareAvatar">Square avatar corners</string>
 </resources>

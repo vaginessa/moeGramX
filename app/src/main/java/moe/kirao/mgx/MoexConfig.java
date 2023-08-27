@@ -43,6 +43,7 @@ public class MoexConfig {
   public static final String KEY_REMEMBER_SEND_OPTIONS_AUTHOR = "remember_send_options_author";
   public static final String KEY_REMEMBER_SEND_OPTIONS_CAPTIONS = "remember_send_options_captions";
   public static final String KEY_REMEMBER_SEND_OPTIONS_SOUND = "remember_send_options_sound";
+  public static final String KEY_SQUARE_AVATAR = "square_avatar";
 
   public static final int SIZE_LIMIT_800 = 0;
   public static final int SIZE_LIMIT_1280 = 1;
@@ -68,6 +69,7 @@ public class MoexConfig {
   public static boolean rememberOptions_author = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, false);
   public static boolean rememberOptions_captions = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS_CAPTIONS, false);
   public static boolean rememberOptions_silent = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS_SOUND, false);
+  public static boolean squareAvatar = instance().getBoolean(KEY_SQUARE_AVATAR, false);
 
   private MoexConfig () {
     File configDir = new File(UI.getAppContext().getFilesDir(), "moexconf");
@@ -283,5 +285,9 @@ public class MoexConfig {
 
   public void SendSilent (boolean state) {
     putBoolean(KEY_REMEMBER_SEND_OPTIONS_SOUND, state);
+  }
+
+  public void toggleSquareAvatar () {
+    putBoolean(KEY_SQUARE_AVATAR, squareAvatar ^= true);
   }
 }

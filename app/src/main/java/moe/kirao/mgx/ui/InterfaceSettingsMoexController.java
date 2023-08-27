@@ -41,6 +41,9 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
     } else if (viewId == R.id.btn_disableSendAsButton) {
       MoexConfig.instance().toggleDisableSendAsButton();
       adapter.updateValuedSettingById(R.id.btn_disableSendAsButton);
+    } else if (viewId == R.id.btn_squareAvatar) {
+      MoexConfig.instance().toggleSquareAvatar();
+      adapter.updateValuedSettingById(R.id.btn_squareAvatar);
     }
   }
 
@@ -61,6 +64,8 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
           view.getToggler().setRadioEnabled(MoexConfig.disableCommandsButton, isUpdate);
         } else if (itemId == R.id.btn_disableSendAsButton) {
           view.getToggler().setRadioEnabled(MoexConfig.disableSendAsButton, isUpdate);
+        } else if (itemId == R.id.btn_squareAvatar) {
+          view.getToggler().setRadioEnabled(MoexConfig.squareAvatar, isUpdate);
         }
       }
     };
@@ -78,6 +83,8 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_disableRecordButton, 0, R.string.DisableRecordButton));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_disableSendAsButton, 0, R.string.DisableSendAsButton));
+    items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
+    items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_squareAvatar, 0, R.string.SquareAvatar));
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
 
     adapter.setItems(items, true);

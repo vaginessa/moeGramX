@@ -36,4 +36,5 @@
   <item name="btn_headerTextUsername" type="id" />
   <item name="btn_headerTextName" type="id" />
   <item name="btn_rememberOptions" type="id" />
+  <item name="btn_squareAvatar" type="id"/>
 </resources>

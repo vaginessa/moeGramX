@@ -42,4 +42,7 @@
   <string name="CopySticker">Копировать стикер</string>
   <string name="CopiedSticker">Стикер был скопирован в буфер</string>
   <string name="Repeat">Повторить</string>
+  <string name="RememberOptions">Запомнить опции отправки</string>
+  <string name="RememberOptionsInfo">Запомнить ранее выбранные опции и установить их по умолчанию</string>
+  <string name="SquareAvatar">Квадратные углы аватарок</string>
 </resources>

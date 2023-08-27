@@ -31,4 +31,5 @@
   <item name="btn_msgRepeat" type="id" />
   <item name="btn_savePhoto" type="id" />
   <item name="btn_rememberOptions" type="id" />
+  <item name="btn_squareAvatar" type="id"/>
 </resources>

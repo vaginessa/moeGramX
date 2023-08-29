@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--
+  <string name="ThemeExportInfo">%1$s theme\n\nIncluding default values is useful for later access in text editor, but will increase theme file size.</string>
+  <string name="ThemeExportNeedDefault">Include default values</string>
+  <string name="ThemeExportAddAuthor">Include author</string>
+  -->
+  <!--<string name="ActionMuteHours_one">Mute for %1$sh</string>
+  <string name="ActionMuteHours_other">Mute for %1$sh</string>
+
+  <string name="ActionMutePersonHours_one">Mute %2$s for %1$sh</string>
+  <string name="ActionMutePersonHours_other">Mute %2$s for %1$sh</string>
+
+  <string name="ActionMuteAll_one">Mute all for %1$sh</string>
+  <string name="ActionMuteAll_other">Mute all for %1$sh</string>-->
+  <!--PEER_FLOOD-->
+  <!--<string name="format_notificationSilentChannelTitle">%1$s &#128277;</string>
+  <string name="format_notificationSilentChannelText">&#128277; %1$s</string>-->
+  <!--<string name="ChatListStyleOptIcons">Media Icons</string>
+  <string name="ChatListStyleOptFormatting">Text Formatting</string>-->
+  <!--<string name="TonLogsWarning">**Warning:** TON Logs may contain your wallet\'s **private key**.\n\nDo not share them with anyone, unless you know what you are doing.</string>
+  <string name="TonLogs">TON Logs</string>
+  <string name="Wallet">Wallet</string>-->
+  <!--<string name="PrivacyAllowFindingNobody">Nobody can see your phone number</string>
+  <string name="PrivacyAllowFindingNobodyExcept">Nobody (%1$s) can see your phone number</string>-->
+  <!-- User has only one authorization and it's current -->
+  <!-- Just one other session -->
+  <!-- All sessions from other devices, each device has 1 session, no other sessions on current device -->
+  <!-- All session from current device, no sessions on other devices -->
+  <!-- %1$s — SignedInXApp, %1$s — SignedInXOtherDevices or SignedInXDevices -->
+  <!-- All session from other devices -->
+  <!-- Option 1: some devices have more than 1 session, no other session on current devices -->
+  <!-- Option 2: multiple sessions on current device, some are from other devices -->
+  <string name="ChatTypes">Tipos de chat</string>
+  <string name="ChatFolders">Pastas de chat</string>
+  <string name="ChatFoldersInfo">Crie pastas para diferentes grupos de conversas e alterne rapidamente entre elas.</string>
+  <string name="ChatFoldersSettings">Configurações</string>
+  <string name="ChatFoldersAppearance">Aparência</string>
+  <string name="ChatFoldersPositionTop">Acima</string>
+  <string name="ChatFoldersPositionBottom">Abaixo</string>
+  <string name="ChatFolderChangeIcon">Alterar ícone</string>
+  <string name="ChatFolderAddChats">Incluir conversas</string>
+  <string name="ChatFolderLimitReached">Você atingiu o limite de **%1$d** pastas.</string>
+  <string name="ChatsInFolderLimitReached">Desculpe, você não pode adicionar mais do que **%1$d** conversas para uma pasta. Por favor, crie uma nova.</string>
+  <string name="NewFolder">Nova pasta</string>
+  <string name="CreateNewFolder">Criar nova pasta</string>
+  <string name="HideFolder">Ocultar pasta</string>
+  <string name="HideFolderInfo">Para exibir a pasta %1$s novamente, vá para %2$s &gt; %3$s</string>
+  <string name="HideAllChats">Ocultar todos as conversas</string>
+  <string name="EditFolder">Editar pasta</string>
+  <string name="EditFolders">Editar pastas</string>
+  <string name="RemoveFolder">Remover pasta</string>
+  <string name="RemoveFolderConfirm">Tem certeza de que deseja remover esta pasta? Suas conversas não serão excluídas.</string>
+  <string name="FolderNoChatsToDisplay">**A pasta está vazia**\n\nNão há conversas que pertencem a esta pasta.</string>
+  <string name="FolderRemoveInclusionConfirm">Tem certeza que deseja remover \"%1$s\" da lista sempre incluída?</string>
+  <string name="FolderRemoveExclusionConfirm">Tem certeza que deseja remover \"%1$s\" da lista sempre excluída?</string>
+  <string name="IncludeChats">Incluir conversas</string>
+  <string name="IncludeChatsInfo_one">Você pode selecionar apenas uma conversa não secreta e apenas uma conversa secreta.</string>
+  <string name="IncludeChatsInfo_other">Você pode selecionar até %1$s conversas não secretas e o mesmo número de conversas secretas.</string>
+  <string name="ExcludeChats">Conversas ignoradas</string>
+  <string name="ExcludeChatsInfo_one">Você pode selecionar apenas uma conversa não secreta e apenas uma conversa secreta</string>
+  <string name="ExcludeChatsInfo_other">Você pode selecionar até %1$s conversas não secretas e o mesmo número de conversas secretas.</string>
+  <string name="FolderIncludedChats">Conversas Incluídas</string>
+  <string name="FolderIncludedChatsInfo">Escolha conversas ou tipos de conversas que aparecerão nesta pasta.</string>
+  <string name="FolderExcludedChats">Conversas ignoradas</string>
+  <string name="FolderExcludedChatsInfo">Escolha conversas ou tipos de conversas que não aparecerão nesta pasta.</string>
+  <string name="FolderActionIncludeChats">Adicionar conversas para Incluídos</string>
+  <string name="FolderActionExcludeChats">Adicionar conversas para ignorados</string>
+  <string name="FolderName">Nome da Pasta</string>
+  <string name="FolderNameHint">Nome</string>
+  <string name="RecommendedFolders">Pastas Recomendadas</string>
+  <string name="AddToFolder">Adicionar à pasta</string>
+  <string name="RemoveFromFolder">Remover da pasta</string>
+  <string name="ChooseFolder">Escolha a pasta</string>
+  <string name="LocalFolderBadge">pasta local</string>
+  <string name="MainListBadge">lista principal</string>
+  <string name="IconOnly">Apenas ícone</string>
+  <string name="LabelOnly">Apenas rótulo</string>
+  <string name="LabelAndIcon">Rótulo com ícone</string>
+  <string name="CountMutedChats">Contagem de conversas mutadas</string>
+  <string name="DisplayFoldersAtTheTop">Exibir pastas no topo</string>
+  <string name="ChatsXShowMore_one">Mostrar %1$s mais</string>
+  <string name="ChatsXShowMore_other">Mostrar %1$s mais</string>
+</resources>

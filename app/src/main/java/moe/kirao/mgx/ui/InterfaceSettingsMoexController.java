@@ -44,6 +44,9 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
     } else if (viewId == R.id.btn_squareAvatar) {
       MoexConfig.instance().toggleSquareAvatar();
       adapter.updateValuedSettingById(R.id.btn_squareAvatar);
+    } else if (viewId == R.id.btn_blurDrawer) {
+      MoexConfig.instance().toggleBlurDrawer();
+      adapter.updateValuedSettingById(R.id.btn_blurDrawer);
     }
   }
 
@@ -66,12 +69,19 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
           view.getToggler().setRadioEnabled(MoexConfig.disableSendAsButton, isUpdate);
         } else if (itemId == R.id.btn_squareAvatar) {
           view.getToggler().setRadioEnabled(MoexConfig.squareAvatar, isUpdate);
+        } else if (itemId == R.id.btn_blurDrawer) {
+          view.getToggler().setRadioEnabled(MoexConfig.blurDrawer, isUpdate);
         }
       }
     };
 
     ArrayList<ListItem> items = new ArrayList<>();
     items.add(new ListItem(ListItem.TYPE_EMPTY_OFFSET_SMALL));
+    items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.MoexDrawerOptions));
+    items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
+    items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_blurDrawer, 0, R.string.MoexBlurDrawer));
+    items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
+
     items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.MoexHideButtons));
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_disableCommandsButton, 0, R.string.DisableCommandsButton));

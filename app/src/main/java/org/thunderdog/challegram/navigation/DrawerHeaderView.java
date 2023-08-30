@@ -295,7 +295,10 @@ public class DrawerHeaderView extends View implements Destroyable, GlobalAccount
         avatarFull = bigFile;
         avatarFull.setScaleType(ImageFile.CENTER_CROP);
         int drawerWidth = context.parent.getWidth();
-        if (drawerWidth < 512) {
+        if (MoexConfig.blurDrawer) {
+          avatarFull.setSize(160);
+          avatarFull.setNeedBlur();
+        } else if (drawerWidth < 512) {
           avatarFull.setSize(drawerWidth);
         }
       } else {

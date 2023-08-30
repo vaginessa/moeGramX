@@ -45,4 +45,6 @@
   <string name="RememberOptions">Запомнить опции отправки</string>
   <string name="RememberOptionsInfo">Запомнить ранее выбранные опции и установить их по умолчанию</string>
   <string name="SquareAvatar">Квадратные углы аватарок</string>
+  <string name="MoexDrawerOptions">Боковое меню</string>
+  <string name="MoexBlurDrawer">Размыть аввтар</string>
 </resources>

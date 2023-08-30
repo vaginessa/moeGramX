@@ -32,4 +32,5 @@
   <item name="btn_savePhoto" type="id" />
   <item name="btn_rememberOptions" type="id" />
   <item name="btn_squareAvatar" type="id"/>
+  <item name="btn_blurDrawer" type="id" />
 </resources>

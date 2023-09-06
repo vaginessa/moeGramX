@@ -2,25 +2,19 @@ package moe.kirao.mgx.utils;
 
 import android.annotation.SuppressLint;
 import android.os.Build;
-import android.text.TextUtils;
+
+import org.thunderdog.challegram.config.Device;
 
 import java.lang.reflect.Field;
 
 public class OEMUtils {
-  private static Boolean isMIUI;
-
   public static boolean isMIUI() {
-    if (isMIUI != null) {
-      return isMIUI;
-    }
-    isMIUI = !TextUtils.isEmpty(SystemUtils.getSystemProperty("ro.miui.ui.version.name"));
-    return isMIUI;
+    return Device.IS_XIAOMI;
   }
 
   public static final int ONEUI_40 = 40_000;
   private static int oneUIVersion;
   private static Boolean isOneUI;
-
 
   @SuppressWarnings("JavaReflectionMemberAccess")
   public static boolean isOneUI() {

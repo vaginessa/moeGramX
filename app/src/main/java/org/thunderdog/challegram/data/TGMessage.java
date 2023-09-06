@@ -3812,12 +3812,14 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         }
         Drawables.draw(c, Icons.getClockIcon(iconColorId), startX - Screen.dp(Icons.CLOCK_SHIFT_X), startY + Screen.dp(5f) - Screen.dp(Icons.CLOCK_SHIFT_Y), iconPaint);
         startX += clockWidth;
-      } else {
+      } else if (!(isMsgSticker && hideStickerTimestamp)) {
         viewCounter.draw(c, startX, counterY, Gravity.LEFT, 1f, view, iconColorId);
         startX += viewCounter.getScaledWidth(Screen.dp(COUNTER_ICON_MARGIN + COUNTER_ADD_MARGIN));
       }
-      shareCounter.draw(c, startX, counterY, Gravity.LEFT, 1f, view, iconColorId);
-      startX += shareCounter.getScaledWidth(Screen.dp(COUNTER_ICON_MARGIN + COUNTER_ADD_MARGIN));
+      if (!(isMsgSticker && hideStickerTimestamp)) {
+        shareCounter.draw(c, startX, counterY, Gravity.LEFT, 1f, view, iconColorId);
+        startX += shareCounter.getScaledWidth(Screen.dp(COUNTER_ICON_MARGIN + COUNTER_ADD_MARGIN));
+      }
     }
     if (replyCounter.getVisibility() > 0f) {
       replyCounter.draw(c, startX, counterY, Gravity.LEFT, 1f, view, iconColorId);

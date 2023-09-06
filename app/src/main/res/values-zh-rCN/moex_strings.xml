@@ -9,8 +9,6 @@
   <string name="MoexUpdatesText">最新动态</string>
   <string name="MoexSourceText">源代码</string>
   <string name="MoexCategories">类别</string>
-  <string name="MoexGeneralSettings">常规选项</string>
-  <string name="MoexInterfaceSettings">界面设置</string>
   <string name="MoexHideButtons">消息界面</string>
   <string name="DisableCommandsButton">隐藏命令按钮</string>
   <string name="DisableCameraButton">隐藏相机按钮</string>

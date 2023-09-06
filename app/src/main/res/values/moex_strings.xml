@@ -15,8 +15,6 @@
   <string name="MoexChatLink" translatable="false">https://t.me/moe_chat</string>
   <string name="MoexUpdatesLink" translatable="false">https://t.me/moex_log</string>
   <string name="MoexSourceLink" translatable="false">https://kiri.su/moexgit</string>
-  <string name="MoexGeneralSettings">General options</string>
-  <string name="MoexInterfaceSettings">Interface options</string>
   <string name="MoexHideButtons">Message panel</string>
   <string name="DisableCommandsButton">Hide commands button</string>
   <string name="DisableCameraButton">Hide camera button</string>
@@ -26,7 +24,7 @@
   <string name="MoexStickersCount">Stickers</string>
   <string name="DisableStickerTimestamp">Hide time on stickers</string>
   <string name="RoundedStickers">Rounded stickers</string>
-  <string name="DrawerOptions">Drawer options</string>
+  <string name="DrawerOptions">Drawer appearance</string>
   <string name="hidePhoneNumber">Hide phone number</string>
   <string name="EnableFeatures">Enable feature toggles</string>
   <string name="FeaturesButtonInfo">Show experimental settings button in drawer</string>
@@ -44,7 +42,7 @@
   <string name="hideMessagesBadge">Hide unread messages badge</string>
   <string name="ReorderStickers">Reorder installed stickers</string>
   <string name="ReorderStickersInfo">Automatically place recently used sticker packs above others.</string>
-  <string name="moexChannel" translatable="false">\@moegramx</string>
+  <string name="moexChannel" translatable="false">\@moeGramX</string>
   <string name="moexChat" translatable="false">\@moe_chat</string>
   <string name="moexUpdates" translatable="false">\@moex_log</string>
   <string name="moexGithub" translatable="false">GitHub</string>
@@ -65,6 +63,8 @@
   <string name="RememberOptions">Remember send options</string>
   <string name="RememberOptionsInfo">Remember previously selected send option and set it by default</string>
   <string name="SquareAvatar">Square avatar corners</string>
-  <string name="MoexDrawerOptions">Drawer appearance</string>
   <string name="MoexBlurDrawer">Blur avatar</string>
+  <string name="MoexChatsHeader">Chats list</string>
+  <string name="AppNameAndVersionOverride" translatable="false">moeGramX %1$s</string>
+  <string name="AppSignatureOverride" translatable="false">**moeGramX** `%1$s`</string>
 </resources>

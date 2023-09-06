@@ -238,6 +238,7 @@ public class MoexConfig {
   }
 
   public void toggleIncreaseRecents () {
+    notifyNewSettingsListeners(KEY_INCREASE_RECENTS_COUNT, !increaseRecents, increaseRecents);
     putBoolean(KEY_INCREASE_RECENTS_COUNT, increaseRecents ^= true);
   }
 

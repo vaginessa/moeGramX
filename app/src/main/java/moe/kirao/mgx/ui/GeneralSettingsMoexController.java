@@ -44,8 +44,6 @@ public class GeneralSettingsMoexController extends RecyclerViewController<Void> 
       adapter.updateValuedSettingById(R.id.btn_hideMessagesBadge);
     } else if (viewId == R.id.btn_changeSizeLimit) {
       showChangeSizeLimit();
-    } else if (viewId == R.id.btn_headerText) {
-      showChangeHeader();
     }
   }
 
@@ -67,30 +65,6 @@ public class GeneralSettingsMoexController extends RecyclerViewController<Void> 
       }
       MoexConfig.instance().setSizeLimit(sizeOption);
       adapter.updateValuedSettingById(R.id.btn_changeSizeLimit);
-    }));
-  }
-
-  private void showChangeHeader () {
-    int headerTextOption = MoexConfig.instance().getHeaderText();
-    showSettings(new SettingsWrapBuilder(R.id.btn_headerText).setRawItems(new ListItem[] {
-      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextChats, 0, R.string.Chats, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_CHATS),
-      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextMoex, 0, R.string.moexHeaderClient, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_MOEX),
-      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextUsername, 0, R.string.Username, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_USERNAME),
-      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextName, 0, R.string.login_FirstName, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_NAME),
-    }).setIntDelegate((id, result) -> {
-      int defaultOption;
-      int headerText = result.get(R.id.btn_headerText);
-      if (headerText == R.id.btn_headerTextChats) {
-        defaultOption = MoexConfig.HEADER_TEXT_CHATS;
-      } else if (headerText == R.id.btn_headerTextName) {
-        defaultOption = MoexConfig.HEADER_TEXT_NAME;
-      } else if (headerText == R.id.btn_headerTextUsername) {
-        defaultOption = MoexConfig.HEADER_TEXT_USERNAME;
-      } else {
-        defaultOption = MoexConfig.HEADER_TEXT_MOEX;
-      }
-      MoexConfig.instance().setHeaderText(defaultOption);
-      adapter.updateValuedSettingById(R.id.btn_headerText);
     }));
   }
 
@@ -124,22 +98,6 @@ public class GeneralSettingsMoexController extends RecyclerViewController<Void> 
               view.setData(R.string.px2560);
               break;
           }
-        } else if (itemId == R.id.btn_headerText) {
-          int mode = MoexConfig.instance().getHeaderText();
-          switch (mode) {
-            case MoexConfig.HEADER_TEXT_CHATS:
-              view.setData(R.string.Chats);
-              break;
-            case MoexConfig.HEADER_TEXT_MOEX:
-              view.setData(R.string.moexHeaderClient);
-              break;
-            case MoexConfig.HEADER_TEXT_USERNAME:
-              view.setData(R.string.Username);
-              break;
-            case MoexConfig.HEADER_TEXT_NAME:
-              view.setData(R.string.login_FirstName);
-              break;
-          }
         }
       }
     };
@@ -153,18 +111,17 @@ public class GeneralSettingsMoexController extends RecyclerViewController<Void> 
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_showIdProfile, 0, R.string.showIdProfile));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_hideMessagesBadge, 0, R.string.hideMessagesBadge));
-    items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-    items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_headerText, 0, R.string.changeHeaderText));
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
 
     items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.ExperimentalOptions));
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
+    items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_changeSizeLimit, 0, R.string.changeSizeLimit));
+    items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
+    items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getMarkdownString(this, R.string.changeSizeLimitInfo), false));
+    items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_enableFeaturesButton, 0, R.string.EnableFeatures));
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
     items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getMarkdownString(this, R.string.FeaturesButtonInfo), false));
-    items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
-    items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_changeSizeLimit, 0, R.string.changeSizeLimit));
-    items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getMarkdownString(this, R.string.changeSizeLimitInfo), false));
 
     adapter.setItems(items, true);
     recyclerView.setAdapter(adapter);

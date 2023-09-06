@@ -1,6 +1,5 @@
 package moe.kirao.mgx.utils;
 
-import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -27,17 +26,6 @@ import java.io.File;
 import java.util.List;
 
 public class SystemUtils {
-  @SuppressLint("PrivateApi")
-  public static String getSystemProperty(String key) {
-    try {
-      Class<?> props = Class.forName("android.os.SystemProperties");
-      return (String) props.getMethod("get", String.class).invoke(null, key);
-    } catch (Exception ignore) {
-      //
-    }
-    return null;
-  }
-
   public static boolean shouldShowClipboardToast() {
     return ((Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) || OEMUtils.isMIUI()) && ((Build.VERSION.SDK_INT < Build.VERSION_CODES.S) || !OEMUtils.hasBuiltInClipboardToasts());
   }

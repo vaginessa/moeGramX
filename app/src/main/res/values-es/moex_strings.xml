@@ -8,8 +8,6 @@
   <string name="MoexChatText">Chat</string>
   <string name="MoexSourceText">Fuente</string>
   <string name="MoexCategories">Categorías</string>
-  <string name="MoexGeneralSettings">Opciones generales</string>
-  <string name="MoexInterfaceSettings">Opciones de interfaz</string>
   <string name="MoexHideButtons">Panel de mensajes</string>
   <string name="DisableCommandsButton">Ocultar botón de comandos</string>
   <string name="DisableCameraButton">Ocultar botón de cámara</string>

@@ -671,7 +671,7 @@ public class SettingsController extends ViewController<Void> implements
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
 
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
-    items.add(new ListItem(ListItem.TYPE_INFO_SETTING, R.id.btn_checkUpdates, R.drawable.baseline_assignment_24, R.string.moexChannel));
+    items.add(new ListItem(ListItem.TYPE_INFO_SETTING, R.id.btn_checkUpdates, R.drawable.baseline_info_24, R.string.moexChannel));
     if (!U.isAppSideLoaded()) {
       items.add(new ListItem(ListItem.TYPE_SEPARATOR));
       items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_subscribeToBeta, R.drawable.templarian_baseline_flask_24, R.string.SubscribeToBeta));
@@ -998,8 +998,9 @@ public class SettingsController extends ViewController<Void> implements
       icons.append(R.drawable.baseline_content_copy_24);
 
       if (user != null) {
-        showOptions("ID " + user.id, ids.get(), strings.get(), null, icons.get(), (itemView, id) -> {
-          UI.copyText(String.valueOf(user.id), R.string.CopiedText);
+        String userId = String.valueOf(user.id);
+        showOptions(userId, ids.get(), strings.get(), null, icons.get(), (itemView, id) -> {
+          UI.copyText(userId, R.string.CopiedText);
           return true;
         });
       }
@@ -1250,7 +1251,7 @@ public class SettingsController extends ViewController<Void> implements
     }
 
     SpannableStringBuilder b = new SpannableStringBuilder();
-    b.append(Lang.getMarkdownStringSecure(this, R.string.AppSignature, BuildConfig.VERSION_NAME));
+    b.append(Lang.getMarkdownStringSecure(this, R.string.AppSignatureOverride, BuildConfig.VERSION_NAME));
 
     showOptions(b, ids.get(), strings.get(), colors.get(), icons.get(), (itemView, id) -> {
       if (id == R.id.btn_copyText) {

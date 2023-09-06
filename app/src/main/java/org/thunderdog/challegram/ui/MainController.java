@@ -335,10 +335,8 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
         title = Lang.getString(R.string.moexHeaderClient);
         break;
       case 2:
-        title = tdlib.account().getUsername();
-        if (title == null || StringUtils.isEmpty(title)) {
-          title = tdlib.account().getFirstName();
-        }
+        String username = tdlib.account().getUsername();
+        title = !StringUtils.isEmpty(username) ? username : tdlib.account().getFirstName();
         break;
       case 3:
         title = tdlib.account().getFirstName();

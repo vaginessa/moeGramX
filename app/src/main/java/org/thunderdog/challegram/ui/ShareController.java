@@ -3135,7 +3135,9 @@ public class ShareController extends TelegramViewController<ShareController.Args
 
   private boolean isSent;
   private final boolean rememberOptions = MoexConfig.rememberOptions;
-  private boolean needHideAuthor = rememberOptions && MoexConfig.rememberOptions_author, needRemoveCaptions = rememberOptions && MoexConfig.rememberOptions_captions, forceSendWithoutSound = rememberOptions && MoexConfig.rememberOptions_silent;
+  private boolean needHideAuthor = rememberOptions && MoexConfig.rememberOptions_author;
+  private boolean needRemoveCaptions = rememberOptions && MoexConfig.rememberOptions_captions;
+  private boolean forceSendWithoutSound = rememberOptions && MoexConfig.rememberOptions_silent;
 
   private void sendMessages (boolean forceGoToChat, boolean isSingleTap, @Nullable TdApi.MessageSendOptions finalSendOptions) {
     if (selectedChats.size() == 0 || isSent) {

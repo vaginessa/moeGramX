@@ -4568,8 +4568,9 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       strings.append(R.string.Copy);
       icons.append(R.drawable.baseline_content_copy_24);
 
-      showOptions("ID " + chat.id, ids.get(), strings.get(), null, icons.get(), (itemView, id) -> {
-        UI.copyText(String.valueOf(chat.id), R.string.CopiedText);
+      String chatId = String.valueOf(chat.id);
+      showOptions(chatId, ids.get(), strings.get(), null, icons.get(), (itemView, id) -> {
+        UI.copyText(chatId, R.string.CopiedText);
         return true;
       });
     } else if (viewId == R.id.btn_username) {

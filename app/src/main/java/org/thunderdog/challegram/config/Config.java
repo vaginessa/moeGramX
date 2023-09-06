@@ -38,7 +38,7 @@ public class Config {
   public static final boolean CHAT_FOLDERS_HIDE_BOTTOM_BAR_ON_SCROLL = true;
   public static final boolean CHAT_FOLDERS_APPEARANCE_IS_GLOBAL = true;
   public static final boolean RESTRICT_HIDING_MAIN_LIST = true;
-  public static final boolean SEARCH_MESSAGES_ONLY_IN_SELECTED_FOLDER = BuildConfig.EXPERIMENTAL;
+  public static final boolean SEARCH_MESSAGES_ONLY_IN_SELECTED_FOLDER = true; //BuildConfig.EXPERIMENTAL
 
   public static final boolean NEED_SILENT_BROADCAST = false;
 
@@ -173,7 +173,7 @@ public class Config {
   public static final boolean USE_GROUP_NAMES = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
 
   public static final boolean FORCE_SHOW_RECENTS_STICKERS_TITLE = false;
-  public static final int DEFAULT_SHOW_RECENT_STICKERS_COUNT = !MoexConfig.increaseRecents ? 10 : 20;
+  public static final int DEFAULT_SHOW_RECENT_STICKERS_COUNT = 10;
 
   public static final boolean USE_TEXT_ADVANCE = true; // Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
 
@@ -297,7 +297,7 @@ public class Config {
   public static final boolean TEST_STATIC_REACTIONS = false;
   public static final boolean TEST_GENERIC_REACTION_EFFECTS = false;
 
-  public static final boolean REORDER_INSTALLED_STICKER_SETS = MoexConfig.reorderStickers;
+  public static final boolean REORDER_INSTALLED_STICKER_SETS = false;
 
   public static final boolean NEED_TEMPORARY_TOPICS_WORKAROUND = true;
 

@@ -1040,13 +1040,12 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
       }
     }
 
-    TdApi.Message singleMessage = msg.getMessage();
-    int constructor = singleMessage.content.getConstructor();
+    int constructor = msg.getMessage().content.getConstructor();
     boolean isPhoto = constructor == TdApi.MessagePhoto.CONSTRUCTOR;
-    if ((isPhoto || constructor == TdApi.MessageDocument.CONSTRUCTOR) && TD.isFileLoaded(singleMessage)) {
-      TD.DownloadedFile downloadedFile = TD.getDownloadedFile(singleMessage);
-      String mimeType = downloadedFile != null ? downloadedFile.getMimeType() : null;
-      if (isPhoto || (mimeType != null && mimeType.startsWith("image/"))) {
+    if (msg.canBeSaved() && (isPhoto || constructor == TdApi.MessageDocument.CONSTRUCTOR) && TD.isFileLoaded(msg.getMessage())) {
+      TD.DownloadedFile downloadedFile = TD.getDownloadedFile(msg.getMessage());
+      String mime = downloadedFile != null ? downloadedFile.getMimeType() : null;
+      if (isPhoto || (!StringUtils.isEmpty(mime) && mime.startsWith("image"))) {
         if (isMore) {
           ids.append(R.id.btn_copyPhoto);
           strings.append(R.string.CopyPhoto);
@@ -1070,11 +1069,13 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
       }
   }
 
-    if (m.canWriteMessages() && isSent && msg.canReplyTo()) {
+    if (m.canWriteMessages() && !m.shouldDisallowScreenshots()) {
       if (isMore) {
         ids.append(R.id.btn_msgRepeat);
         strings.append(R.string.Repeat);
         icons.append(R.drawable.baseline_repeat_24);
+      } else {
+        moreOptions++;
       }
     }
 

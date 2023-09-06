@@ -14,11 +14,11 @@
   <string name="DisableCameraButton">Скрыть кнопку камеры</string>
   <string name="HideCameraButtonInfo">Опция выше также так же добавляет плавающую кнопку камеры в меню отправки медиа.</string>
   <string name="DisableRecordButton">Скрыть кнопку медиасообщений</string>
-  <string name="moexNews">Новости о moeGramX</string>
+  <string name="moexNews">Новости о клиенте</string>
   <string name="MoexStickersCount">Стикеры</string>
   <string name="DisableStickerTimestamp">Скрыть время на стикерах</string>
   <string name="RoundedStickers">Закругление стикеров</string>
-  <string name="DrawerOptions">Настройки бокового меню</string>
+  <string name="DrawerOptions">Боковое меню</string>
   <string name="hidePhoneNumber">Скрыть номер телефона</string>
   <string name="EnableFeatures">Показать тестовые настройки</string>
   <string name="FeaturesButtonInfo">Эта функция включает отображение скрытого пункта с тестируемыми функциями в боковом меню</string>
@@ -35,7 +35,7 @@
   <string name="ReorderStickersInfo">Автоматически размещать недавно использованные стикеры перед другими</string>
   <string name="MoexCuteSettings">Попробуйте что-нибудь интересное ~</string>
   <string name="changeSizeLimit">Разрешение фото</string>
-  <string name="changeSizeLimitInfo">Изменить разрешение отправленных фото</string>
+  <string name="changeSizeLimitInfo">Изменить разрешение отправляемых фото</string>
   <string name="SizeLimitDesc">Эта функция нестабильна и может повлечь за собой пару визуальных проблем. Выбирите **1280px** и очистите данные через меню хранилища если наблюдаете критические ошибки, связанные с отправкой фото</string>
   <string name="CopiedPhoto">Фотография была скопирована в буфер</string>
   <string name="CopyPhoto">Копировать фото</string>
@@ -45,7 +45,7 @@
   <string name="RememberOptions">Запомнить опции отправки</string>
   <string name="RememberOptionsInfo">Запомнить ранее выбранные опции и установить их по умолчанию</string>
   <string name="SquareAvatar">Квадратные углы аватарок</string>
-  <string name="MoexDrawerOptions">Боковое меню</string>
-  <string name="MoexBlurDrawer">Размыть аввтар</string>
+  <string name="MoexBlurDrawer">Размыть аватар</string>
+  <string name="MoexChatsHeader">Список чатов</string>
   <string name="changeHeaderText">Текст заголовка</string>
 </resources>

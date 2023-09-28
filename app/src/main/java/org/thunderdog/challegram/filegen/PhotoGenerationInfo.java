@@ -419,7 +419,7 @@ public class PhotoGenerationInfo extends GenerationInfo {
     int size = MoexConfig.instance().getSizeLimit();
     switch (size) {
       case 0:
-        return  800;
+        return 800;
       default:
       case 1:
         return 1280;

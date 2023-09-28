@@ -42,6 +42,7 @@ import org.thunderdog.challegram.loader.gif.GifReceiver;
 import org.thunderdog.challegram.telegram.AnimatedEmojiListener;
 import org.thunderdog.challegram.telegram.TdlibEmojiManager;
 import org.thunderdog.challegram.telegram.TdlibThread;
+import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.DrawAlgorithms;
 import org.thunderdog.challegram.tool.Paints;
 import org.thunderdog.challegram.tool.Screen;
@@ -186,10 +187,16 @@ public class TGMessageSticker extends TGMessage implements AnimatedEmojiListener
         }
       //}
       GifFile file = receiver.getGifReceiver(key).getCurrentFile();
+      float corners = 0;
+      if (MoexConfig.roundedStickers) {
+        corners = Screen.dp(Theme.getBubbleMergeRadius());
+      }
       if (file != animatedFile) {
+        receiver.getGifReceiver(key).setRadius(corners);
         receiver.getGifReceiver(key).requestFile(null);         // The new file may have the same id as
         receiver.getGifReceiver(key).requestFile(animatedFile); // old file, but a different requestedSize
       }
+      receiver.getImageReceiver(key).setRadius(corners);
       receiver.getImageReceiver(key).requestFile(staticFile);
     }
 

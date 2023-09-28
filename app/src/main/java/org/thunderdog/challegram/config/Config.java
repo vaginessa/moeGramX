@@ -26,8 +26,6 @@ import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.data.TD;
 import org.thunderdog.challegram.theme.ColorId;
 
-import moe.kirao.mgx.MoexConfig;
-
 public class Config {
   public static final boolean SUPPORT_SYSTEM_UNDERLINE_SPAN = true;
 

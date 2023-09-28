@@ -67,4 +67,5 @@
   <string name="MoexChatsHeader">Chats list</string>
   <string name="AppNameAndVersionOverride" translatable="false">moeGramX %1$s</string>
   <string name="AppSignatureOverride" translatable="false">**moeGramX** `%1$s`</string>
+  <string name="Page1TitleOverride">moeGramX</string>
 </resources>

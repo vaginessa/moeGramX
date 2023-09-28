@@ -11722,7 +11722,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
       if (showGifRestriction(view))
         return false;
       pickDateOrProceed(initialSendOptions, (modifiedSendOptions, disableMarkdown) -> {
-        if (sendSticker(view, sticker.getSticker(), sticker.getFoundByEmoji(), true, Td.newSendOptions(modifiedSendOptions, false, Config.REORDER_INSTALLED_STICKER_SETS))) {
+        if (sendSticker(view, sticker.getSticker(), sticker.getFoundByEmoji(), true, Td.newSendOptions(modifiedSendOptions, false, Config.REORDER_INSTALLED_STICKER_SETS || MoexConfig.reorderStickers))) {
           lastJunkTime = SystemClock.uptimeMillis();
           inputView.setInput("", false, true);
         }

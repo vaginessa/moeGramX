@@ -34,17 +34,17 @@ public class MoexConfig {
   public static final String KEY_SHOW_ID_PROFILE = "show_id_profile";
   public static final String KEY_DISABLE_SEND_AS_BUTTON = "disable_send_as_button";
   public static final String KEY_ROUNDED_STICKERS = "rounded_stickers";
-  public static final String KEY_INCREASE_RECENTS_COUNT = "increase recents count";
-  public static final String KEY_HIDE_MESSAGES_BADGE = "hide messages badge";
-  public static final String KEY_ENABLE_REORDER_STICKERS = "reorder stickers";
-  public static final String KEY_CHANGE_SIZE_LIMIT = "change size limit";
+  public static final String KEY_INCREASE_RECENTS_COUNT = "increase_recents_count";
+  public static final String KEY_HIDE_MESSAGES_BADGE = "hide_messages_badge";
+  public static final String KEY_ENABLE_REORDER_STICKERS = "reorder_stickers";
+  public static final String KEY_CHANGE_SIZE_LIMIT = "change_size_limit";
   public static final String KEY_REMEMBER_SEND_OPTIONS = "remember_send_options";
   public static final String KEY_REMEMBER_SEND_OPTIONS_AUTHOR = "remember_send_options_author";
   public static final String KEY_REMEMBER_SEND_OPTIONS_CAPTIONS = "remember_send_options_captions";
   public static final String KEY_REMEMBER_SEND_OPTIONS_SOUND = "remember_send_options_sound";
   public static final String KEY_SQUARE_AVATAR = "square_avatar";
   public static final String KEY_BLUR_DRAWER = "blur_drawer";
-  public static final String KEY_CHANGE_HEADER_TEXT = "change header text";
+  public static final String KEY_CHANGE_HEADER_TEXT = "change_header_text";
 
   public static final int SIZE_LIMIT_800 = 0;
   public static final int SIZE_LIMIT_1280 = 1;

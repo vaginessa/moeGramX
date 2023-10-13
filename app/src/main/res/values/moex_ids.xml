@@ -38,4 +38,5 @@
   <item name="btn_headerTextMoex" type="id" />
   <item name="btn_headerTextUsername" type="id" />
   <item name="btn_headerTextName" type="id" />
+  <item name="btn_typingInstead" type="id"/>
 </resources>

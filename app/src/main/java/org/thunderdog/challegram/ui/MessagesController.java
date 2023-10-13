@@ -9672,7 +9672,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
       @TdApi.ChatAction.Constructors int action;
       switch (emojiType) {
         case EmojiMediaType.STICKER:
-          action = TdApi.ChatActionChoosingSticker.CONSTRUCTOR;
+          action = MoexConfig.typingInsteadChoosing ? TdApi.ChatActionChoosingSticker.CONSTRUCTOR : TdApi.ChatActionTyping.CONSTRUCTOR;
           if (suggestionYDiff > Screen.dp(50) || stickerPreviewIsVisible) {
             hideEmojiSuggestionsTemporarily();
           } else if (suggestionYDiff <= 0) {

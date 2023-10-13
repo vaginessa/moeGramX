@@ -44,6 +44,9 @@ public class ChatsSettingsMoexController extends RecyclerViewController<Void> im
     } else if (viewId == R.id.btn_rememberOptions) {
       MoexConfig.instance().toggleRememberSendOptions();
       adapter.updateValuedSettingById(R.id.btn_rememberOptions);
+    } else if (viewId == R.id.btn_typingInstead) {
+      MoexConfig.instance().toggleTypingInsteadChoosing();
+      adapter.updateValuedSettingById(R.id.btn_typingInstead);
     }
   }
 
@@ -66,6 +69,8 @@ public class ChatsSettingsMoexController extends RecyclerViewController<Void> im
           view.getToggler().setRadioEnabled(MoexConfig.reorderStickers, isUpdate);
         } else if (itemId == R.id.btn_rememberOptions) {
           view.getToggler().setRadioEnabled(MoexConfig.rememberOptions, isUpdate);
+        } else if (itemId == R.id.btn_typingInstead) {
+          view.getToggler().setRadioEnabled(MoexConfig.typingInsteadChoosing, isUpdate);
         }
       }
     };
@@ -87,6 +92,10 @@ public class ChatsSettingsMoexController extends RecyclerViewController<Void> im
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_rememberOptions, 0, R.string.RememberOptions));
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
     items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getMarkdownString(this, R.string.RememberOptionsInfo), false));
+    items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
+    items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_typingInstead, 0, R.string.TypingInstead));
+    items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
+    items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getMarkdownString(this, R.string.TypingInsteadInfo), false));
 
     adapter.setItems(items, true);
     recyclerView.setAdapter(adapter);

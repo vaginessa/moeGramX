@@ -48,4 +48,6 @@
   <string name="MoexBlurDrawer">Размыть аватар</string>
   <string name="MoexChatsHeader">Список чатов</string>
   <string name="changeHeaderText">Текст заголовка</string>
+  <string name="TypingInstead">Отправлять \"Выбирает стикер\"</string>
+  <string name="TypingInsteadInfo" formatted="true">Отправлять статус **печатает** вместо **выбирает** стикер</string>
 </resources>

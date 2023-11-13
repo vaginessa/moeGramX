@@ -347,6 +347,7 @@ public class BaseView extends SparseDrawableView implements ClickHelper.Delegate
           if (customControllerProvider != null) {
             ViewController<?> controller = customControllerProvider.createForceTouchPreview(this, x, y);
             if (controller != null) {
+              controller.setInForceTouchMode(true);
               if (controller.needAsynchronousAnimation()) {
                 openPreviewAsync(controller, x, y);
               } else {
@@ -439,6 +440,10 @@ public class BaseView extends SparseDrawableView implements ClickHelper.Delegate
     this.allowMaximizePreview = allowMaximize;
   }
 
+  public void setAllowMaximizePreview (boolean allowMaximizePreview) {
+    this.allowMaximizePreview = allowMaximizePreview;
+  }
+
   public final TdApi.ChatList getPreviewChatList () {
     return chatList;
   }
@@ -468,6 +473,7 @@ public class BaseView extends SparseDrawableView implements ClickHelper.Delegate
     }
     cancelAsyncPreview();
     final MessagesController controller = new MessagesController(getContext(), tdlib);
+    controller.setInForceTouchMode(true);
     controller.setArguments(createChatPreviewArguments(chatList, chat, messageThread, filter));
     openPreviewAsync(controller, x, y);
   }
@@ -623,10 +629,12 @@ public class BaseView extends SparseDrawableView implements ClickHelper.Delegate
   }
 
   private void closePreview () {
-    if (currentOpenPreview != null) {
-      UI.getContext(getContext()).closeForceTouch();
-      currentOpenPreview = null;
-    }
+    UI.post(() -> {
+      if (currentOpenPreview != null) {
+        UI.getContext(getContext()).closeForceTouch();
+        currentOpenPreview = null;
+      }
+    });
   }
 
   // Utils

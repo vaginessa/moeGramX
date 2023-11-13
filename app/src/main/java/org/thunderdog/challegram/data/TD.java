@@ -4536,7 +4536,7 @@ public class TD {
         break;
       }
       default: {
-        destDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        destDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), BuildConfig.PROJECT_NAME);
         break;
       }
     }
@@ -4595,7 +4595,7 @@ public class TD {
     if (!sourceFile.exists()) {
       return;
     }
-    final File destDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+    final File destDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), BuildConfig.PROJECT_NAME);
     if (!FileUtils.createDirectory(destDir)) {
       return;
     }

@@ -1667,16 +1667,6 @@ public class ProfileController extends ViewController<ProfileController.Args> im
         final int itemId = item.getId();
         if (itemId == R.id.btn_useExplicitDice) {
           view.getToggler().setRadioEnabled(Settings.instance().getNewSetting(item.getLongId()), isUpdate);
-        } else if (itemId == R.id.btn_chatId) {
-          switch (mode) {
-            case MODE_USER:
-            case MODE_SECRET:
-            case MODE_CHANNEL:
-            case MODE_SUPERGROUP: {
-              view.setData(String.valueOf(chat.id));
-              break;
-            }
-          }
         } else if (itemId == R.id.btn_username) {
           view.setName(getUsernameName());
           view.setData(getUsernameData());
@@ -2308,18 +2298,6 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     return new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_description, R.drawable.baseline_info_24, isUserMode() && !TD.isBot(user) ? R.string.UserBio : R.string.Description);
   }
 
-  private ListItem newChatIdItem () {
-    switch (mode) {
-      case MODE_USER:
-      case MODE_SECRET:
-      case MODE_CHANNEL:
-      case MODE_SUPERGROUP: {
-        return new ListItem(ListItem.TYPE_INFO_SETTING, R.id.btn_chatId, R.drawable.baseline_fingerprint_24, R.string.ChatId, false);
-      }
-    }
-    return null;
-  }
-
   private ListItem newEncryptionKeyItem () {
     return new ListItem(ListItem.TYPE_VALUED_SETTING, R.id.btn_encryptionKey, R.drawable.baseline_vpn_key_24, R.string.EncryptionKey);
   }
@@ -2340,15 +2318,6 @@ public class ProfileController extends ViewController<ProfileController.Args> im
         items.add(usernameItem);
         addedCount++;
       }
-    }
-
-    final ListItem chatIdItem = newChatIdItem();
-    if (MoexConfig.showId && chatIdItem != null) {
-      if (addedCount > 0) {
-        items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-      }
-      items.add(chatIdItem);
-      addedCount++;
     }
 
     if (TD.isBot(user)) {
@@ -2895,15 +2864,6 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       }
     }
 
-    final ListItem chatIdItem = newChatIdItem();
-    if (MoexConfig.showId && chatIdItem != null) {
-      if (addedCount > 0) {
-        items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-      }
-      items.add(chatIdItem);
-      addedCount++;
-    }
-
     if (tdlib.canCreateInviteLink(chat) && !isPublic) {
       if (addedCount > 0) {
         items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
@@ -2979,15 +2939,6 @@ public class ProfileController extends ViewController<ProfileController.Args> im
         items.add(usernameItem);
         addedCount++;
       }
-    }
-
-    final ListItem chatIdItem = newChatIdItem();
-    if (MoexConfig.showId && chatIdItem != null) {
-      if (addedCount > 0) {
-        items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-      }
-      items.add(chatIdItem);
-      addedCount++;
     }
 
     /*if (canManageChat()) {
@@ -4559,20 +4510,6 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       tdlib.ui().handleProfileClick(this, v, v.getId(), user, false);
     } else if (viewId == R.id.btn_useExplicitDice) {
       Settings.instance().setNewSetting(((ListItem) v.getTag()).getLongId(), baseAdapter.toggleView(v));
-    } else if (viewId == R.id.btn_chatId) {
-      IntList ids = new IntList(1);
-      StringList strings = new StringList(1);
-      IntList icons = new IntList(1);
-
-      ids.append(R.id.btn_copyText);
-      strings.append(R.string.Copy);
-      icons.append(R.drawable.baseline_content_copy_24);
-
-      String chatId = String.valueOf(chat.id);
-      showOptions(chatId, ids.get(), strings.get(), null, icons.get(), (itemView, id) -> {
-        UI.copyText(chatId, R.string.CopiedText);
-        return true;
-      });
     } else if (viewId == R.id.btn_username) {
       boolean canSetUsername = canSetUsername();
       boolean canInviteUsers = chat != null && tdlib.canManageInviteLinks(chat);

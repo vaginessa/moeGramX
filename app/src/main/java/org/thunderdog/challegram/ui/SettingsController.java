@@ -533,8 +533,6 @@ public class SettingsController extends ViewController<Void> implements
           } else {
             view.setData(R.string.unknownUser);
           }
-        } else if (itemId == R.id.btn_checkUpdates) {
-          view.setData(R.string.moexNews);
         } else if (itemId == R.id.btn_moexSettings) {
           view.setData(R.string.MoexSettings);
         } else if (itemId == R.id.btn_devices) {
@@ -671,7 +669,7 @@ public class SettingsController extends ViewController<Void> implements
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
 
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
-    items.add(new ListItem(ListItem.TYPE_INFO_SETTING, R.id.btn_checkUpdates, R.drawable.baseline_info_24, R.string.moexChannel));
+    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_checkUpdates, R.drawable.baseline_google_play_24, U.isAppSideLoaded() ? R.string.AppOnGooglePlay : R.string.CheckForUpdates));
     if (!U.isAppSideLoaded()) {
       items.add(new ListItem(ListItem.TYPE_SEPARATOR));
       items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_subscribeToBeta, R.drawable.templarian_baseline_flask_24, R.string.SubscribeToBeta));
@@ -955,8 +953,8 @@ public class SettingsController extends ViewController<Void> implements
     
   }
 
-  private void viewMoexNews () {
-    tdlib.ui().openUrl(this, Lang.getStringSecure(R.string.MoexChannelLink), new TdlibUi.UrlOpenParameters().forceInstantView());
+  private void viewGooglePlay () {
+    tdlib.ui().openUrl(this, BuildConfig.MARKET_URL, new TdlibUi.UrlOpenParameters().disableInstantView());
   }
 
   private void viewSourceCode (boolean isTdlib) {
@@ -1013,7 +1011,7 @@ public class SettingsController extends ViewController<Void> implements
     } else if (viewId == R.id.btn_moexSettings) {
       navigateTo(new SettingsMoexController(context, tdlib));
     } else if (viewId == R.id.btn_checkUpdates) {
-      viewMoexNews();
+      viewGooglePlay();
     } else if (viewId == R.id.btn_subscribeToBeta) {
       tdlib.ui().subscribeToBeta(this);
     } else if (viewId == R.id.btn_sourceCodeChanges) {// TODO provide an ability to view changes in PRs if they are present in both builds

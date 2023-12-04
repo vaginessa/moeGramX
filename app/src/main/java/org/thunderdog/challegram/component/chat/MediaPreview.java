@@ -134,6 +134,32 @@ public abstract class MediaPreview implements ListAnimator.Measurable {
     }
   }
 
+  public static boolean hasMedia (TdApi.WebPage webPage) {
+    if (webPage.video != null) {
+      TdApi.Video video = webPage.video;
+      // video preview
+      return video.thumbnail != null || video.minithumbnail != null;
+    } else if (webPage.sticker != null) {
+      // sticker preview
+      return true;
+    } else if (webPage.animation != null) {
+      // gif preview
+      return webPage.animation.thumbnail != null || webPage.animation.minithumbnail != null;
+    } else if (webPage.videoNote != null) {
+      return true;
+    } else if (webPage.voiceNote != null) {
+      // TODO voice note preview?
+    } else if (webPage.document != null) {
+      TdApi.Document document = webPage.document;
+      // doc preview
+      return document.minithumbnail != null || document.thumbnail != null;
+    } else if (webPage.photo != null) {
+      TdApi.PhotoSize thumbnail = Td.findSmallest(webPage.photo);
+      return thumbnail != null || webPage.photo.minithumbnail != null;
+    }
+    return false;
+  }
+
   public static MediaPreview valueOf (Tdlib tdlib, TdApi.Message message, @Nullable ContentPreview preview, int size, int cornerRadius) {
     Tdlib.Album album = preview != null ? preview.getAlbum() : null;
     if (album != null) {
@@ -244,8 +270,26 @@ public abstract class MediaPreview implements ListAnimator.Measurable {
         TdApi.VoiceNote voiceNote = ((TdApi.MessageVoiceNote) message.content).voiceNote;
         break;
       }
+      case TdApi.MessageGiftedPremium.CONSTRUCTOR: {
+        TdApi.Sticker sticker = ((TdApi.MessageGiftedPremium) message.content).sticker;
+        if (sticker != null)
+          return new MediaPreviewSimple(tdlib, size, cornerRadius, sticker);
+        break;
+      }
+      case TdApi.MessagePremiumGiftCode.CONSTRUCTOR: {
+        TdApi.Sticker sticker = ((TdApi.MessagePremiumGiftCode) message.content).sticker;
+        if (sticker != null)
+          return new MediaPreviewSimple(tdlib, size, cornerRadius, sticker);
+        break;
+      }
+      case TdApi.MessagePremiumGiveaway.CONSTRUCTOR: {
+        TdApi.Sticker sticker = ((TdApi.MessagePremiumGiveaway) message.content).sticker;
+        if (sticker != null)
+          return new MediaPreviewSimple(tdlib, size, cornerRadius, sticker);
+        break;
+      }
       default: {
-        Td.assertMessageContent_cda9af31();
+        Td.assertMessageContent_ea2cfacf();
         break;
       }
     }

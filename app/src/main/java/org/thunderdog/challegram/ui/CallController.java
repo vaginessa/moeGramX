@@ -52,6 +52,7 @@ import org.thunderdog.challegram.support.ViewSupport;
 import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.telegram.TdlibCache;
 import org.thunderdog.challegram.theme.ColorId;
+import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.DrawAlgorithms;
 import org.thunderdog.challegram.tool.Drawables;
 import org.thunderdog.challegram.tool.Fonts;
@@ -61,6 +62,7 @@ import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.tool.Views;
 import org.thunderdog.challegram.util.CustomTypefaceSpan;
 import org.thunderdog.challegram.util.EmojiStatusHelper;
+import org.thunderdog.challegram.util.RateLimiter;
 import org.thunderdog.challegram.util.text.TextColorSetOverride;
 import org.thunderdog.challegram.util.text.TextColorSets;
 import org.thunderdog.challegram.voip.gui.CallSettings;
@@ -637,13 +639,8 @@ public class CallController extends ViewController<CallController.Arguments> imp
     if (emojiStatusHelper != null) {
       this.emojiStatusHelper.updateEmoji(tdlib, user, new TextColorSetOverride(TextColorSets.Regular.NORMAL) {
         @Override
-        public int mediaTextColorOrId () {
-          return ColorId.white;
-        }
-
-        @Override
-        public boolean mediaTextColorIsId () {
-          return true;
+        public long mediaTextComplexColor () {
+          return Theme.newComplexColor(true, ColorId.white);
         }
       }, R.drawable.baseline_premium_star_28, 32);
     }
@@ -782,9 +779,8 @@ public class CallController extends ViewController<CallController.Arguments> imp
   public void onFactorChangeFinished (int id, float finalFactor, FactorAnimator callee) {
     switch (id) {
       case ANIMATOR_FLASH_ID: {
-        flashAnimator.forceFactor(0f);
-        if (isFlashing) {
-          flashAnimator.animateTo(1f);
+        if (finalFactor == 1f) {
+          flashLimiter.run();
         }
         break;
       }
@@ -895,6 +891,15 @@ public class CallController extends ViewController<CallController.Arguments> imp
 
   public static final long CALL_FLASH_DURATION = 1100;
   public static final long CALL_FLASH_DELAY = 650l;
+
+  private final RateLimiter flashLimiter = new RateLimiter(() -> {
+    if (isFlashing) {
+      flashAnimator.forceFactor(0f);
+      if (isFlashing) {
+        flashAnimator.animateTo(1f);
+      }
+    }
+  }, 100l, null);
 
   private void setFlashing (boolean isFlashing) {
     if (this.isFlashing != isFlashing) {

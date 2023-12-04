@@ -29,7 +29,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.Nullable;
-import androidx.core.util.ObjectsCompat;
+import androidx.annotation.StringRes;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
@@ -48,6 +48,7 @@ import org.thunderdog.challegram.navigation.ViewController;
 import org.thunderdog.challegram.support.RippleSupport;
 import org.thunderdog.challegram.support.ViewSupport;
 import org.thunderdog.challegram.telegram.Tdlib;
+import org.thunderdog.challegram.telegram.TdlibAccentColor;
 import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.Drawables;
@@ -391,18 +392,17 @@ public class EditChatFolderController extends RecyclerViewController<EditChatFol
   }
 
   private ListItem chatTypeItem (@IdRes int id) {
-    return new ListItem(ListItem.TYPE_CHAT_BETTER, id, TD.chatTypeIcon24(id), TD.chatTypeName(id)).setIntValue(TD.chatTypeColor(id));
+    TdlibAccentColor accentColor = tdlib.accentColor(TD.chatTypeAccentColorId(id));
+    return new ListItem(ListItem.TYPE_CHAT_BETTER, id, TD.chatTypeIcon24(id), TD.chatTypeName(id))
+      .setAccentColor(accentColor);
   }
 
   private void loadChatFolder () {
-    tdlib.send(new TdApi.GetChatFolder(chatFolderId), (result) -> runOnUiThreadOptional(() -> {
-      switch (result.getConstructor()) {
-        case TdApi.ChatFolder.CONSTRUCTOR:
-          updateChatFolder((TdApi.ChatFolder) result);
-          break;
-        case TdApi.Error.CONSTRUCTOR:
-          UI.showError(result);
-          break;
+    tdlib.send(new TdApi.GetChatFolder(chatFolderId), (chatFolder, error) -> runOnUiThreadOptional(() -> {
+      if (error != null) {
+        UI.showError(error);
+      } else {
+        updateChatFolder(chatFolder);
       }
     }));
   }
@@ -502,7 +502,18 @@ public class EditChatFolderController extends RecyclerViewController<EditChatFol
     } else {
       title = item.getString();
     }
-    CharSequence info = Lang.getStringBold(inclusion ? R.string.FolderRemoveInclusionConfirm : R.string.FolderRemoveExclusionConfirm, title);
+    @StringRes int stringRes;
+    if (item.getId() == R.id.chat) {
+      long chatId = item.getLongId();
+      if (tdlib.isUserChat(chatId)) {
+        stringRes = inclusion ? R.string.FolderRemoveInclusionConfirmUser : R.string.FolderRemoveExclusionConfirmUser;
+      } else {
+        stringRes = inclusion ? R.string.FolderRemoveInclusionConfirmChat : R.string.FolderRemoveExclusionConfirmChat;
+      }
+    } else {
+      stringRes = inclusion ? R.string.FolderRemoveInclusionConfirmType : R.string.FolderRemoveExclusionConfirmType;
+    }
+    CharSequence info = Lang.getStringBold(stringRes, title);
     showConfirm(info, Lang.getString(R.string.Remove), R.drawable.baseline_delete_24, OPTION_COLOR_RED, () -> {
       int index = adapter.getItem(position) == item ? position : adapter.indexOfView(item);
       if (index != RecyclerView.NO_POSITION) {
@@ -572,15 +583,15 @@ public class EditChatFolderController extends RecyclerViewController<EditChatFol
   }
 
   private void createChatFolder (TdApi.ChatFolder chatFolder) {
-    tdlib.send(new TdApi.CreateChatFolder(chatFolder), tdlib.resultHandler(TdApi.ChatFolderInfo.class, this::closeSelf));
+    tdlib.send(new TdApi.CreateChatFolder(chatFolder), tdlib.successHandler(this::closeSelf));
   }
 
   private void editChatFolder (int chatFolderId, TdApi.ChatFolder chatFolder) {
-    tdlib.send(new TdApi.EditChatFolder(chatFolderId, chatFolder), tdlib.resultHandler(TdApi.ChatFolderInfo.class, this::closeSelf));
+    tdlib.send(new TdApi.EditChatFolder(chatFolderId, chatFolder), tdlib.successHandler(this::closeSelf));
   }
 
   private void deleteChatFolder (int chatFolderId) {
-    tdlib.send(new TdApi.DeleteChatFolder(chatFolderId, null), tdlib.okHandler(this::closeSelf));
+    tdlib.send(new TdApi.DeleteChatFolder(chatFolderId, null), tdlib.typedOkHandler(this::closeSelf));
   }
 
   private void closeSelf () {
@@ -609,7 +620,7 @@ public class EditChatFolderController extends RecyclerViewController<EditChatFol
         chatView.setTitle(item.getString());
         chatView.setSubtitle(null);
         chatView.setNoSubtitle(true);
-        chatView.setAvatar(null, new AvatarPlaceholder.Metadata(item.getIntValue(), item.getIconResource()));
+        chatView.setAvatar(null, new AvatarPlaceholder.Metadata(item.getAccentColor(), item.getIconResource()));
         chatView.clearPreviewChat();
       }
     }
@@ -675,7 +686,7 @@ public class EditChatFolderController extends RecyclerViewController<EditChatFol
       } else if (item.getId() == R.id.btn_removeFolder) {
         view.setIconColorId(ColorId.iconNegative);
       } else {
-        view.setIconColorId(0 /* theme_color_icon */);
+        view.setIconColorId(ColorId.NONE /* theme_color_icon */);
       }
     }
   }

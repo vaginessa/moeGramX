@@ -720,7 +720,7 @@ public class TGCallService extends Service implements
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
       builder.setColor(tdlib.accountColor());
     }
-    Bitmap bitmap = TdlibNotificationUtils.buildLargeIcon(tdlib, user.profilePhoto != null ? user.profilePhoto.small : null, TD.getAvatarColorId(user, tdlib.myUserId()), TD.getLetters(user), false, true);
+    Bitmap bitmap = TdlibNotificationUtils.buildLargeIcon(tdlib, user.profilePhoto != null ? user.profilePhoto.small : null, tdlib.cache().userAccentColor(user), TD.getLetters(user), false, true);
     if (bitmap != null) {
       builder.setLargeIcon(bitmap);
     }
@@ -840,7 +840,7 @@ public class TGCallService extends Service implements
       builder.setCategory(Notification.CATEGORY_CALL);
       builder.setFullScreenIntent(PendingIntent.getActivity(this, PendingIntent.FLAG_ONE_SHOT, Intents.valueOfCall(), Intents.mutabilityFlags(false)), true);
     }
-    Bitmap bitmap = user != null ? TdlibNotificationUtils.buildLargeIcon(tdlib, user.profilePhoto != null ? user.profilePhoto.small : null, TD.getAvatarColorId(user, tdlib.myUserId()), TD.getLetters(user), false, true) : null;
+    Bitmap bitmap = user != null ? TdlibNotificationUtils.buildLargeIcon(tdlib, user.profilePhoto != null ? user.profilePhoto.small : null, tdlib.cache().userAccentColor(user), TD.getLetters(user), false, true) : null;
     if (bitmap != null) {
       builder.setLargeIcon(bitmap);
     }
@@ -1139,13 +1139,19 @@ public class TGCallService extends Service implements
 
   private CharSequence lastDebugLog;
 
-  private void releaseTgCalls (Tdlib tdlib, TdApi.Call call) {
+  private void releaseTgCalls (@Nullable Tdlib tdlib, @Nullable TdApi.Call call) {
     if (tgcalls != null) {
+      if (call == null) {
+        call = tgcalls.getCall();
+      }
+      if (tdlib == null) {
+        tdlib = tgcalls.tdlib();
+      }
       lastDebugLog = tgcalls.collectDebugLog();
       tgcalls.performDestroy();
       tgcalls = null;
     }
-    if (callListener != null) {
+    if (callListener != null && tdlib != null && call != null) {
       tdlib.listeners().unsubscribeFromCallUpdates(call.id, callListener);
       callListener = null;
     }

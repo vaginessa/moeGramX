@@ -1450,11 +1450,15 @@ public class RecordAudioVideoController implements
   private int savedRoundDurationSeconds;
 
   private void startVideoRecording () {
+    if (this.recordingRoundVideo)
+      throw new IllegalStateException();
     this.recordingRoundVideo = true;
     ownedCamera.getLegacyManager().requestRoundVideoCapture(roundKey, this, roundOutputPath);
   }
 
   private void finishVideoRecording (int closeMode) {
+    if (!this.recordingRoundVideo)
+      throw new IllegalStateException();
     this.recordingRoundVideo = false;
     this.roundCloseMode = closeMode;
     final boolean needResult = closeMode != CLOSE_MODE_CANCEL;
@@ -1482,7 +1486,7 @@ public class RecordAudioVideoController implements
         TdApi.InputMessageVideoNote newVideoNote = tdlib.filegen().createThumbnail(videoNote, isSecretChat, helperFile);
         long chatId = targetController.getChatId();
         long messageThreadId = targetController.getMessageThreadId();
-        TdApi.MessageReplyTo replyTo = targetController.obtainReplyTo();
+        TdApi.InputMessageReplyTo replyTo = targetController.obtainReplyTo();
         final TdApi.MessageSendOptions finalSendOptions = Td.newSendOptions(initialSendOptions, tdlib.chatDefaultDisableNotifications(chatId));
         if (newVideoNote.thumbnail == null && helperFile != null) {
           tdlib.client().send(new TdApi.DownloadFile(helperFile.id, 1, 0, 0, true), result -> {

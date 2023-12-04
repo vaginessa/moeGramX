@@ -72,6 +72,7 @@ import java.util.List;
 import me.vkryl.android.AnimatorUtils;
 import me.vkryl.android.widget.FrameLayoutFix;
 import me.vkryl.core.lambda.CancellableRunnable;
+import me.vkryl.td.ChatId;
 import me.vkryl.td.Td;
 import moe.kirao.mgx.MoexConfig;
 
@@ -238,7 +239,7 @@ public class MediaBottomGalleryController extends MediaBottomBaseController<Medi
 
   @Override
   public boolean allowSpoiler () {
-    return true;
+    return !ChatId.isSecret(getOutputChatId());
   }
 
   @Override

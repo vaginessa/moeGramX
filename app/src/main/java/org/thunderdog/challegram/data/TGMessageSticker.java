@@ -430,9 +430,11 @@ public class TGMessageSticker extends TGMessage implements AnimatedEmojiListener
   }
 
   protected boolean isSupportedMessageContent (TdApi.Message message, TdApi.MessageContent messageContent) {
-    final @EmojiMessageContentType int contentType = getEmojiMessageContentType(messageContent);
-    if (contentType == EmojiMessageContentType.NOT_EMOJI) {
-      return false;
+    if (specialType != SPECIAL_TYPE_NONE) {
+      final @EmojiMessageContentType int contentType = getEmojiMessageContentType(messageContent);
+      if (contentType == EmojiMessageContentType.NOT_EMOJI) {
+        return false;
+      }
     }
     return super.isSupportedMessageContent(message, messageContent);
   }
@@ -691,14 +693,9 @@ public class TGMessageSticker extends TGMessage implements AnimatedEmojiListener
                 target = receiver.getImageReceiver(index);
               }
               if (representation.needThemedColorFilter) {
-                int color = getTextColorSet().mediaTextColorOrId();
-                if (getTextColorSet().mediaTextColorIsId()) {
-                  preview.setThemedPorterDuffColorId(color);
-                  target.setThemedPorterDuffColorId(color);
-                } else {
-                  preview.setPorterDuffColorFilter(color);
-                  target.setPorterDuffColorFilter(color);
-                }
+                long complexColor = getTextColorSet().mediaTextComplexColor();
+                Theme.applyComplexColor(preview, complexColor);
+                Theme.applyComplexColor(target, complexColor);
               } else {
                 preview.disablePorterDuffColorFilter();
                 target.disablePorterDuffColorFilter();
@@ -952,6 +949,6 @@ public class TGMessageSticker extends TGMessage implements AnimatedEmojiListener
   private static TdApi.MessageContent checkContent (TdApi.MessageContent content) {
     final boolean allowAnimatedEmoji = !Settings.instance().getNewSetting(Settings.SETTING_FLAG_NO_ANIMATED_EMOJI);
     return !allowAnimatedEmoji && TD.isStickerFromAnimatedEmojiPack(content) ?
-      new TdApi.MessageText(Td.textOrCaption(content), null): content;
+      new TdApi.MessageText(Td.textOrCaption(content), null, null) : content;
   }
 }

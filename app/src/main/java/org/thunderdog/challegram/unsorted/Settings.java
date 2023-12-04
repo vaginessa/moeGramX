@@ -122,6 +122,8 @@ import me.vkryl.td.ChatId;
 import me.vkryl.td.MessageId;
 import me.vkryl.td.Td;
 
+import moe.kirao.mgx.MoexConfig;
+
 /**
  * All app-related settings.
  * <p>
@@ -6958,6 +6960,6 @@ public class Settings {
   }
 
   public boolean showPeerIds () {
-    return isExperimentEnabled(EXPERIMENT_FLAG_SHOW_PEER_IDS);
+    return isExperimentEnabled(EXPERIMENT_FLAG_SHOW_PEER_IDS) || MoexConfig.showId;
   }
 }

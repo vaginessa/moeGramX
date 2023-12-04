@@ -70,4 +70,5 @@
   <string name="Page1TitleOverride">moeGramX</string>
   <string name="TypingInstead">Send choosing sticker status</string>
   <string name="TypingInsteadInfo" formatted="true">This will send **typing** status instead of **choosing** sticker</string>
+  <string name="cuteToast" translatable="false">Moe moe, kyun!</string>
 </resources>

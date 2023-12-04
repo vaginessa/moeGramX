@@ -531,6 +531,8 @@ public class SettingsController extends ViewController<Void> implements
           view.setData(R.string.CopyReportDataInfo);
         } else if (itemId == R.id.btn_moexSettings) {
           view.setData(R.string.MoexSettings);
+        } else if (itemId == R.id.btn_checkUpdates) {
+          view.setData(R.string.MoexVer);
         } else if (itemId == R.id.btn_devices) {
           if (sessions == null) {
             view.setData(R.string.LoadingInformation);
@@ -702,7 +704,7 @@ public class SettingsController extends ViewController<Void> implements
           throw new UnsupportedOperationException();
       }
     }
-    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_checkUpdates, downloadIconRes, downloadStringRes)
+    items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_checkUpdates, downloadIconRes, downloadStringRes)
       .setData(downloadUrl));
     if (downloadUrl.installerId == AppInstallationUtil.InstallerId.GOOGLE_PLAY) {
       items.add(new ListItem(ListItem.TYPE_SEPARATOR));

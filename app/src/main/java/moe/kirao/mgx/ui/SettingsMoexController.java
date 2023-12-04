@@ -2,6 +2,7 @@ package moe.kirao.mgx.ui;
 
 import android.content.Context;
 import android.view.View;
+import android.widget.Toast;
 
 import org.thunderdog.challegram.BuildConfig;
 import org.thunderdog.challegram.R;
@@ -45,14 +46,14 @@ public class SettingsMoexController extends RecyclerViewController<Void> impleme
     } else if (viewId == R.id.btn_moexSourceLink) {
       tdlib.ui().openUrl(this, Lang.getStringSecure(R.string.MoexSourceLink), new TdlibUi.UrlOpenParameters().forceInstantView());
     } else if (viewId == R.id.btn_build) {
-      UI.copyText(Lang.getStringSecure(R.string.MoexVer) + " (" + BuildConfig.COMMIT + ")\n", R.string.CopiedText);
+      UI.showToast(R.string.cuteToast, Toast.LENGTH_SHORT);
     }
   }
 
   @Override
   public boolean onLongClick (View v) {
     if (v.getId() == R.id.btn_build) {
-      UI.copyText(U.getUsefulMetadata(tdlib), R.string.CopiedText);
+      UI.copyText(String.join("\n", Lang.getStringSecure(R.string.MoexVer), U.getUsefulMetadata(tdlib)), R.string.CopiedText);
     }
     return false;
   }

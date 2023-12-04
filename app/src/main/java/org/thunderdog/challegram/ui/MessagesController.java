@@ -5551,7 +5551,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
         });
       } else if (id == R.id.btn_msgRepeat) {
         TdApi.Message msg = selectedMessage.getMessage();
-        tdlib.client().send(new TdApi.ForwardMessages(msg.chatId, msg.messageThreadId, msg.chatId, new long[] {msg.id}, null, true, false, false), tdlib.messageHandler());
+        tdlib.client().send(new TdApi.ForwardMessages(msg.chatId, msg.messageThreadId, msg.chatId, new long[] {msg.id}, null, true, false), tdlib.messageHandler());
       } else if (id == R.id.btn_openIn) {
         if (selectedMessageTag != null) {
           TdApi.Document document = ((TdApi.MessageDocument) selectedMessage.getMessage().content).document;

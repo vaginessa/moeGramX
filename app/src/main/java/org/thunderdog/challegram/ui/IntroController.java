@@ -1294,7 +1294,7 @@ public class IntroController extends ViewController<Void> implements GLSurfaceVi
     return new int[] {
       R.string.StartMessaging,
 
-      R.string.Page1TitleOverride,
+      R.string.moexHeaderClient,
       R.string.Page1Message,
       R.string.Page2Title,
       R.string.Page2Message,
@@ -1310,7 +1310,7 @@ public class IntroController extends ViewController<Void> implements GLSurfaceVi
   }
 
   private static boolean belongsToIntro (@StringRes int res) {
-    return res == R.string.Page1TitleOverride ||
+    return res == R.string.moexHeaderClient ||
       res == R.string.Page1Message ||
       res == R.string.Page2Title ||
       res == R.string.Page2Message ||
@@ -1326,14 +1326,14 @@ public class IntroController extends ViewController<Void> implements GLSurfaceVi
 
   private static int getTitleString (int position, boolean isDesc) {
     switch (position) {
-      case 0: return isDesc ? R.string.Page1Message : R.string.Page1TitleOverride;
+      case 0: return isDesc ? R.string.Page1Message : R.string.moexHeaderClient;
       case 1: return isDesc ? R.string.Page2Message : R.string.Page2Title;
       case 2: return isDesc ? R.string.Page3Message : R.string.Page3Title;
       case 3: return isDesc ? R.string.Page4Message : R.string.Page4Title;
       case 4: return isDesc ? R.string.Page5Message : R.string.Page5Title;
       case 5: return isDesc ? R.string.Page6Message : R.string.Page6Title;
     }
-    return isDesc ? R.string.Page1Message : R.string.Page1TitleOverride;
+    return isDesc ? R.string.Page1Message : R.string.moexHeaderClient;
   }
 
   private CharSequence[] descs = new CharSequence[6];

@@ -13,7 +13,6 @@
   <string name="DisableCommandsButton">隐藏命令按钮</string>
   <string name="DisableCameraButton">隐藏相机按钮</string>
   <string name="DisableRecordButton">隐藏录制按钮</string>
-  <string name="moexNews">moeGramX 官方频道</string>
   <string name="MoexChatsSettings">聊天选项</string>
   <string name="MoexStickersCount">贴纸</string>
   <string name="DisableStickerTimestamp">隐藏贴纸发送时间</string>
@@ -28,7 +27,7 @@
   <string name="DisableSendAsButton">隐藏“以频道身份发言”按钮</string>
   <string name="MobileHidden">号码已隐藏</string>
   <string name="MoexAbout">关于</string>
-  <string name="MoexAboutText">**moeGramX** — 是一款基于官方源代码和 TDlib 的可爱且功能丰富的实验性客户端。欢迎您提出功能建议，报告问题，或在我们的讨论组聊天！</string>
+  <string name="MoexAboutText" formatted="true">**moeGramX** — 是一款基于官方源代码和 TDlib 的可爱且功能丰富的实验性客户端。欢迎您提出功能建议，报告问题，或在我们的讨论组聊天！</string>
   <string name="HideCameraButtonInfo">此选项可将相机按钮从消息界面隐藏到附加选项。</string>
   <string name="IncreaseRecents">增加更多的最近贴纸</string>
   <string name="hideMessagesBadge">隐藏未读消息数</string>
@@ -43,4 +42,10 @@
   <string name="CopySticker">复制贴纸</string>
   <string name="CopiedSticker">贴纸已复制至剪切板</string>
   <string name="Repeat">复读</string>
+  <string name="changeHeaderText">自定义标题</string>
+  <string name="RememberOptions">记住发送时选项</string>
+  <string name="RememberOptionsInfo">记住先前选择的发送时选项，将其作为默认选项</string>
+  <string name="SquareAvatar">方形头像</string>
+  <string name="MoexBlurDrawer">模糊头像</string>
+  <string name="MoexChatsHeader">聊天列表</string>
 </resources>

@@ -12,13 +12,12 @@
   <string name="MoexHideButtons">Поле ввода сообщений</string>
   <string name="DisableCommandsButton">Скрыть кнопку команд</string>
   <string name="DisableCameraButton">Скрыть кнопку камеры</string>
-  <string name="HideCameraButtonInfo">Опция выше также так же добавляет плавающую кнопку камеры в меню отправки медиа.</string>
   <string name="DisableRecordButton">Скрыть кнопку медиасообщений</string>
-  <string name="moexNews">Новости о клиенте</string>
+  <string name="MoexChatsSettings">Чаты</string>
   <string name="MoexStickersCount">Стикеры</string>
   <string name="DisableStickerTimestamp">Скрыть время на стикерах</string>
   <string name="RoundedStickers">Закругление стикеров</string>
-  <string name="DrawerOptions">Боковое меню</string>
+  <string name="DrawerOptions">Настройки бокового меню</string>
   <string name="hidePhoneNumber">Скрыть номер телефона</string>
   <string name="EnableFeatures">Показать тестовые настройки</string>
   <string name="FeaturesButtonInfo">Эта функция включает отображение скрытого пункта с тестируемыми функциями в боковом меню</string>
@@ -28,26 +27,27 @@
   <string name="DisableSendAsButton">Скрыть кнопку отправки от канала</string>
   <string name="MobileHidden">Номер скрыт</string>
   <string name="MoexAbout">О нас</string>
-  <string name="MoexAboutText">**moeGramX** — это милый клиент c расширенной функциональностью, основанный на официальном исходном коде и TDlib. Присоединяйтесь к нашему чату, где вы можете предложить новые функции или указать на ошибки!</string>
+  <string name="MoexAboutText" formatted="true">**moeGramX** — это милый клиент c расширенной функциональностью, основанный на официальном исходном коде и TDlib. Присоединяйтесь к нашему чату, где вы можете предложить новые функции или указать на ошибки!</string>
+  <string name="HideCameraButtonInfo">Опция выше также так же добавляет плавающую кнопку камеры в меню отправки медиа.</string>
   <string name="IncreaseRecents">Увеличить количество недавних</string>
   <string name="hideMessagesBadge">Скрыть метку с кнопки меню</string>
   <string name="ReorderStickers">Динамический порядок стикеров</string>
   <string name="ReorderStickersInfo">Автоматически размещать недавно использованные стикеры перед другими</string>
   <string name="MoexCuteSettings">Попробуйте что-нибудь интересное ~</string>
   <string name="changeSizeLimit">Разрешение фото</string>
-  <string name="changeSizeLimitInfo">Изменить разрешение отправляемых фото</string>
+  <string name="changeSizeLimitInfo">Изменить разрешение отправленных фото</string>
   <string name="SizeLimitDesc">Эта функция нестабильна и может повлечь за собой пару визуальных проблем. Выбирите **1280px** и очистите данные через меню хранилища если наблюдаете критические ошибки, связанные с отправкой фото</string>
   <string name="CopiedPhoto">Фотография была скопирована в буфер</string>
   <string name="CopyPhoto">Копировать фото</string>
   <string name="CopySticker">Копировать стикер</string>
   <string name="CopiedSticker">Стикер был скопирован в буфер</string>
   <string name="Repeat">Повторить</string>
+  <string name="changeHeaderText">Текст заголовка</string>
   <string name="RememberOptions">Запомнить опции отправки</string>
   <string name="RememberOptionsInfo">Запомнить ранее выбранные опции и установить их по умолчанию</string>
   <string name="SquareAvatar">Квадратные углы аватарок</string>
   <string name="MoexBlurDrawer">Размыть аватар</string>
   <string name="MoexChatsHeader">Список чатов</string>
-  <string name="changeHeaderText">Текст заголовка</string>
-  <string name="TypingInstead">Отправлять \"Выбирает стикер\"</string>
-  <string name="TypingInsteadInfo" formatted="true">Отправлять статус **печатает** вместо **выбирает** стикер</string>
+  <string name="TypingInstead">Отправлять статус выбора стикера</string>
+  <string name="TypingInsteadInfo" formatted="true">Статус **Печатает** будет отправлен вместо **Выбирает стикер**</string>
 </resources>

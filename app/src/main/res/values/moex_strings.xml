@@ -19,7 +19,6 @@
   <string name="DisableCommandsButton">Hide commands button</string>
   <string name="DisableCameraButton">Hide camera button</string>
   <string name="DisableRecordButton">Hide record button</string>
-  <string name="moexNews">moeGramX client channel</string>
   <string name="MoexChatsSettings">Chats options</string>
   <string name="MoexStickersCount">Stickers</string>
   <string name="DisableStickerTimestamp">Hide time on stickers</string>
@@ -30,7 +29,6 @@
   <string name="FeaturesButtonInfo">Show experimental settings button in drawer</string>
   <string name="ExperimentalOptions">Experimental options</string>
   <string name="PhoneHidden">Phone hidden</string>
-  <string name="ChatId">ID</string>
   <string name="showIdProfile">Show User ID in profiles</string>
   <string name="DisableSendAsButton">Hide \"Send as Channel\" button</string>
   <string name="MobileHidden">Mobile hidden</string>
@@ -67,7 +65,6 @@
   <string name="MoexChatsHeader">Chats list</string>
   <string name="AppNameAndVersionOverride" translatable="false">moeGramX %1$s</string>
   <string name="AppSignatureOverride" translatable="false">**moeGramX** `%1$s`</string>
-  <string name="Page1TitleOverride">moeGramX</string>
   <string name="TypingInstead">Send choosing sticker status</string>
   <string name="TypingInsteadInfo" formatted="true">This will send **typing** status instead of **choosing** sticker</string>
   <string name="cuteToast" translatable="false">Moe moe, kyun!</string>

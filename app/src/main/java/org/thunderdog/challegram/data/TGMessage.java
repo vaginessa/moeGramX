@@ -303,6 +303,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
   public static final int REACTIONS_DRAW_MODE_BUBBLE = 0;
   public static final int REACTIONS_DRAW_MODE_FLAT = 1;
   public static final int REACTIONS_DRAW_MODE_ONLY_ICON = 2;
+  public static final int REACTIONS_DRAW_MODE_NONE = 3;
 
   private final TranslationsManager mTranslationsManager;
 
@@ -4921,7 +4922,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
   }
 
   public boolean canBeReacted () {
-    return !isSponsoredMessage() && !isEventLog() && !(msg.content instanceof TdApi.MessageCall) && !Td.isEmpty(messageAvailableReactions);
+    return !isSponsoredMessage() && !isEventLog() && !(msg.content instanceof TdApi.MessageCall) && !Td.isEmpty(messageAvailableReactions) && !MoexConfig.disableReactions;
   }
 
   public boolean canBeSaved () {
@@ -4991,7 +4992,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
       }
       result = true;
     }
-    if (containsUnreadReactions() && !BitwiseUtils.hasFlag(flags, FLAG_IGNORE_REACTIONS_VIEW)) {
+    if (containsUnreadReactions() && !BitwiseUtils.hasFlag(flags, FLAG_IGNORE_REACTIONS_VIEW) && !MoexConfig.disableReactions) {
       flags |= FLAG_IGNORE_REACTIONS_VIEW;
 
       highlightUnreadReactions();
@@ -8140,7 +8141,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
   }*/
 
   public final boolean useReactionBubbles () {
-    return manager().useReactionBubbles();
+    return manager().useReactionBubbles() && !MoexConfig.disableReactions;
   }
 
   //
@@ -8470,6 +8471,10 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
   }
 
   private int getReactionsDrawMode () {
+    if (MoexConfig.disableReactions) {
+      return REACTIONS_DRAW_MODE_NONE;
+    }
+  
     if (useReactionBubbles()) {
       return REACTIONS_DRAW_MODE_BUBBLE;
     }

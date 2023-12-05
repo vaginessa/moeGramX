@@ -46,6 +46,8 @@ public class MoexConfig {
   public static final String KEY_BLUR_DRAWER = "blur_drawer";
   public static final String KEY_CHANGE_HEADER_TEXT = "change_header_text";
   public static final String KEY_TYPING_INSTEAD_CHOOSING = "typing_instead_choosing";
+  public static final String KEY_DISABLE_REACTIONS = "disable_reactions";
+
 
   public static final int SIZE_LIMIT_800 = 0;
   public static final int SIZE_LIMIT_1280 = 1;
@@ -74,6 +76,7 @@ public class MoexConfig {
   public static boolean squareAvatar = instance().getBoolean(KEY_SQUARE_AVATAR, false);
   public static boolean blurDrawer = instance().getBoolean(KEY_BLUR_DRAWER, false);
   public static boolean typingInsteadChoosing = instance().getBoolean(KEY_TYPING_INSTEAD_CHOOSING, true);
+  public static boolean disableReactions = instance().getBoolean(KEY_DISABLE_REACTIONS, false);
 
   private MoexConfig () {
     File configDir = new File(UI.getAppContext().getFilesDir(), "moexconf");
@@ -302,5 +305,10 @@ public class MoexConfig {
 
   public void toggleTypingInsteadChoosing () {
     putBoolean(KEY_TYPING_INSTEAD_CHOOSING, typingInsteadChoosing ^= true);
+  }
+
+  public void toggleDisableReactions () {
+    notifyNewSettingsListeners(KEY_DISABLE_REACTIONS, !disableReactions, disableReactions);
+    putBoolean(KEY_DISABLE_REACTIONS, disableReactions ^= true);
   }
 }

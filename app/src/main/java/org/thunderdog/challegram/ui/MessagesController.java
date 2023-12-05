@@ -6063,7 +6063,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
   }
 
   private void setReactionCountBadge (int reactionCount) {
-    if (reactionCount > 0 && (inPreviewMode || isInForceTouchMode() || areScheduledOnly())) {
+    if (reactionCount > 0 && (inPreviewMode || isInForceTouchMode() || areScheduledOnly() || MoexConfig.disableReactions)) {
       return;
     }
     if (reactionCountBadge != reactionCount) {

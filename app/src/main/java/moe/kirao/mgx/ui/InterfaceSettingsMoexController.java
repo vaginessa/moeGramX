@@ -50,6 +50,9 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
       adapter.updateValuedSettingById(R.id.btn_blurDrawer);
     } else if (viewId == R.id.btn_headerText) {
       showChangeHeader();
+    } else if (viewId == R.id.btn_disableReactions) {
+      MoexConfig.instance().toggleDisableReactions();
+      adapter.updateValuedSettingById(R.id.btn_disableReactions);
     }
   }
 
@@ -114,6 +117,8 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
               view.setData(R.string.login_FirstName);
               break;
           }
+        } else if (itemId == R.id.btn_disableReactions) {
+          view.getToggler().setRadioEnabled(MoexConfig.disableReactions, isUpdate);
         }
       }
     };
@@ -130,6 +135,8 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
     items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_headerText, 0, R.string.changeHeaderText));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
     items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_squareAvatar, 0, R.string.SquareAvatar));
+    items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
+    items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_disableReactions, 0, R.string.DisableReactions));
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
 
     items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.MoexHideButtons));

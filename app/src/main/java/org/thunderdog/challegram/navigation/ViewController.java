@@ -68,6 +68,10 @@ import org.thunderdog.challegram.config.Config;
 import org.thunderdog.challegram.core.Background;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.TD;
+import org.thunderdog.challegram.mediaview.AvatarPickerMode;
+import org.thunderdog.challegram.mediaview.MediaSelectDelegate;
+import org.thunderdog.challegram.mediaview.MediaSendDelegate;
+import org.thunderdog.challegram.mediaview.MediaViewDelegate;
 import org.thunderdog.challegram.support.RippleSupport;
 import org.thunderdog.challegram.support.ViewSupport;
 import org.thunderdog.challegram.telegram.Tdlib;
@@ -444,6 +448,17 @@ public abstract class ViewController<T> implements Future<View>, ThemeChangeList
 
   public final ViewController<?> destroyStackItemAt (int index) {
     return navigationController != null ? navigationController.getStack().destroy(index) : null;
+  }
+
+  public final ViewController<?> destroyPreviousStackItem () {
+    if (navigationController != null) {
+      NavigationStack stack = navigationController.getStack();
+      int currentIndex = stack.size() - 1;
+      if (currentIndex > 0) {
+        return stack.destroy(currentIndex - 1);
+      }
+    }
+    return null;
   }
 
   public final ViewController<?> removeStackItemById (int id) {
@@ -3332,6 +3347,11 @@ public abstract class ViewController<T> implements Future<View>, ThemeChangeList
     public CameraController.QrCodeListener qrCodeListener;
     public @StringRes int qrModeSubtitle;
     public boolean qrModeDebug;
+    public @AvatarPickerMode int avatarPickerMode;
+
+    public MediaViewDelegate delegate;
+    public MediaSelectDelegate selectDelegate;
+    public MediaSendDelegate sendDelegate;
 
     public CameraOpenOptions anchor (View anchorView) {
       this.anchorView = anchorView;
@@ -3370,6 +3390,18 @@ public abstract class ViewController<T> implements Future<View>, ThemeChangeList
 
     public CameraOpenOptions allowSystem (boolean allowSystem) {
       this.allowSystem = allowSystem;
+      return this;
+    }
+
+    public CameraOpenOptions setAvatarPickerMode (@AvatarPickerMode int avatarPickerMode) {
+      this.avatarPickerMode = avatarPickerMode;
+      return this;
+    }
+
+    public CameraOpenOptions setMediaEditorDelegates (MediaViewDelegate delegate, MediaSelectDelegate selectDelegate, MediaSendDelegate sendDelegate) {
+      this.delegate = delegate;
+      this.selectDelegate = selectDelegate;
+      this.sendDelegate = sendDelegate;
       return this;
     }
 

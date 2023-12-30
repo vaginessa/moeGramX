@@ -98,7 +98,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -109,6 +108,7 @@ import me.vkryl.android.text.AcceptFilter;
 import me.vkryl.core.ArrayUtils;
 import me.vkryl.core.DateUtils;
 import me.vkryl.core.FileUtils;
+import me.vkryl.core.ObjectUtils;
 import me.vkryl.core.StringUtils;
 import me.vkryl.core.collection.IntList;
 import me.vkryl.core.collection.LongList;
@@ -2800,48 +2800,6 @@ public class TD {
     return type != Character.SPACE_SEPARATOR && c != '#';
   }
 
-  /*public static boolean hasWritePermission (TdApi.Chat chat) {
-    if (chat == null) {
-      return false;
-    }
-    switch (chat.type.getConstructor()) {
-      case TdApi.ChatTypeSupergroup.CONSTRUCTOR: {
-        TdApi.Supergroup channel = TdlibCache.instance().getSupergroup(TD.getChatSupergroupId(chat));
-        return hasWritePermission(channel);
-      }
-      case TdApi.ChatTypeBasicGroup.CONSTRUCTOR: {
-        TdApi.BasicGroup group = TdlibCache.instance().getGroup(TD.getChatBasicGroupId(chat));
-        return hasWritePermission(group);
-      }
-      case TdApi.ChatTypePrivate.CONSTRUCTOR: {
-        TdApi.User user = TD.getUser(chat);
-        return user != null && user.type.getConstructor() != TdApi.UserTypeDeleted.CONSTRUCTOR && user.type.getConstructor() != TdApi.UserTypeUnknown.CONSTRUCTOR;
-      }
-      case TdApi.ChatTypeSecret.CONSTRUCTOR: {
-        TdApi.SecretChat secretChat = TD.getSecretChat(chat);
-        return secretChat != null && secretChat.state.getConstructor() == TdApi.SecretChatStateReady.CONSTRUCTOR;
-      }
-    }
-    return false;
-  }*/
-
-  public static boolean hasWritePermission (TdApi.Supergroup supergroup) {
-    if (supergroup != null) {
-      if (supergroup.isChannel) {
-        switch (supergroup.status.getConstructor()) {
-          case TdApi.ChatMemberStatusCreator.CONSTRUCTOR:
-            return true;
-          case TdApi.ChatMemberStatusAdministrator.CONSTRUCTOR:
-            return ((TdApi.ChatMemberStatusAdministrator) supergroup.status).rights.canPostMessages;
-        }
-        return false;
-      } else {
-        return !isNotInChat(supergroup.status);
-      }
-    }
-    return false;
-  }
-
   public static boolean isLocalLanguagePackId (String languagePackId) {
     return languagePackId.startsWith("X");
   }
@@ -5168,8 +5126,10 @@ public class TD {
     if (lhs == rhs) {
       return true;
     }
-    return Objects.equals(lhs.title, rhs.title) &&
-      Objects.equals(lhs.icon != null ? lhs.icon.name : null, rhs.icon != null ? rhs.icon.name : null) &&
+    if (!ObjectUtils.equals(lhs.title, rhs.title)) return false;
+    String a = lhs.icon != null ? lhs.icon.name : null;
+    String b = rhs.icon != null ? rhs.icon.name : null;
+    return ObjectUtils.equals(a, b) &&
       lhs.includeContacts == rhs.includeContacts &&
       lhs.includeNonContacts == rhs.includeNonContacts &&
       lhs.includeGroups == rhs.includeGroups &&

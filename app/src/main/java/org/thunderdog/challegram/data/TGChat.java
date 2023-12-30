@@ -971,7 +971,7 @@ public class TGChat implements TdlibStatusManager.HelperTarget, ContentPreview.R
   }
 
   public boolean needDrawReactionsPreview () {
-    return isPrivate() && !isSelfChat() && !MoexConfig.disableReactions;
+    return isPrivate() && !isSelfChat() && !showDraft() && !MoexConfig.disableReactions;
   }
 
   public @Nullable EmojiStatusHelper.EmojiStatusDrawable getEmojiStatus () {

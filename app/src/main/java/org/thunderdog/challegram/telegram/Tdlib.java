@@ -63,6 +63,7 @@ import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.Strings;
 import org.thunderdog.challegram.tool.UI;
+import org.thunderdog.challegram.ui.EditRightsController;
 import org.thunderdog.challegram.unsorted.Passcode;
 import org.thunderdog.challegram.unsorted.Settings;
 import org.thunderdog.challegram.util.AppInstallationUtil;
@@ -103,6 +104,7 @@ import me.vkryl.core.ArrayUtils;
 import me.vkryl.core.BitwiseUtils;
 import me.vkryl.core.FileUtils;
 import me.vkryl.core.MathUtils;
+import me.vkryl.core.ObjectUtils;
 import me.vkryl.core.StringUtils;
 import me.vkryl.core.collection.LongList;
 import me.vkryl.core.collection.LongSet;
@@ -1156,13 +1158,19 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     return authorizationState;
   }
 
-  public void signOut () {
+  public boolean switchToNextAuthorizedAccount () {
     if (context().preferredAccountId() == accountId) {
       int nextAccountId = context().findNextAccountId(accountId);
       if (nextAccountId != TdlibAccount.NO_ID) {
         context().changePreferredAccountId(nextAccountId, TdlibManager.SWITCH_REASON_UNAUTHORIZED);
+        return true;
       }
     }
+    return false;
+  }
+
+  public void signOut () {
+    switchToNextAuthorizedAccount();
     boolean isMulti = context().isMultiUser();
     String name = isMulti ? TD.getUserName(account().getFirstName(), account().getLastName()) : null;
     incrementReferenceCount(REFERENCE_TYPE_JOB);
@@ -2896,14 +2904,6 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     }
     return false;
   }
-
-  /*public boolean hasWritePermission (long chatId) {
-    return chatId != 0 && hasWritePermission(chat(chatId));
-  }
-
-  public boolean hasWritePermission (TdApi.Chat chat) {
-    return getRestrictionStatus(chat, R.id.right_sendMessages) == null;
-  }*/
 
   public @Nullable TdApi.SecretChat chatToSecretChat (long chatId) {
     int secretChatId = ChatId.toSecretChatId(chatId);
@@ -5758,31 +5758,43 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       if (deviceToken != null && (state == TdlibManager.TokenState.NONE || state == TdlibManager.TokenState.INITIALIZING)) {
         state = TdlibManager.TokenState.OK;
       }
+      String tokenProvider = TdlibNotificationUtils.getTokenRetriever().getName();
       String error = context().getTokenError();
       switch (state) {
         case TdlibManager.TokenState.ERROR: {
-          params.put("device_token", "FIREBASE_ERROR");
+          params.put("device_token", tokenProvider.toUpperCase() + "_ERROR");
           if (!StringUtils.isEmpty(error)) {
-            params.put("firebase_error", error);
+            params.put(tokenProvider + "_error", error);
           }
           break;
         }
         case TdlibManager.TokenState.INITIALIZING: {
-          params.put("device_token", "FIREBASE_INITIALIZING");
+          params.put("device_token", tokenProvider.toUpperCase() + "_INITIALIZING");
           break;
         }
         case TdlibManager.TokenState.OK: {
-          switch (deviceToken.getConstructor()) {
-            // TODO more push services
-            case TdApi.DeviceTokenFirebaseCloudMessaging.CONSTRUCTOR: {
-              String token = ((TdApi.DeviceTokenFirebaseCloudMessaging) deviceToken).token;
-              params.put("device_token", token);
+          String tokenOrEndpoint;
+          switch (ObjectUtils.requireNonNull(deviceToken).getConstructor()) {
+            case TdApi.DeviceTokenFirebaseCloudMessaging.CONSTRUCTOR:
+              tokenOrEndpoint = ((TdApi.DeviceTokenFirebaseCloudMessaging) deviceToken).token;
+              break;
+            case TdApi.DeviceTokenHuaweiPush.CONSTRUCTOR: {
+              tokenOrEndpoint = ((TdApi.DeviceTokenHuaweiPush) deviceToken).token;
+              final String huaweiTokenPrefix = "huawei://";
+              if (tokenOrEndpoint.startsWith(huaweiTokenPrefix)) {
+                tokenOrEndpoint = huaweiTokenPrefix + tokenOrEndpoint;
+              }
               break;
             }
+            case TdApi.DeviceTokenSimplePush.CONSTRUCTOR:
+              tokenOrEndpoint = ((TdApi.DeviceTokenSimplePush) deviceToken).endpoint;
+              break;
             default: {
-              throw new UnsupportedOperationException(deviceToken.toString());
+              Td.assertDeviceToken_de4a4f61();
+              throw Td.unsupported(deviceToken);
             }
           }
+          params.put("device_token", tokenOrEndpoint);
           break;
         }
         case TdlibManager.TokenState.NONE:
@@ -10637,6 +10649,10 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     return false;
   }
 
+  public boolean inSlowMode (long chatId) {
+    return cache.getSlowModeDelayExpiresIn(ChatId.toSupergroupId(chatId), TimeUnit.SECONDS) > 0;
+  }
+
   public boolean canEditSlowMode (long chatId) {
     if (canRestrictMembers(chatId)) {
       TdApi.Supergroup supergroup = chatToSupergroup(chatId);
@@ -10914,6 +10930,28 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     return null;
   }
 
+  public CharSequence getSlowModeRestrictionText (long chatId) {
+    return getSlowModeRestrictionText(chatId, null);
+  }
+
+  public CharSequence getSlowModeRestrictionText (long chatId, @Nullable TdApi.MessageSchedulingState schedulingState) {
+    if (schedulingState != null) {
+      return null;
+    }
+
+    final int timeToSend = (int) cache().getSlowModeDelayExpiresIn(ChatId.toSupergroupId(chatId), TimeUnit.SECONDS);
+    if (timeToSend == 0) {
+      return null;
+    }
+
+    final int minutes = timeToSend / 60;
+    final int seconds = timeToSend % 60;
+
+    return (minutes > 0) ?
+      Lang.pluralBold(R.string.xSlowModeRestrictionMinutes, minutes):
+      Lang.pluralBold(R.string.xSlowModeRestrictionSeconds, seconds);
+  }
+
   public CharSequence getRestrictionText (TdApi.Chat chat, TdApi.Message message) {
     if (message != null) {
       switch (message.content.getConstructor()) {
@@ -11044,9 +11082,12 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         case TdApi.InputMessageText.CONSTRUCTOR:
         case TdApi.InputMessageVenue.CONSTRUCTOR:
         case TdApi.InputMessageContact.CONSTRUCTOR:
+        case TdApi.InputMessageStory.CONSTRUCTOR:
           return getBasicMessageRestrictionText(chat);
+        default:
+          Td.assertInputMessageContent_4e99a3f();
+          throw Td.unsupported(content);
       }
-      throw new UnsupportedOperationException(content.toString());
     }
     // Assuming if null is passed, we want to check if we can write text messages
     return getBasicMessageRestrictionText(chat);
@@ -11296,6 +11337,22 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
   public boolean canSendBasicMessage (TdApi.Chat chat) {
     return canSendMessage(chat, RightId.SEND_BASIC_MESSAGES);
   }
+
+  public boolean canSendSendSomeMedia (TdApi.Chat chat) {
+    return canSendSendSomeMedia(chat, false);
+  }
+
+  public boolean canSendSendSomeMedia (TdApi.Chat chat, boolean checkGlobal) {
+    for (int rightId : EditRightsController.SEND_MEDIA_RIGHT_IDS) {
+      Tdlib.RestrictionStatus restrictionStatus = getRestrictionStatus(chat, rightId);
+      if (restrictionStatus == null || checkGlobal && !restrictionStatus.isGlobal()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public boolean canSendMessage (TdApi.Chat chat, @RightId int kindResId) {
     switch (kindResId) {
       case RightId.SEND_BASIC_MESSAGES:

@@ -30,54 +30,61 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
 
   @Override public void onClick (View v) {
     int viewId = v.getId();
-    if (viewId == R.id.btn_disableCameraButton) {
-      MoexConfig.instance().toggleDisableCameraButton();
-      adapter.updateValuedSettingById(R.id.btn_disableCameraButton);
-    } else if (viewId == R.id.btn_disableRecordButton) {
-      MoexConfig.instance().toggleDisableRecordButton();
-      adapter.updateValuedSettingById(R.id.btn_disableRecordButton);
-    } else if (viewId == R.id.btn_disableCommandsButton) {
-      MoexConfig.instance().toggleDisableCommandsButton();
-      adapter.updateValuedSettingById(R.id.btn_disableCommandsButton);
-    } else if (viewId == R.id.btn_disableSendAsButton) {
-      MoexConfig.instance().toggleDisableSendAsButton();
-      adapter.updateValuedSettingById(R.id.btn_disableSendAsButton);
-    } else if (viewId == R.id.btn_squareAvatar) {
+    if (viewId == R.id.btn_squareAvatar) {
       MoexConfig.instance().toggleSquareAvatar();
       adapter.updateValuedSettingById(R.id.btn_squareAvatar);
     } else if (viewId == R.id.btn_blurDrawer) {
       MoexConfig.instance().toggleBlurDrawer();
       adapter.updateValuedSettingById(R.id.btn_blurDrawer);
     } else if (viewId == R.id.btn_headerText) {
-      showChangeHeader();
+      int headerTextOption = MoexConfig.instance().getHeaderText();
+      showSettings(new SettingsWrapBuilder(R.id.btn_headerText).setRawItems(new ListItem[] {
+        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextChats, 0, R.string.Chats, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_CHATS),
+        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextMoex, 0, R.string.moexHeaderClient, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_MOEX),
+        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextUsername, 0, R.string.Username, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_USERNAME),
+        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextName, 0, R.string.login_FirstName, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_NAME),
+      }).setIntDelegate((id, result) -> {
+        int defaultOption;
+        int headerText = result.get(R.id.btn_headerText);
+        if (headerText == R.id.btn_headerTextChats) {
+          defaultOption = MoexConfig.HEADER_TEXT_CHATS;
+        } else if (headerText == R.id.btn_headerTextName) {
+          defaultOption = MoexConfig.HEADER_TEXT_NAME;
+        } else if (headerText == R.id.btn_headerTextUsername) {
+          defaultOption = MoexConfig.HEADER_TEXT_USERNAME;
+        } else {
+          defaultOption = MoexConfig.HEADER_TEXT_MOEX;
+        }
+        MoexConfig.instance().setHeaderText(defaultOption);
+        adapter.updateValuedSettingById(R.id.btn_headerText);
+      }));
     } else if (viewId == R.id.btn_disableReactions) {
       MoexConfig.instance().toggleDisableReactions();
       adapter.updateValuedSettingById(R.id.btn_disableReactions);
+    } else if (viewId == R.id.btn_hideMessagePanelButtons) {
+      showSettings(new SettingsWrapBuilder(viewId).addHeaderItem(
+        new ListItem(ListItem.TYPE_INFO, R.id.text_title, 0, R.string.HideCameraButtonInfo, false)).setRawItems(
+        new ListItem[] {
+          new ListItem(ListItem.TYPE_CHECKBOX_OPTION, R.id.btn_disableCameraButton, 0, R.string.DisableCameraButton, MoexConfig.disableCameraButton),
+          new ListItem(ListItem.TYPE_CHECKBOX_OPTION, R.id.btn_disableCommandsButton, 0, R.string.DisableCommandsButton, MoexConfig.disableCommandsButton),
+          new ListItem(ListItem.TYPE_CHECKBOX_OPTION, R.id.btn_disableRecordButton, 0, R.string.DisableRecordButton, MoexConfig.disableRecordButton),
+          new ListItem(ListItem.TYPE_CHECKBOX_OPTION, R.id.btn_disableSendAsButton, 0, R.string.DisableSendAsButton, MoexConfig.disableSendAsButton)
+        }).setIntDelegate((id, result) -> {
+        if (MoexConfig.disableCameraButton == (result.get(R.id.btn_disableCameraButton) == 0)) {
+          MoexConfig.instance().toggleDisableCameraButton();
+        }
+        if (MoexConfig.disableCommandsButton == (result.get(R.id.btn_disableCommandsButton) == 0)) {
+          MoexConfig.instance().toggleDisableCommandsButton();
+        }
+        if (MoexConfig.disableRecordButton == (result.get(R.id.btn_disableRecordButton) == 0)) {
+          MoexConfig.instance().toggleDisableRecordButton();
+        }
+        if (MoexConfig.disableSendAsButton == (result.get(R.id.btn_disableSendAsButton) == 0)) {
+          MoexConfig.instance().toggleDisableSendAsButton();
+        }
+        adapter.updateValuedSettingById(R.id.btn_hideMessagePanelButtons);
+      }));
     }
-  }
-
-  private void showChangeHeader () {
-    int headerTextOption = MoexConfig.instance().getHeaderText();
-    showSettings(new SettingsWrapBuilder(R.id.btn_headerText).setRawItems(new ListItem[] {
-      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextChats, 0, R.string.Chats, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_CHATS),
-      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextMoex, 0, R.string.moexHeaderClient, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_MOEX),
-      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextUsername, 0, R.string.Username, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_USERNAME),
-      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_headerTextName, 0, R.string.login_FirstName, R.id.btn_headerText, headerTextOption == MoexConfig.HEADER_TEXT_NAME),
-    }).setIntDelegate((id, result) -> {
-      int defaultOption;
-      int headerText = result.get(R.id.btn_headerText);
-      if (headerText == R.id.btn_headerTextChats) {
-        defaultOption = MoexConfig.HEADER_TEXT_CHATS;
-      } else if (headerText == R.id.btn_headerTextName) {
-        defaultOption = MoexConfig.HEADER_TEXT_NAME;
-      } else if (headerText == R.id.btn_headerTextUsername) {
-        defaultOption = MoexConfig.HEADER_TEXT_USERNAME;
-      } else {
-        defaultOption = MoexConfig.HEADER_TEXT_MOEX;
-      }
-      MoexConfig.instance().setHeaderText(defaultOption);
-      adapter.updateValuedSettingById(R.id.btn_headerText);
-    }));
   }
 
   @Override public int getId () {
@@ -119,6 +126,33 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
           }
         } else if (itemId == R.id.btn_disableReactions) {
           view.getToggler().setRadioEnabled(MoexConfig.disableReactions, isUpdate);
+        } else if (itemId == R.id.btn_hideMessagePanelButtons) {
+          StringBuilder b = new StringBuilder();
+          if (MoexConfig.disableCameraButton) {
+            b.append(Lang.getString(R.string.DisableCameraButton));
+          }
+          if (MoexConfig.disableRecordButton) {
+            if (b.length() > 0) {
+              b.append(Lang.getConcatSeparator());
+            }
+            b.append(Lang.getString(R.string.DisableRecordButton));
+          }
+          if (MoexConfig.disableCommandsButton) {
+            if (b.length() > 0) {
+              b.append(Lang.getConcatSeparator());
+            }
+            b.append(Lang.getString(R.string.DisableCommandsButton));
+          }
+          if (MoexConfig.disableSendAsButton) {
+            if (b.length() > 0) {
+              b.append(Lang.getConcatSeparator());
+            }
+            b.append(Lang.getString(R.string.DisableSendAsButton));
+          }
+          if (b.length() == 0) {
+            b.append(Lang.getString(R.string.BlockedNone));
+          }
+          view.setData(b.toString());
         }
       }
     };
@@ -141,15 +175,7 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
 
     items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.MoexHideButtons));
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
-    items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_disableCommandsButton, 0, R.string.DisableCommandsButton));
-    items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-    items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_disableRecordButton, 0, R.string.DisableRecordButton));
-    items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-    items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_disableSendAsButton, 0, R.string.DisableSendAsButton));
-    items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-    items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_disableCameraButton, 0, R.string.DisableCameraButton));
-    items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
-    items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getMarkdownString(this, R.string.HideCameraButtonInfo), false));
+    items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_hideMessagePanelButtons, 0, R.string.HideMessagePanelButtons));
 
     adapter.setItems(items, true);
     recyclerView.setAdapter(adapter);

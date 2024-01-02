@@ -40,4 +40,5 @@
   <item name="btn_headerTextName" type="id" />
   <item name="btn_typingInstead" type="id"/>
   <item name="btn_disableReactions" type="id"/>
+  <item name="btn_hideMessagePanelButtons" type="id" />
 </resources>

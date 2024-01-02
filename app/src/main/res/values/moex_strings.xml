@@ -16,9 +16,9 @@
   <string name="MoexUpdatesLink" translatable="false">https://t.me/moex_log</string>
   <string name="MoexSourceLink" translatable="false">https://kiri.su/moexgit</string>
   <string name="MoexHideButtons">Message panel</string>
-  <string name="DisableCommandsButton">Hide commands button</string>
-  <string name="DisableCameraButton">Hide camera button</string>
-  <string name="DisableRecordButton">Hide record button</string>
+  <string name="DisableCommandsButton">Commands</string>
+  <string name="DisableCameraButton">Camera</string>
+  <string name="DisableRecordButton">Media</string>
   <string name="MoexChatsSettings">Chats options</string>
   <string name="MoexStickersCount">Stickers</string>
   <string name="DisableStickerTimestamp">Hide time on stickers</string>
@@ -30,12 +30,12 @@
   <string name="ExperimentalOptions">Experimental options</string>
   <string name="PhoneHidden">Phone hidden</string>
   <string name="showIdProfile">Show User ID in profiles</string>
-  <string name="DisableSendAsButton">Hide \"Send as Channel\" button</string>
+  <string name="DisableSendAsButton">Channels</string>
   <string name="MobileHidden">Mobile hidden</string>
   <string name="MoexAbout">About</string>
   <string name="MoexAboutText" formatted="true">**moeGramX** — is a cute features rich a bit experimental client based on the official sources and TDlib. Feel free to suggest some features, report problems or just chat in our Discuss group!</string>
   <string name="MoexVer" translatable="false">moeGramX v1.3-release (Dorayaki)</string>
-  <string name="HideCameraButtonInfo">This option move camera button from message panel to the attach menu</string>
+  <string name="HideCameraButtonInfo">Hide camera button option also adds a camera button to the buttom of the attach menu</string>
   <string name="IncreaseRecents">Increase recent stickers</string>
   <string name="hideMessagesBadge">Hide unread messages badge</string>
   <string name="ReorderStickers">Reorder installed stickers</string>
@@ -69,4 +69,5 @@
   <string name="TypingInsteadInfo" formatted="true">This will send **typing** status instead of **choosing** sticker</string>
   <string name="cuteToast" translatable="false">Moe moe, kyun!</string>
   <string name="DisableReactions">Hide reactions</string>
+  <string name="HideMessagePanelButtons">Hide message panel buttons</string>
 </resources>

@@ -135,6 +135,7 @@ public class MoexConfig {
   public void putLong (String key, long value) {
     config.putLong(key, value);
   }
+
   public long getLong (String key, long defValue) {
     return config.getLong(key, defValue);
   }
@@ -142,6 +143,7 @@ public class MoexConfig {
   public void putLongArray (String key, long[] value) {
     config.putLongArray(key, value);
   }
+
   public long[] getLongArray (String key) {
     return config.getLongArray(key);
   }
@@ -149,6 +151,7 @@ public class MoexConfig {
   public void putInt (String key, int value) {
     config.putInt(key, value);
   }
+
   public int getInt (String key, int defValue) {
     return config.getInt(key, defValue);
   }
@@ -156,6 +159,7 @@ public class MoexConfig {
   public void putFloat (String key, float value) {
     config.putFloat(key, value);
   }
+
   public void getFloat (String key, float defValue) {
     config.getFloat(key, defValue);
   }
@@ -163,6 +167,7 @@ public class MoexConfig {
   public void putBoolean (String key, boolean value) {
     config.putBoolean(key, value);
   }
+
   public boolean getBoolean (String key, boolean defValue) {
     return config.getBoolean(key, defValue);
   }
@@ -170,6 +175,7 @@ public class MoexConfig {
   public void putString (String key, @NonNull String value) {
     config.putString(key, value);
   }
+
   public String getString (String key, String defValue) {
     return config.getString(key, defValue);
   }
@@ -308,7 +314,6 @@ public class MoexConfig {
   }
 
   public void toggleDisableReactions () {
-    notifyNewSettingsListeners(KEY_DISABLE_REACTIONS, !disableReactions, disableReactions);
     putBoolean(KEY_DISABLE_REACTIONS, disableReactions ^= true);
   }
 }

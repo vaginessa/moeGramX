@@ -70,4 +70,7 @@
   <string name="cuteToast" translatable="false">Moe moe, kyun!</string>
   <string name="DisableReactions">Hide reactions</string>
   <string name="HideMessagePanelButtons">Hide message panel buttons</string>
+  <string name="ProfileOptions">Profile</string>
+  <string name="ActivityOptions">Activity</string>
+  <string name="HideBottomBar">Hide bottom bar</string>
 </resources>

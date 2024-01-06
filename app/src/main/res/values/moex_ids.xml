@@ -41,4 +41,5 @@
   <item name="btn_typingInstead" type="id"/>
   <item name="btn_disableReactions" type="id"/>
   <item name="btn_hideMessagePanelButtons" type="id" />
+  <item name="btn_hideBottomBar" type="id" />
 </resources>

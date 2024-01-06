@@ -5704,9 +5704,10 @@ public class MessagesController extends ViewController<MessagesController.Argume
 
   private int bottomButtonAction;
   private boolean needBigPadding;
+  private int CURRENT_BOTTOM_ACTION;
 
   private void checkExtraPadding () {
-    boolean needBigPadding = bottomBarVisible.getValue(); //  && !scrollToBottomVisible;
+    boolean needBigPadding = MoexConfig.hideBottomBar ? CURRENT_BOTTOM_ACTION == BOTTOM_ACTION_APPLY_WALLPAPER : bottomBarVisible.getValue(); //  && !scrollToBottomVisible;
     if (this.needBigPadding != needBigPadding) {
       this.needBigPadding = needBigPadding;
       manager.rebuildLastItem();
@@ -5718,7 +5719,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
   }
 
   private void showBottomButton (int bottomButtonAction, long bottomButtonData, boolean animated) {
-    this.bottomButtonAction = bottomButtonAction;
+    CURRENT_BOTTOM_ACTION = this.bottomButtonAction = bottomButtonAction;
     boolean animateButtonContent = animated && bottomBarVisible.getFloatValue() > 0f;
     switch (bottomButtonAction) {
       case BOTTOM_ACTION_FOLLOW:
@@ -5765,6 +5766,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
       return;
     float bottomButtonFactor = bottomBarVisible.getFloatValue();
     float detachFactor = scrollToBottomVisible.getFloatValue();
+    boolean needBottomBar = CURRENT_BOTTOM_ACTION == BOTTOM_ACTION_APPLY_WALLPAPER;
+    boolean needHideBottomBar = MoexConfig.hideBottomBar && !needBottomBar && !scrollToBottomVisible.getValue();
     int barHeight = Screen.dp(48f);
     int baseY = needSearchControlsTranslate() ? (int) ((float) barHeight * MathUtils.clamp(searchControlsFactor)) : 0;
     float fromY = bottomButtonFactor == 1f ? baseY : baseY + (int) ((float) barHeight * (1f - bottomButtonFactor));
@@ -5776,7 +5779,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
     int dx = (int) ((bottomBar.getMeasuredWidth() / 2f - Screen.dp(16f) - barHeight / 2) * detachFactor);
     bottomBar.setTranslationY(bottomButtonFactor == 1f && detachFactor == 0f ? fromY : fromY + (toY - fromY) * detachFactor);
     bottomBar.setTranslationX(dx);
-    int desiredVisibility = (bottomButtonFactor > 0f && searchControlsFactor != 1f) ? View.VISIBLE : View.GONE;
+    int desiredVisibility = (bottomButtonFactor > 0f && searchControlsFactor != 1f) && !needHideBottomBar ? View.VISIBLE : View.GONE;
     if (bottomBar.getVisibility() != desiredVisibility) {
       bottomBar.setVisibility(desiredVisibility);
     }

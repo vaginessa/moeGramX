@@ -84,6 +84,9 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
         }
         adapter.updateValuedSettingById(R.id.btn_hideMessagePanelButtons);
       }));
+    } else if (viewId == R.id.btn_hideBottomBar) {
+      MoexConfig.instance().toggleHideBottomBar();
+      adapter.updateValuedSettingById(R.id.btn_hideBottomBar);
     }
   }
 
@@ -153,6 +156,8 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
             b.append(Lang.getString(R.string.BlockedNone));
           }
           view.setData(b.toString());
+        } else if (itemId == R.id.btn_hideBottomBar) {
+          view.getToggler().setRadioEnabled(MoexConfig.hideBottomBar, isUpdate);
         }
       }
     };
@@ -176,6 +181,8 @@ public class InterfaceSettingsMoexController extends RecyclerViewController<Void
     items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.MoexHideButtons));
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
     items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_hideMessagePanelButtons, 0, R.string.HideMessagePanelButtons));
+    items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
+    items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_hideBottomBar, 0, R.string.HideBottomBar));
 
     adapter.setItems(items, true);
     recyclerView.setAdapter(adapter);

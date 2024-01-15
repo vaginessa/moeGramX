@@ -460,7 +460,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
   private final LongSparseLongArray accessibleChatTimers = new LongSparseLongArray();
 
   private long authorizationDate = 0;
-  private int supergroupMaxSize = 100000;
+  private int supergroupMaxSize = 200000;
   private int maxBioLength = 70;
   private int chatFolderMaxCount = 10, folderChosenChatMaxCount = 100;
   private int addedShareableChatFolderMaxCount = 2, chatFolderInviteLinkMaxCount = 3;
@@ -1534,7 +1534,10 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         makeUpdateText(0, 25, 6, APP_RELEASE_VERSION_2023_APRIL, "https://telegra.ph/Telegram-X-04-02", functions, updates, false);
       }
       if (checkVersion(prevVersion, APP_RELEASE_VERSION_2023_AUGUST, test)) {
-        makeUpdateText(0, 25, 10, APP_RELEASE_VERSION_2023_AUGUST, "https://telegra.ph/Telegram-X-08-02", functions, updates, true);
+        makeUpdateText(0, 25, 10, APP_RELEASE_VERSION_2023_AUGUST, "https://telegra.ph/Telegram-X-08-02", functions, updates, false);
+      }
+      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2023_DECEMBER, test)) {
+        makeUpdateText(0, 26, 3, APP_RELEASE_VERSION_2023_DECEMBER, "https://telegra.ph/Telegram-X-2023-12-31", functions, updates, true);
       }
       if (!updates.isEmpty()) {
         incrementReferenceCount(REFERENCE_TYPE_JOB); // starting task
@@ -1594,6 +1597,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
   private static final int APP_RELEASE_VERSION_2023_MARCH_2 = 1615; // Bugfixes to the previous release. 15 March, 2023: https://t.me/tgx_android/305
   private static final int APP_RELEASE_VERSION_2023_APRIL = 1624; // Emoji 15.0, more recent stickers & more + critical TDLIb upgrade. 2 April, 2023: https://telegra.ph/Telegram-X-04-02
   private static final int APP_RELEASE_VERSION_2023_AUGUST = 1646; // Translation, Advanced Text Formatting, Emoji Status, tgcalls, reproducible TDLib & more. 3 August, 2023: https://telegra.ph/Telegram-X-08-02
+  private static final int APP_RELEASE_VERSION_2023_DECEMBER = 1674; // Custom emoji, select link preview, archive settings, in-app avatar picker, group chat tools, & more. 31st December, 2023 (full roll-out in January 2024): https://telegra.ph/Telegram-X-2023-12-31
 
   // Startup
 
@@ -4729,7 +4733,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         case TdApi.MessageAnimatedEmoji.CONSTRUCTOR:
           return Td.textOrCaption(messageText);
       }
-      Td.assertMessageContent_afad899a();
+      Td.assertMessageContent_d40af239();
       throw Td.unsupported(messageText);
     }
     return getPendingMessageCaption(chatId, messageId);
@@ -6824,6 +6828,10 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     }
   }
 
+  public String tMeGiftCodeUrl (@NonNull String giftCode) {
+    return tMeUrl("giftcode/" + giftCode);
+  }
+
   public String tMeHost () {
     return StringUtils.urlWithoutProtocol(tMeUrl());
   }
@@ -8832,7 +8840,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     synchronized (dataLock) {
       for (TdApi.SuggestedAction removedAction : update.removedActions) {
         for (int i = suggestedActions.size() - 1; i >= 0; i--) {
-          if (suggestedActions.get(i).getConstructor() == removedAction.getConstructor()) {
+          if (Td.equalsTo(suggestedActions.get(i), removedAction)) {
             suggestedActions.remove(i);
           }
         }
@@ -8893,18 +8901,22 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
   }
 
   @TdlibThread
-  private void updateChatAccentColor (TdApi.UpdateChatAccentColor update) {
-    updateChat(update, update.chatId, chat ->
-      chat.accentColorId = update.accentColorId,
-      listeners::updateChatAccentColor
+  private void updateChatAccentColors (TdApi.UpdateChatAccentColors update) {
+    updateChat(update, update.chatId, chat -> {
+        chat.accentColorId = update.accentColorId;
+        chat.backgroundCustomEmojiId = update.backgroundCustomEmojiId;
+        chat.profileAccentColorId = update.profileAccentColorId;
+        chat.profileBackgroundCustomEmojiId = update.profileBackgroundCustomEmojiId;
+      },
+      listeners::updateChatAccentColors
     );
   }
 
   @TdlibThread
-  private void updateChatBackgroundCustomEmoji (TdApi.UpdateChatBackgroundCustomEmoji update) {
+  private void updateChatEmojiStatus (TdApi.UpdateChatEmojiStatus update) {
     updateChat(update, update.chatId, chat ->
-      chat.backgroundCustomEmojiId = update.backgroundCustomEmojiId,
-      listeners::updateChatBackgroundCustomEmoji
+      chat.emojiStatus = update.emojiStatus,
+      listeners::updateChatEmojiStatus
     );
   }
 
@@ -8995,6 +9007,11 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
   @TdlibThread
   private void updateSpeechRecognitionTrial (TdApi.UpdateSpeechRecognitionTrial update) {
     // TODO
+  }
+
+  @TdlibThread
+  private void updateDefaultBackground (TdApi.UpdateDefaultBackground update) {
+    // TODO ?
   }
 
   @TdlibThread
@@ -9963,8 +9980,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         updateSpeechRecognitionTrial((TdApi.UpdateSpeechRecognitionTrial) update);
         break;
       }
-      case TdApi.UpdateSelectedBackground.CONSTRUCTOR: {
-        // TODO?
+      case TdApi.UpdateDefaultBackground.CONSTRUCTOR: {
+        updateDefaultBackground((TdApi.UpdateDefaultBackground) update);
         break;
       }
 
@@ -10040,12 +10057,12 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         updateChatBackground((TdApi.UpdateChatBackground) update);
         break;
       }
-      case TdApi.UpdateChatAccentColor.CONSTRUCTOR: {
-        updateChatAccentColor((TdApi.UpdateChatAccentColor) update);
+      case TdApi.UpdateChatAccentColors.CONSTRUCTOR: {
+        updateChatAccentColors((TdApi.UpdateChatAccentColors) update);
         break;
       }
-      case TdApi.UpdateChatBackgroundCustomEmoji.CONSTRUCTOR: {
-        updateChatBackgroundCustomEmoji((TdApi.UpdateChatBackgroundCustomEmoji) update);
+      case TdApi.UpdateChatEmojiStatus.CONSTRUCTOR: {
+        updateChatEmojiStatus((TdApi.UpdateChatEmojiStatus) update);
         break;
       }
 
@@ -10072,12 +10089,14 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       case TdApi.UpdatePoll.CONSTRUCTOR:
       case TdApi.UpdatePollAnswer.CONSTRUCTOR:
       case TdApi.UpdateChatMember.CONSTRUCTOR:
-      case TdApi.UpdateChatBoost.CONSTRUCTOR: {
+      case TdApi.UpdateChatBoost.CONSTRUCTOR:
+      case TdApi.UpdateMessageReaction.CONSTRUCTOR:
+      case TdApi.UpdateMessageReactions.CONSTRUCTOR: {
         // Must never come from TDLib. If it does, there's a bug on TDLib side.
         throw Td.unsupported(update);
       }
       default: {
-        Td.assertUpdate_3098a407();
+        Td.assertUpdate_618db8c7();
         throw Td.unsupported(update);
       }
     }
@@ -10669,6 +10688,26 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     return supergroup != null && supergroup.isBroadcastGroup;
   }
 
+  public boolean suggestConvertToBroadcastGroup (long chatId) {
+    TdApi.Supergroup supergroup = chatToSupergroup(chatId);
+    if (supergroup == null || supergroup.isChannel || supergroup.isBroadcastGroup || !TD.isCreator(supergroup.status)) {
+      return false;
+    }
+    synchronized (dataLock) {
+      for (TdApi.SuggestedAction action : suggestedActions) {
+        if (action.getConstructor() == TdApi.SuggestedActionConvertToBroadcastGroup.CONSTRUCTOR) {
+          TdApi.SuggestedActionConvertToBroadcastGroup convertToBroadcastGroup = (TdApi.SuggestedActionConvertToBroadcastGroup) action;
+          if (convertToBroadcastGroup.supergroupId == supergroup.id) {
+            return true;
+          }
+        }
+      }
+    }
+    TdApi.SupergroupFullInfo fullInfo = cache().supergroupFull(supergroup.id, false);
+    int memberCount = fullInfo != null ? fullInfo.memberCount : supergroup.memberCount;
+    return memberCount + (supergroupMaxSize * 0.0005f) /* +50 per 100000*/ >= supergroupMaxSize;
+  }
+
   public boolean canDeleteMessages (long chatId) {
     TdApi.ChatMemberStatus status = chatStatus(chatId);
     if (status != null) {
@@ -11021,6 +11060,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         case TdApi.MessagePremiumGiftCode.CONSTRUCTOR:
         case TdApi.MessagePremiumGiveawayCreated.CONSTRUCTOR:
         case TdApi.MessagePremiumGiveawayCompleted.CONSTRUCTOR:
+        case TdApi.MessagePremiumGiveawayWinners.CONSTRUCTOR:
         case TdApi.MessagePremiumGiveaway.CONSTRUCTOR:
         case TdApi.MessageInviteVideoChatParticipants.CONSTRUCTOR:
         case TdApi.MessagePassportDataReceived.CONSTRUCTOR:
@@ -11030,7 +11070,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         case TdApi.MessageSuggestProfilePhoto.CONSTRUCTOR:
         case TdApi.MessageSupergroupChatCreate.CONSTRUCTOR:
         case TdApi.MessageUnsupported.CONSTRUCTOR:
-        case TdApi.MessageUserShared.CONSTRUCTOR:
+        case TdApi.MessageUsersShared.CONSTRUCTOR:
         case TdApi.MessageVideoChatEnded.CONSTRUCTOR:
         case TdApi.MessageVideoChatScheduled.CONSTRUCTOR:
         case TdApi.MessageVideoChatStarted.CONSTRUCTOR:
@@ -11040,7 +11080,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
           // assuming we want to check RightId.SEND_BASIC_MESSAGES
           return getBasicMessageRestrictionText(chat);
         default:
-          Td.assertMessageContent_afad899a();
+          Td.assertMessageContent_d40af239();
           throw Td.unsupported(message.content);
       }
     }

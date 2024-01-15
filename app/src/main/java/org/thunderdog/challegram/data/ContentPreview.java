@@ -554,6 +554,19 @@ public class ContentPreview {
         }
         return new ContentPreview(EMOJI_GIFT, 0, text, true);
       }
+      case TdApi.MessagePremiumGiveawayWinners.CONSTRUCTOR: {
+        TdApi.MessagePremiumGiveawayWinners premiumGiveaway = (TdApi.MessagePremiumGiveawayWinners) message.content;
+        String text;
+        if (premiumGiveaway.winnerCount > 0) {
+          text = Lang.getString(R.string.format_giveawayInfo,
+            Lang.getString(R.string.Giveaway),
+            Lang.plural(R.string.xPastWinnersOn, premiumGiveaway.winnerCount, Lang.getDate(premiumGiveaway.actualWinnersSelectionDate, TimeUnit.SECONDS))
+          );
+        } else {
+          text = Lang.getString(R.string.Giveaway);
+        }
+        return new ContentPreview(EMOJI_GIFT, 0, text, true);
+      }
       case TdApi.MessagePremiumGiveawayCompleted.CONSTRUCTOR: {
         TdApi.MessagePremiumGiveawayCompleted giveawayCompleted = (TdApi.MessagePremiumGiveawayCompleted) message.content;
         arg1 = giveawayCompleted.winnerCount;
@@ -624,7 +637,7 @@ public class ContentPreview {
 
       // Handled by getSimpleContentPreview, but unsupported
       case TdApi.MessageUnsupported.CONSTRUCTOR:
-      case TdApi.MessageUserShared.CONSTRUCTOR:
+      case TdApi.MessageUsersShared.CONSTRUCTOR:
       case TdApi.MessageChatShared.CONSTRUCTOR:
       case TdApi.MessageSuggestProfilePhoto.CONSTRUCTOR:
       case TdApi.MessageForumTopicCreated.CONSTRUCTOR:
@@ -640,7 +653,7 @@ public class ContentPreview {
       case TdApi.MessagePaymentSuccessfulBot.CONSTRUCTOR:
       case TdApi.MessageWebAppDataReceived.CONSTRUCTOR:
       default:
-        Td.assertMessageContent_afad899a();
+        Td.assertMessageContent_d40af239();
         throw Td.unsupported(message.content);
     }
     Refresher refresher = null;
@@ -1256,6 +1269,21 @@ public class ContentPreview {
         }
         return new ContentPreview(EMOJI_GIFT, 0, text, true);
       }
+      case TdApi.MessagePremiumGiveawayWinners.CONSTRUCTOR: {
+        int winnerCount = arg1;
+        int monthCount = arg2;
+        String text;
+        if (winnerCount > 0) {
+          text = Lang.getString(R.string.format_giveawayInfo,
+            Lang.getString(R.string.Giveaway),
+            Lang.plural(R.string.xPastWinners, winnerCount)
+          );
+        } else {
+          text = Lang.getString(R.string.Giveaway);
+        }
+        return new ContentPreview(EMOJI_GIFT, 0, text, true);
+      }
+
 
       // Must be supported by the caller and never passed to this method.
       case TdApi.MessageGiftedPremium.CONSTRUCTOR:
@@ -1275,7 +1303,7 @@ public class ContentPreview {
         throw new IllegalArgumentException(Integer.toString(type));
         
       case TdApi.MessageStory.CONSTRUCTOR:
-      case TdApi.MessageUserShared.CONSTRUCTOR:
+      case TdApi.MessageUsersShared.CONSTRUCTOR:
       case TdApi.MessageChatShared.CONSTRUCTOR:
       case TdApi.MessageSuggestProfilePhoto.CONSTRUCTOR:
       case TdApi.MessageForumTopicCreated.CONSTRUCTOR:
@@ -1296,7 +1324,7 @@ public class ContentPreview {
       case TdApi.MessagePaymentSuccessfulBot.CONSTRUCTOR:
       case TdApi.MessageWebAppDataReceived.CONSTRUCTOR:
       default:
-        Td.assertMessageContent_afad899a();
+        Td.assertMessageContent_d40af239();
         throw new UnsupportedOperationException(Integer.toString(type));
     }
   }

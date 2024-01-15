@@ -30,6 +30,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.SystemClock;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
@@ -548,7 +549,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
     }
 
     ThreadInfo messageThread = messagesController().getMessageThread();
-    if (msg.replyTo != null && (messageThread == null || !messageThread.isRootMessage(msg.replyTo))) {
+    if (msg.replyTo != null && (messageThread == null || !messageThread.isRootMessage(msg.replyTo)) && !(msg.content != null && msg.content.getConstructor() == TdApi.MessagePremiumGiveawayWinners.CONSTRUCTOR)) {
       if (msg.replyTo.getConstructor() == TdApi.MessageReplyToMessage.CONSTRUCTOR) { // TODO: support replies to stories
         loadReply();
       }
@@ -2788,6 +2789,10 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
     performWithViews(view -> requestCommentsResources(view.getAvatarsReceiver(), true));
   }
 
+  public final void invalidateGiveawayReceiver () {
+    performWithViews(view -> requestGiveawayAvatars(view.getGiveawayAvatarsReceiver(), true));
+  }
+
   public final void invalidateReactionFilesReceiver () {
     performWithViews(view -> requestReactions(view.getReactionsComplexReceiver()));
   }
@@ -4243,6 +4248,10 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
     }
   }
 
+  public void requestGiveawayAvatars (ComplexReceiver complexReceiver, boolean isUpdate) {
+
+  }
+
   public final void requestReactionsResources (ComplexReceiver complexReceiver, boolean isUpdate) {
     if (messageReactions != null) {
       messageReactions.requestAvatarFiles(complexReceiver, isUpdate);
@@ -5475,6 +5484,10 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
     // return msg.ttl > 0 && ((chat != null && chat.type.getConstructor() == TdApi.ChatTypePrivate.CONSTRUCTOR) || msg.ttl <= 60) && (flags & FLAG_EVENT_LOG) == 0 && !isEventLog();
   }
 
+  public boolean isViewOnce () {
+    return msg.selfDestructType != null && msg.selfDestructType.getConstructor() == TdApi.MessageSelfDestructTypeImmediately.CONSTRUCTOR;
+  }
+
   public boolean isHotDone () {
     return isOutgoing() && isHotOpened();
   }
@@ -5482,7 +5495,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
   public boolean isHotOpened () {
     if (msg.selfDestructType != null && msg.selfDestructType.getConstructor() == TdApi.MessageSelfDestructTypeTimer.CONSTRUCTOR) {
       TdApi.MessageSelfDestructTypeTimer timer = (TdApi.MessageSelfDestructTypeTimer) msg.selfDestructType;
-      return msg.selfDestructIn < timer.selfDestructTime;
+      return msg.selfDestructIn != 0 && msg.selfDestructIn < timer.selfDestructTime;
     }
     return false;
   }
@@ -5527,7 +5540,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
   private void startHotTimer (boolean byEvent) {
     if (isHot() && needHotTimer() && hotTimerStart == 0) {
       HotHandler hotHandler = getHotHandler();
-      hotTimerStart = System.currentTimeMillis();
+      hotTimerStart = SystemClock.uptimeMillis();
       hotHandler.sendMessageDelayed(Message.obtain(hotHandler, HotHandler.MSG_HOT_CHECK, this), HOT_CHECK_DELAY);
       onHotTimerStarted(byEvent);
     }
@@ -5549,12 +5562,16 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
   }
 
   private void checkHotTimer () {
-    long now = System.currentTimeMillis();
-    long elapsed = now - hotTimerStart;
-    double prevTtl = msg.selfDestructIn;
+    if (msg.selfDestructType == null || msg.selfDestructType.getConstructor() != TdApi.MessageSelfDestructTypeTimer.CONSTRUCTOR) {
+      return;
+    }
+    TdApi.MessageSelfDestructTypeTimer timer = (TdApi.MessageSelfDestructTypeTimer) msg.selfDestructType;
+    double preSelfDestructIn = msg.selfDestructIn != 0 ? msg.selfDestructIn : timer.selfDestructTime;
+    long now = SystemClock.uptimeMillis();
+    long elapsedMs = now - hotTimerStart;
     hotTimerStart = now;
-    msg.selfDestructIn = Math.max(0, prevTtl - (double) elapsed / 1000.0d);
-    boolean secondsChanged = Math.round(prevTtl) != Math.round(msg.selfDestructIn);
+    msg.selfDestructIn = Math.max(0, preSelfDestructIn - (double) elapsedMs / 1000.0d);
+    boolean secondsChanged = Math.round(preSelfDestructIn) != Math.round(msg.selfDestructIn);
     onHotInvalidate(secondsChanged);
     if (hotListener != null) {
       hotListener.onHotInvalidate(secondsChanged);
@@ -5568,13 +5585,31 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
   public float getHotExpiresFactor () {
     if (msg.selfDestructType != null && msg.selfDestructType.getConstructor() == TdApi.MessageSelfDestructTypeTimer.CONSTRUCTOR) {
       TdApi.MessageSelfDestructTypeTimer timer = (TdApi.MessageSelfDestructTypeTimer) msg.selfDestructType;
-      return (float) (msg.selfDestructIn / timer.selfDestructTime);
+      return msg.selfDestructIn == 0 ? 1f : (float) (msg.selfDestructIn / timer.selfDestructTime);
     }
     return 0f;
   }
 
   public String getHotTimerText () {
-    return TdlibUi.getDuration((int) Math.round(msg.selfDestructIn), TimeUnit.SECONDS, false);
+    double selfDestructIn = msg.selfDestructIn;
+    if (msg.selfDestructType != null) {
+      switch (msg.selfDestructType.getConstructor()) {
+        case TdApi.MessageSelfDestructTypeImmediately.CONSTRUCTOR:
+          return Lang.getString(R.string.ViewOnce);
+        case TdApi.MessageSelfDestructTypeTimer.CONSTRUCTOR: {
+          TdApi.MessageSelfDestructTypeTimer timer = (TdApi.MessageSelfDestructTypeTimer) msg.selfDestructType;
+          if (selfDestructIn == 0) {
+            selfDestructIn = timer.selfDestructTime;
+          }
+          break;
+        }
+        default: {
+          Td.assertMessageSelfDestructType_58882d8c();
+          throw Td.unsupported(msg.selfDestructType);
+        }
+      }
+    }
+    return TdlibUi.getDuration(Math.round(selfDestructIn), TimeUnit.SECONDS, false);
   }
 
   public interface HotListener {
@@ -8128,9 +8163,6 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         case TdApi.MessageGiftedPremium.CONSTRUCTOR: {
           return new TGMessageService(context, msg, (TdApi.MessageGiftedPremium) content);
         }
-        case TdApi.MessagePremiumGiftCode.CONSTRUCTOR: {
-          return new TGMessageService(context, msg, (TdApi.MessagePremiumGiftCode) content);
-        }
         case TdApi.MessageChatSetTheme.CONSTRUCTOR: {
           return new TGMessageService(context, msg, (TdApi.MessageChatSetTheme) content);
         }
@@ -8221,12 +8253,14 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         case TdApi.MessagePremiumGiveawayCompleted.CONSTRUCTOR: {
           return new TGMessageService(context, msg, (TdApi.MessagePremiumGiveawayCompleted) content);
         }
+        case TdApi.MessagePremiumGiftCode.CONSTRUCTOR: {
+          return new TGMessageGift(context, msg, (TdApi.MessagePremiumGiftCode) content);
+        }
+        case TdApi.MessagePremiumGiveawayWinners.CONSTRUCTOR: {
+          return new TGMessageGiveawayWinners(context, msg, (TdApi.MessagePremiumGiveawayWinners) content);
+        }
         case TdApi.MessagePremiumGiveaway.CONSTRUCTOR: {
-          if (BuildConfig.DEBUG) {
-            // uncomment once finished
-            return new TGMessageGiveaway(context, msg, (TdApi.MessagePremiumGiveaway) content);
-          }
-          break;
+          return new TGMessageGiveaway(context, msg, (TdApi.MessagePremiumGiveaway) content);
         }
         // unsupported
         case TdApi.MessageInvoice.CONSTRUCTOR:
@@ -8234,7 +8268,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         case TdApi.MessageStory.CONSTRUCTOR:
         case TdApi.MessageChatSetBackground.CONSTRUCTOR:
         case TdApi.MessageSuggestProfilePhoto.CONSTRUCTOR:
-        case TdApi.MessageUserShared.CONSTRUCTOR:
+        case TdApi.MessageUsersShared.CONSTRUCTOR:
         case TdApi.MessageChatShared.CONSTRUCTOR:
           break;
         case TdApi.MessageUnsupported.CONSTRUCTOR:
@@ -8248,7 +8282,7 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
           break;
         }
         default: {
-          Td.assertMessageContent_afad899a();
+          Td.assertMessageContent_d40af239();
           throw Td.unsupported(msg.content);
         }
       }

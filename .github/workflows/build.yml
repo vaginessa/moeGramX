@@ -1,7 +1,7 @@
 name: compile and publish client
 
 on:
-  push:
+  workflow_dispatch:
     branches:
       - '*'
     paths-ignore:
@@ -19,15 +19,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
           cache: 'gradle'
       - name: Setup Android SDK Tools
-        uses: android-actions/setup-android@v2
+        uses: android-actions/setup-android@v3
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Chmod Gradle
@@ -36,10 +36,6 @@ jobs:
         run: |
           echo "${{ secrets.prop }}" | base64 -d > local.properties
           echo "${{ secrets.keystore }}" | base64 -d > keystore.properties
-      - name: Fix SDK 31.0.0
-        run: |
-          [ ! -f $ANDROID_HOME/build-tools/31.0.0/dx ] && cp $ANDROID_HOME/build-tools/30.0.3/dx $ANDROID_HOME/build-tools/31.0.0/dx
-          [ ! -f $ANDROID_HOME/build-tools/31.0.0/lib/dx.jar ] && cp $ANDROID_HOME/build-tools/30.0.3/lib/dx.jar $ANDROID_HOME/build-tools/31.0.0/lib/dx.jar
       - name: Setup
         run: |
           export TERM=linux

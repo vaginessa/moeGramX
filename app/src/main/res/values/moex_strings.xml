@@ -25,8 +25,8 @@
   <string name="RoundedStickers">Rounded stickers</string>
   <string name="DrawerOptions">Drawer appearance</string>
   <string name="hidePhoneNumber">Hide phone number</string>
-  <string name="EnableFeatures">Enable feature toggles</string>
-  <string name="FeaturesButtonInfo">Show experimental settings button in drawer</string>
+  <string name="EnableFeatures">Allow debug options</string>
+  <string name="FeaturesButtonInfo">Show experimental features such as testing DC switch or a feature toggles button in various scenarios</string>
   <string name="ExperimentalOptions">Experimental options</string>
   <string name="PhoneHidden">Phone hidden</string>
   <string name="showIdProfile">Show User ID in profiles</string>

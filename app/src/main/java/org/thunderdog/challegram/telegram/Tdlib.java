@@ -124,6 +124,8 @@ import me.vkryl.td.MessageId;
 import me.vkryl.td.Td;
 import me.vkryl.td.TdConstants;
 
+import moe.kirao.mgx.MoexConfig;
+
 public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, DateChangeListener {
   @Override
   public final int accountId () {
@@ -4855,7 +4857,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         return;
       }
       TdApi.Chat tgxTestersChat = chat(TESTER_CHAT_ID);
-      if (tgxTestersChat != null && TD.isMember(chatStatus(TESTER_CHAT_ID))) {
+      if (tgxTestersChat != null && TD.isMember(chatStatus(TESTER_CHAT_ID)) || MoexConfig.enableTestFeatures) {
         callback.runWithInt(TESTER_LEVEL_TESTER);
         return;
       }

@@ -3999,12 +3999,14 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         startX += shareCounter.getScaledWidth(Screen.dp(COUNTER_ICON_MARGIN + COUNTER_ADD_MARGIN));
       }
     }
-    if (replyCounter.getVisibility() > 0f) {
+    if (replyCounter.getVisibility() > 0f && !(isMsgSticker && hideStickerTimestamp)) {
       replyCounter.draw(c, startX, counterY, Gravity.LEFT, 1f, view, iconColorId);
       startX += replyCounter.getScaledWidth(Screen.dp(COUNTER_ICON_MARGIN + COUNTER_ADD_MARGIN));
     }
-    isPinned.draw(c, startX, counterY, Gravity.LEFT, 1f, view, iconColorId);
-    startX += isPinned.getScaledWidth(Screen.dp(COUNTER_ICON_MARGIN));
+    if (!(isMsgSticker && hideStickerTimestamp)) {
+      isPinned.draw(c, startX, counterY, Gravity.LEFT, 1f, view, iconColorId);
+      startX += isPinned.getScaledWidth(Screen.dp(COUNTER_ICON_MARGIN));
+    }
 
     if (shouldShowMessageRestrictedWarning()) {
       if (isRestrictedByTelegram()) {

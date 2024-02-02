@@ -71,9 +71,6 @@ public class MoexConfig {
   public static boolean hideMessagesBadge = instance().getBoolean(KEY_HIDE_MESSAGES_BADGE, false);
   public static boolean reorderStickers = instance().getBoolean(KEY_ENABLE_REORDER_STICKERS, false);
   public static boolean rememberOptions = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS, false);
-  public static boolean rememberOptions_author = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, false);
-  public static boolean rememberOptions_captions = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS_CAPTIONS, false);
-  public static boolean rememberOptions_silent = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS_SOUND, false);
   public static boolean squareAvatar = instance().getBoolean(KEY_SQUARE_AVATAR, false);
   public static boolean blurDrawer = instance().getBoolean(KEY_BLUR_DRAWER, false);
   public static boolean typingInsteadChoosing = instance().getBoolean(KEY_TYPING_INSTEAD_CHOOSING, true);
@@ -283,12 +280,24 @@ public class MoexConfig {
     putBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, state);
   }
 
+  public Boolean getAuthorState () {
+    return getBoolean(KEY_REMEMBER_SEND_OPTIONS_AUTHOR, false);
+  }
+
   public void SendWithoutCaption (boolean state) {
     putBoolean(KEY_REMEMBER_SEND_OPTIONS_CAPTIONS, state);
   }
 
+  public Boolean getCaptionState () {
+    return getBoolean(KEY_REMEMBER_SEND_OPTIONS_CAPTIONS, false);
+  }
+
   public void SendSilent (boolean state) {
     putBoolean(KEY_REMEMBER_SEND_OPTIONS_SOUND, state);
+  }
+
+  public Boolean getSilentState () {
+    return getBoolean(KEY_REMEMBER_SEND_OPTIONS_SOUND, false);
   }
 
   public void toggleSquareAvatar () {

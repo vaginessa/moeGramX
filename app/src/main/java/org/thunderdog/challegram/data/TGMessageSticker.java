@@ -61,6 +61,7 @@ import me.vkryl.core.collection.IntSet;
 import me.vkryl.core.collection.LongSet;
 import me.vkryl.td.Td;
 import me.vkryl.td.TdConstants;
+
 import moe.kirao.mgx.MoexConfig;
 
 public class TGMessageSticker extends TGMessage implements AnimatedEmojiListener, TdlibEmojiManager.Watcher {
@@ -175,6 +176,7 @@ public class TGMessageSticker extends TGMessage implements AnimatedEmojiListener
         receiver.getPreviewReceiver(key).clear();
         return;
       }
+      float corners = MoexConfig.roundedStickers ? Screen.dp(Theme.getBubbleMergeRadius()) : 0;
       //if (!invalidate) {
         DoubleImageReceiver previewReceiver = receiver.getPreviewReceiver(key);
         if (preview == null || hasAnimationEnded()) {
@@ -183,14 +185,11 @@ public class TGMessageSticker extends TGMessage implements AnimatedEmojiListener
           previewReceiver.clear();
           preview = null;
         } else {
+          previewReceiver.setRadius(corners);
           previewReceiver.requestFile(null, preview);
         }
       //}
       GifFile file = receiver.getGifReceiver(key).getCurrentFile();
-      float corners = 0;
-      if (MoexConfig.roundedStickers) {
-        corners = Screen.dp(Theme.getBubbleMergeRadius());
-      }
       if (file != animatedFile) {
         receiver.getGifReceiver(key).setRadius(corners);
         receiver.getGifReceiver(key).requestFile(null);         // The new file may have the same id as

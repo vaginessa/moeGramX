@@ -79,6 +79,8 @@ import me.vkryl.core.MathUtils;
 import me.vkryl.core.lambda.Destroyable;
 import me.vkryl.td.Td;
 
+import moe.kirao.mgx.MoexConfig;
+
 public class StickerPreviewView extends FrameLayoutFix implements FactorAnimator.Target, PopupLayout.AnimatedPopupProvider, BackListener, Destroyable, ThemeChangeListener {
   private static final OvershootInterpolator OVERSHOOT_INTERPOLATOR = new OvershootInterpolator(1f);
 
@@ -325,14 +327,18 @@ public class StickerPreviewView extends FrameLayoutFix implements FactorAnimator
       GifActor.addFreezeReason(currentSticker.getFullAnimation(), false);
     }
     this.currentSticker = sticker;
+    float radius = MoexConfig.roundedStickers ? Screen.dp(Theme.getBubbleMergeRadius()) : 0;
     if (!sticker.isMasks() && !disableEmojis) {
       this.emojiString = new EmojiString(sticker.getAllEmoji(), -1, paint);
     } else {
       this.emojiString = null;
     }
     if (effectSticker == null) layoutReceivers();
+    preview.setRadius(radius);
     preview.requestFile(sticker.getImage());
+    imageReceiver.setRadius(radius);
     imageReceiver.requestFile(sticker.getFullImage());
+    gifReceiver.setRadius(radius);
     gifReceiver.requestFile(sticker.getFullAnimation());
     if (sticker.isDefaultPremiumStar()) {
       defaultPremiumStarDrawable = Drawables.get(R.drawable.baseline_premium_star_28);

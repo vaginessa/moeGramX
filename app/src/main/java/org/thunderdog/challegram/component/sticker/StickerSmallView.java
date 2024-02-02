@@ -52,6 +52,8 @@ import me.vkryl.core.lambda.CancellableRunnable;
 import me.vkryl.core.lambda.Destroyable;
 import me.vkryl.td.Td;
 
+import moe.kirao.mgx.MoexConfig;
+
 public class StickerSmallView extends View implements FactorAnimator.Target, Destroyable {
   public static final float PADDING = 8f;
   private static final Interpolator OVERSHOOT_INTERPOLATOR = new OvershootInterpolator(3.2f);
@@ -96,6 +98,7 @@ public class StickerSmallView extends View implements FactorAnimator.Target, Des
   public void setSticker (@Nullable TGStickerObj sticker) {
     this.sticker = sticker;
     this.isAnimation = sticker != null && sticker.isAnimated();
+    float corners = MoexConfig.roundedStickers ? Screen.dp(Theme.getImageRadius()) : 0;
     resetStickerState();
     ImageFile imageFile = sticker != null && !sticker.isEmpty() ? sticker.getImage() : null;
     GifFile gifFile = sticker != null && !sticker.isEmpty() ? sticker.getPreviewAnimation() : null;
@@ -103,7 +106,9 @@ public class StickerSmallView extends View implements FactorAnimator.Target, Des
       throw new RuntimeException("");
     }
     contour = sticker != null ? sticker.getContour(Math.min(imageReceiver.getWidth(), imageReceiver.getHeight())) : null;
+    imageReceiver.setRadius(corners);
     imageReceiver.requestFile(imageFile);
+    gifReceiver.setRadius(corners);
     gifReceiver.requestFile(gifFile);
   }
 

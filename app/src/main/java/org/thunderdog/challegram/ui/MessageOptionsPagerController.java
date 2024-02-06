@@ -114,7 +114,7 @@ public class MessageOptionsPagerController extends BottomSheetViewController<Opt
         .drawable(R.drawable.baseline_favorite_16, 16f, 6f, Gravity.LEFT)
         .build(), this, Screen.dp(16));
       counters[ALL_REACTED_POSITION].counter.setCount(message.getMessageReactions().getTotalCount(), false);
-      state.headerAlwaysVisibleCountersWidth += counters[ALL_REACTED_POSITION].calculateWidth(null, Screen.dp(ViewPagerTopView.DEFAULT_ITEM_SPACING));
+      state.headerAlwaysVisibleCountersWidth += counters[ALL_REACTED_POSITION].calculateWidth(null, Screen.dp(ViewPagerTopView.DEFAULT_ITEM_SPACING), /* labelFactor */ 1f);
     } else {
       ALL_REACTED_POSITION = -1;
     }
@@ -126,7 +126,7 @@ public class MessageOptionsPagerController extends BottomSheetViewController<Opt
         .drawable(R.drawable.baseline_visibility_16, 16f, 6f, Gravity.LEFT)
         .build(), this, Screen.dp(16));
       counters[SEEN_POSITION].counter.setCount(1, false);
-      int itemWidth = counters[SEEN_POSITION].calculateWidth(null, Screen.dp(ViewPagerTopView.DEFAULT_ITEM_SPACING)); // - Screen.dp(16);
+      int itemWidth = counters[SEEN_POSITION].calculateWidth(null, Screen.dp(ViewPagerTopView.DEFAULT_ITEM_SPACING), /* labelFactor */ 1f); // - Screen.dp(16);
       state.headerAlwaysVisibleCountersWidth += itemWidth;
       counters[SEEN_POSITION].setStaticWidth(itemWidth - Screen.dp(16));
       counters[SEEN_POSITION].counter.setCount(Tdlib.CHAT_LOADING, false);
@@ -137,7 +137,7 @@ public class MessageOptionsPagerController extends BottomSheetViewController<Opt
 
     if (state.needShowMessageReactionSenders) {
       REACTED_START_POSITION = i;
-      for (TdApi.MessageReaction reaction : state.messageReactions) {
+      for (TdApi.MessageReaction reaction : state.messageReactions.reactions) {
         TGReaction tgReaction = tdlib.getReaction(reaction.type);
         counters[i] = new ViewPagerTopView.Item(tgReaction, new Counter.Builder()
           .noBackground().allBold(true).textSize(13f).colorSet(this).callback(this)
@@ -483,7 +483,7 @@ public class MessageOptionsPagerController extends BottomSheetViewController<Opt
     }
 
     if (position >= REACTED_START_POSITION && REACTED_START_POSITION != -1) {
-      MessageOptionsReactedController c = new MessageOptionsReactedController(context, this.tdlib, getPopupLayout(), state.message, state.messageReactions[position - REACTED_START_POSITION].type);
+      MessageOptionsReactedController c = new MessageOptionsReactedController(context, this.tdlib, getPopupLayout(), state.message, state.messageReactions.reactions[position - REACTED_START_POSITION].type);
       c.getValue();
       if (isFirstCreation && !state.needShowMessageOptions) {
         setHeaderPosition(getContentOffset() + HeaderView.getTopOffset());
@@ -999,7 +999,7 @@ public class MessageOptionsPagerController extends BottomSheetViewController<Opt
     public final Tdlib tdlib;
     public final Options options;
     public final TGMessage message;
-    public final TdApi.MessageReaction[] messageReactions;
+    public final TdApi.MessageReactions messageReactions;
     public final TdApi.AvailableReaction[] availableReactions;
     public final Set<String> chosenReactions;
     public final long[] emojiPackIds;
@@ -1036,7 +1036,7 @@ public class MessageOptionsPagerController extends BottomSheetViewController<Opt
       this.needShowMessageOptions = options != null;
 
       this.needShowReactionsPopupPicker = needShowMessageOptions && message.needShowReactionPopupPicker();
-      this.needShowMessageReactionSenders = messageReactions != null && message.canGetAddedReactions() && message.getMessageReactions().getTotalCount() > 0;
+      this.needShowMessageReactionSenders = !Td.isEmpty(messageReactions) && message.canGetAddedReactions() && message.getMessageReactions().getTotalCount() > 0;
 
       this.headerButtonsVisibleWidth = needShowReactionsPopupPicker ? Screen.dp(56): 0;
       this.needShowCustomEmojiInsidePicker = isPremium && message.isCustomEmojiReactionsAvailable();
@@ -1056,7 +1056,7 @@ public class MessageOptionsPagerController extends BottomSheetViewController<Opt
     public int getPagesCount () {
       return (needShowMessageOptions ? 1 : 0)
         + (needShowMessageViews ? 1 : 0)
-        + (needShowMessageReactionSenders ? messageReactions.length + 1 : 0);
+        + (needShowMessageReactionSenders ? Td.reactionTypesCount(messageReactions) + 1 : 0);
     }
 
     public int getRightViewsWidth () {

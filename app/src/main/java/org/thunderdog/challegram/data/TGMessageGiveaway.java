@@ -27,11 +27,13 @@ import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.component.chat.MessageView;
 import org.thunderdog.challegram.component.chat.MessagesManager;
 import org.thunderdog.challegram.core.Lang;
+import org.thunderdog.challegram.emoji.Emoji;
 import org.thunderdog.challegram.telegram.TdlibUi;
 import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.Paints;
 import org.thunderdog.challegram.tool.Screen;
+import org.thunderdog.challegram.tool.Strings;
 import org.thunderdog.challegram.tool.TGCountry;
 import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.tool.Views;
@@ -74,7 +76,16 @@ public class TGMessageGiveaway extends TGMessageGiveawayBase implements TGInline
       content.add(Lang.getString(R.string.GiveawayPrizesWith), () -> Theme.getColor(ColorId.textLight), currentViews);
       content.padding(Screen.dp(6));
     }
-    content.add(Lang.pluralBold(R.string.xGiveawayPrizePremiumInfo, premiumGiveaway.winnerCount, premiumGiveaway.monthCount), getTextColorSet(), currentViews);
+    CharSequence text = Lang.plural(
+      R.string.xGiveawayPrizePremium,
+      premiumGiveaway.winnerCount,
+      (target, argStart, argEnd, argIndex, needFakeBold) -> argIndex == 0 ? Lang.newBoldSpan(needFakeBold) : null,
+      Lang.pluralBold(
+        R.string.xGiveawayPrizePremiumMonths, premiumGiveaway.monthCount
+      )
+    );
+    text = Strings.replaceBoldTokens(text);
+    content.add(text, getTextColorSet(), currentViews);
 
     content.padding(Screen.dp(BLOCK_MARGIN));
     content.add(Lang.boldify(Lang.getString(R.string.GiveawayParticipants)), getTextColorSet(), currentViews);
@@ -90,6 +101,11 @@ public class TGMessageGiveaway extends TGMessageGiveawayBase implements TGInline
           sb.append(Lang.getConcatSeparator());
         }
         String[] info = TGCountry.instance().find(countryCode);
+        String flag = Emoji.getEmojiFlagFromCountry(countryCode);
+        if (!StringUtils.isEmpty(flag)) {
+          sb.append(flag);
+          sb.append(' ');
+        }
         sb.append(info != null ? info[2] : countryCode);
       }
       content.padding(Screen.dp(6));
@@ -114,7 +130,8 @@ public class TGMessageGiveaway extends TGMessageGiveawayBase implements TGInline
     return content.getHeight();
   }
 
-  @Override protected void onBuildButton (int maxWidth) {
+  @Override
+  protected void onBuildButton (int maxWidth) {
     final boolean isParticipating = TD.isParticipating(premiumGiveawayInfo);
     rippleButton.setCustom(isParticipating ? R.drawable.baseline_check_18 : 0, Lang.getString(isParticipating ? R.string.GiveawayParticipating : R.string.GiveawayLearnMore), maxWidth, false, this);
     rippleButton.firstButton().setCustomIconReverse(true);

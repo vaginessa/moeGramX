@@ -20,8 +20,7 @@ import android.os.Message;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import com.google.android.exoplayer2.PlaybackParameters;
+import androidx.media3.common.PlaybackParameters;
 
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
@@ -155,6 +154,7 @@ public class TGPlayerController implements GlobalMessageListener, ProximityManag
 
   private long playlistChatId;
   private long playlistMessageThreadId;
+  private TdApi.SavedMessagesTopic savedMessagesTopic;
   private long playlistMaxMessageId, playlistMinMessageId;
   private String playlistSearchQuery;
   private TdApi.GetInlineQueryResults playlistInlineQuery;
@@ -1522,7 +1522,8 @@ public class TGPlayerController implements GlobalMessageListener, ProximityManag
         chatId, playlistSearchQuery, null,
         playlistSearchNextFromMessageId != 0 ? Math.min(minMessageId, playlistSearchNextFromMessageId) : minMessageId,
         0, 100, filter,
-        playlistMessageThreadId
+        playlistMessageThreadId,
+        null
       ) : null;
       requestNew = allowNewer ? playlistInlineQuery != null ? makeNextInlineQuery() : new TdApi.SearchChatMessages(
         chatId,
@@ -1530,7 +1531,8 @@ public class TGPlayerController implements GlobalMessageListener, ProximityManag
         maxMessageId,
         -99, 100,
         filter,
-        playlistMessageThreadId
+        playlistMessageThreadId,
+        null
       ) : null;
     }
 
@@ -1894,7 +1896,7 @@ public class TGPlayerController implements GlobalMessageListener, ProximityManag
     }
 
     /**
-     * Message thread identifier to be passed in {@link org.drinkless.tdlib.telegram.TdApi.SearchChatMessages} query
+     * Message thread identifier to be passed in {@link org.drinkless.tdlib.TdApi.SearchChatMessages} query
      */
     public PlayList setMessageThreadId (long messageThreadId) {
       this.messageThreadId = messageThreadId;

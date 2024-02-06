@@ -334,7 +334,8 @@ public class Settings {
   private static final String KEY_PUSH_REPORTED_ERROR = "push_reported_error";
   private static final String KEY_PUSH_REPORTED_ERROR_DATE = "push_reported_error_date";
   private static final String KEY_CRASH_DEVICE_ID = "crash_device_id";
-  public static final String KEY_IS_EMULATOR = "is_emulator";
+  private static final String KEY_IS_EMULATOR = "is_emulator";
+  private static final String KEY_EMULATOR_DETECTION_RESULT = "emulator";
 
   private static final @Deprecated String KEY_EMOJI_COUNTERS_OLD = "counters_v2";
   private static final @Deprecated String KEY_EMOJI_RECENTS_OLD = "recents_v2";
@@ -6189,11 +6190,74 @@ public class Settings {
     return pmc.getBoolean(KEY_IS_EMULATOR, false);
   }
 
-  public void markAsEmulator () {
-    if (!isEmulator()) {
-      putBoolean(KEY_IS_EMULATOR, true);
-      TdlibManager.instance().setIsEmulator(true);
+  public static class EmulatorDetectionResult {
+    public final long time, installationId, elapsed, result;
+
+    public EmulatorDetectionResult (long time, long installationId, long elapsed, long result) {
+      this.time = time;
+      this.installationId = installationId;
+      this.elapsed = elapsed;
+      this.result = result;
     }
+
+    public boolean isEmulatorDetected () {
+      return result != 0;
+    }
+
+    public String toHumanReadableFormat () {
+      return "0x" + Long.toString(result, 16);
+    }
+
+    public long[] toLongArray () {
+      return new long[] {
+        time,
+        installationId,
+        elapsed,
+        result
+      };
+    }
+
+    public static EmulatorDetectionResult restore (long[] array) {
+      if (array == null || array.length != 4) {
+        return null;
+      }
+      return new EmulatorDetectionResult(
+        array[0],
+        array[1],
+        array[2],
+        array[3]
+      );
+    }
+  }
+
+  @Nullable
+  public EmulatorDetectionResult getLastEmulatorDetectionResult () {
+    long[] emulatorDetectionResult = pmc.getLongArray(KEY_EMULATOR_DETECTION_RESULT);
+    if (emulatorDetectionResult == null) {
+      return null;
+    }
+    return EmulatorDetectionResult.restore(emulatorDetectionResult);
+  }
+
+  @NonNull
+  public EmulatorDetectionResult trackEmulatorDetectionResult (long installationId, long elapsed, long emulatorCheckResult) {
+    EmulatorDetectionResult result = new EmulatorDetectionResult(
+      System.currentTimeMillis(),
+      installationId,
+      elapsed,
+      emulatorCheckResult
+    );
+    long[] data = result.toLongArray();
+    pmc.putLongArray(KEY_EMULATOR_DETECTION_RESULT, data);
+    boolean wasEmulator = isEmulator();
+    if (wasEmulator != result.isEmulatorDetected()) {
+      if (result.isEmulatorDetected()) {
+        putBoolean(KEY_IS_EMULATOR, true);
+      } else {
+        pmc.remove(KEY_IS_EMULATOR);
+      }
+    }
+    return result;
   }
 
   private List<String> authenticationTokens;

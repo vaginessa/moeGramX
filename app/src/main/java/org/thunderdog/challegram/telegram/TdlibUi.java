@@ -42,6 +42,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.collection.LongSparseArray;
 import androidx.core.os.CancellationSignal;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -100,6 +101,7 @@ import org.thunderdog.challegram.tool.Screen;
 import org.thunderdog.challegram.tool.Strings;
 import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.tool.Views;
+import org.thunderdog.challegram.ui.ChatFolderInviteLinkController;
 import org.thunderdog.challegram.ui.ChatJoinRequestsController;
 import org.thunderdog.challegram.ui.ChatLinkMembersController;
 import org.thunderdog.challegram.ui.ChatLinksController;
@@ -160,6 +162,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -411,7 +414,7 @@ public class TdlibUi extends Handler {
         }
       });
       // TODO TDLib / server: ability to get totalCount with limit=0
-      tdlib.client().send(new TdApi.SearchChatMessages(chatId, null, senderId, 0, 0, 1, null, 0), result -> {
+      tdlib.client().send(new TdApi.SearchChatMessages(chatId, null, senderId, 0, 0, 1, null, 0, null), result -> {
         if (result.getConstructor() == TdApi.FoundChatMessages.CONSTRUCTOR) {
           int moreCount = ((TdApi.FoundChatMessages) result).totalCount - deletingMessages.length;
           if (moreCount > 0) {
@@ -465,7 +468,7 @@ public class TdlibUi extends Handler {
     if (senderId.getConstructor() == TdApi.MessageSenderChat.CONSTRUCTOR)
       return;
     if (ChatId.getType(chatId) == TdApi.ChatTypeBasicGroup.CONSTRUCTOR) {
-      c.showOptions(Lang.getStringBold(R.string.MemberCannotJoinRegularGroup, tdlib.senderName(senderId, true)), new int[] {R.id.btn_blockSender, R.id.btn_cancel}, new String[]{Lang.getString(R.string.RemoveFromGroup), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[]{R.drawable.baseline_remove_circle_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+      c.showOptions(Lang.getStringBold(R.string.MemberCannotJoinRegularGroup, tdlib.senderName(senderId, true)), new int[] {R.id.btn_blockSender, R.id.btn_cancel}, new String[]{Lang.getString(R.string.RemoveFromGroup), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[]{R.drawable.baseline_remove_circle_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
         if (id == R.id.btn_blockSender) {
           tdlib.setChatMemberStatus(chatId, senderId, new TdApi.ChatMemberStatusLeft(), currentStatus, null);
         }
@@ -636,7 +639,7 @@ public class TdlibUi extends Handler {
       context.showOptions(null,
         new int[] {R.id.menu_btn_delete, R.id.btn_cancel},
         new String[] {deleteActionMsg, Lang.getString(R.string.Cancel)},
-        new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL},
+        new int[] {ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL},
         new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24},
         (itemView, id) -> {
           if (id == R.id.menu_btn_delete) {
@@ -744,7 +747,7 @@ public class TdlibUi extends Handler {
         popupFinal[0].hideWindow(true);
       }
       return false;
-    }), new int[] {R.id.btn_openChat, R.id.btn_cancel}, StringList.asArray(R.string.AskButton, R.string.Cancel), new int[] {ViewController.OPTION_COLOR_BLUE, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_help_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+    }), new int[] {R.id.btn_openChat, R.id.btn_cancel}, StringList.asArray(R.string.AskButton, R.string.Cancel), new int[] {ViewController.OptionColor.BLUE, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_help_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
       if (id == R.id.btn_openChat) {
         tdlib.client().send(new TdApi.GetSupportUser(), object -> {
           switch (object.getConstructor()) {
@@ -959,7 +962,7 @@ public class TdlibUi extends Handler {
       icons.append(R.drawable.baseline_notifications_24);
       ids.append(R.id.btn_menu_enable);
       if (colors != null) {
-        colors.append(ViewController.OPTION_COLOR_NORMAL);
+        colors.append(ViewController.OptionColor.NORMAL);
       }
     }
 
@@ -968,7 +971,7 @@ public class TdlibUi extends Handler {
       icons.append(R.drawable.baseline_notifications_off_24);
       ids.append(R.id.btn_menu_resetToDefault);
       if (colors != null) {
-        colors.append(ViewController.OPTION_COLOR_NORMAL);
+        colors.append(ViewController.OptionColor.NORMAL);
       }
     }
 
@@ -977,7 +980,7 @@ public class TdlibUi extends Handler {
       icons.append(R.drawable.baseline_notifications_off_24);
       ids.append(R.id.btn_menu_disable);
       if (colors != null) {
-        colors.append(ViewController.OPTION_COLOR_NORMAL);
+        colors.append(ViewController.OptionColor.NORMAL);
       }
     }
 
@@ -992,9 +995,9 @@ public class TdlibUi extends Handler {
       ids.append(R.id.btn_menu_8hours);
       ids.append(R.id.btn_menu_2days);
       if (colors != null) {
-        colors.append(ViewController.OPTION_COLOR_NORMAL);
-        colors.append(ViewController.OPTION_COLOR_NORMAL);
-        colors.append(ViewController.OPTION_COLOR_NORMAL);
+        colors.append(ViewController.OptionColor.NORMAL);
+        colors.append(ViewController.OptionColor.NORMAL);
+        colors.append(ViewController.OptionColor.NORMAL);
       }
     }
 
@@ -1003,7 +1006,7 @@ public class TdlibUi extends Handler {
       strings.append(R.string.NotificationsCustomize);
       icons.append(R.drawable.baseline_settings_24);
       if (colors != null) {
-        colors.append(prioritizeCustomization ? ViewController.OPTION_COLOR_RED : ViewController.OPTION_COLOR_NORMAL);
+        colors.append(prioritizeCustomization ? ViewController.OptionColor.RED : ViewController.OptionColor.NORMAL);
       }
     }
   }
@@ -1457,6 +1460,10 @@ public class TdlibUi extends Handler {
       c.setArguments(args);
       c.show();
     }
+  }
+
+  public void shareUrl (TdlibDelegate context, String url) {
+    shareUrl(context, url, null, url, null);
   }
 
   public void shareUrl (TdlibDelegate context, String url, String internalShareText, String externalShareText, String externalShareButton) {
@@ -2405,7 +2412,7 @@ public class TdlibUi extends Handler {
             if (Config.SHOW_CHANNEL_POST_REPLY_INFO_IN_COMMENTS) {
               TdApi.Message message = messageThread.getOldestMessage();
               if (message != null && message.replyTo == null && message.forwardInfo != null && tdlib.isChannelAutoForward(message)) {
-                tdlib.send(new TdApi.GetRepliedMessage(message.forwardInfo.fromChatId, message.forwardInfo.fromMessageId), (repliedMessage, repliedMessageError) -> {
+                tdlib.send(new TdApi.GetRepliedMessage(message.forwardInfo.source.chatId, message.forwardInfo.source.messageId), (repliedMessage, repliedMessageError) -> {
                   if (repliedMessage != null) {
                     message.replyTo = new TdApi.MessageReplyToMessage(repliedMessage.chatId, repliedMessage.id, null, null, repliedMessage.date, repliedMessage.content);
                   }
@@ -2532,6 +2539,28 @@ public class TdlibUi extends Handler {
         }
       }
     });
+  }
+
+  private static void checkChatFolderInviteLink(TdlibDelegate context, String inviteLinkUrl, TdApi.InternalLinkTypeChatFolderInvite invite, @Nullable UrlOpenParameters openParameters) {
+    context.tdlib().send(new TdApi.CheckChatFolderInviteLink(invite.inviteLink), (result, error) -> {
+      if (error != null) {
+        showLinkTooltip(context.tdlib(), R.drawable.baseline_error_24, TD.toErrorString(error), openParameters);
+      } else {
+        showChatFolderInviteLinkInfo(context, inviteLinkUrl, result);
+      }
+    });
+  }
+
+  private static void showChatFolderInviteLinkInfo (TdlibDelegate context, String inviteLinkUrl, TdApi.ChatFolderInviteLinkInfo inviteLinkInfo) {
+    if (TdlibManager.inBackgroundThread()) {
+      context.tdlib().ui().post(() -> {
+        showChatFolderInviteLinkInfo(context, inviteLinkUrl, inviteLinkInfo);
+      });
+      return;
+    }
+    ChatFolderInviteLinkController controller = new ChatFolderInviteLinkController(context.context(), context.tdlib());
+    controller.setArguments(new ChatFolderInviteLinkController.Arguments(inviteLinkUrl, inviteLinkInfo));
+    controller.show();
   }
 
   private boolean installLanguage (final TdlibDelegate context, final String languagePackId, @Nullable UrlOpenParameters openParameters) {
@@ -3553,7 +3582,6 @@ public class TdlibUi extends Handler {
       }
 
       case TdApi.InternalLinkTypeStory.CONSTRUCTOR:
-      case TdApi.InternalLinkTypeChatFolderInvite.CONSTRUCTOR:
       case TdApi.InternalLinkTypeDefaultMessageAutoDeleteTimerSettings.CONSTRUCTOR:
 
       case TdApi.InternalLinkTypeAttachmentMenuBot.CONSTRUCTOR:
@@ -3639,6 +3667,15 @@ public class TdlibUi extends Handler {
         }
         break;
       }
+      case TdApi.InternalLinkTypeChatFolderInvite.CONSTRUCTOR: {
+        if (Settings.instance().chatFoldersEnabled()) {
+          TdApi.InternalLinkTypeChatFolderInvite invite = (TdApi.InternalLinkTypeChatFolderInvite) linkType;
+          checkChatFolderInviteLink(context, originalUrl, invite, openParameters);
+        } else {
+          showLinkTooltip(tdlib, R.drawable.baseline_warning_24, Lang.getString(R.string.InternalUrlUnsupported), openParameters);
+        }
+        break;
+      }
       case TdApi.InternalLinkTypeUnknownDeepLink.CONSTRUCTOR: {
         // TODO progress
         TdApi.InternalLinkTypeUnknownDeepLink unknownDeepLink = (TdApi.InternalLinkTypeUnknownDeepLink) linkType;
@@ -3713,7 +3750,7 @@ public class TdlibUi extends Handler {
       } else if (id == R.id.btn_copyLink) {
         UI.copyText(url, R.string.CopiedLink);
       } else if (id == R.id.btn_share) {
-        shareUrl(context, url, null, url, null);
+        shareUrl(context, url);
       }
       return true;
     });
@@ -3743,17 +3780,17 @@ public class TdlibUi extends Handler {
     ids.append(R.id.btn_addProxy);
     strings.append(R.string.ProxyEnable);
     icons.append(R.drawable.baseline_security_24);
-    colors.append(ViewController.OPTION_COLOR_BLUE);
+    colors.append(ViewController.OptionColor.BLUE);
 
     ids.append(R.id.btn_save);
     strings.append(R.string.ProxySaveForLater);
     icons.append(R.drawable.baseline_playlist_add_24);
-    colors.append(ViewController.OPTION_COLOR_NORMAL);
+    colors.append(ViewController.OptionColor.NORMAL);
 
     ids.append(R.id.btn_cancel);
     strings.append(R.string.Cancel);
     icons.append(R.drawable.baseline_cancel_24);
-    colors.append(ViewController.OPTION_COLOR_NORMAL);
+    colors.append(ViewController.OptionColor.NORMAL);
 
     c.showOptions(msg, ids.get(), strings.get(), colors.get(), icons.get(), (itemView, id) -> {
       if (id == R.id.btn_addProxy) {
@@ -3773,7 +3810,7 @@ public class TdlibUi extends Handler {
       Lang.getMarkdownString(context, needShowAlternatives ? R.string.DeleteAccountConfirmFirst : R.string.DeleteAccountConfirm),
       new int[] {R.id.btn_deleteAccount, R.id.btn_cancel},
       new String[] {Lang.getString(needShowAlternatives ? R.string.DeleteAccountConfirmFirstBtn : R.string.DeleteAccountConfirmBtn), Lang.getString(R.string.Cancel)},
-      new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL},
+      new int[] {ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL},
       new int[] {R.drawable.baseline_delete_alert_24, R.drawable.baseline_cancel_24},
       (optionItemView, id) -> {
         if (id == R.id.btn_deleteAccount) {
@@ -4218,7 +4255,7 @@ public class TdlibUi extends Handler {
         });
         context.showSettings(b);
       } else {
-        context.showOptions(informationStr, new int[]{checkId, R.id.btn_cancel}, new String[]{Lang.getString(confirmButtonRes), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[]{R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+        context.showOptions(informationStr, new int[]{checkId, R.id.btn_cancel}, new String[]{Lang.getString(confirmButtonRes), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[]{R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
           if (id == checkId) {
             act.runWithBool(false);
           }
@@ -4328,7 +4365,7 @@ public class TdlibUi extends Handler {
         info,
         new int[]{R.id.btn_clearChatHistory, R.id.btn_cancel},
         new String[]{confirmButton, Lang.getString(R.string.Cancel)},
-        new int[]{ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL},
+        new int[]{ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL},
         new int[]{confirmButtonIcon, R.drawable.baseline_cancel_24}, (itemView, id) -> {
           if (id == R.id.btn_clearChatHistory) {
             if (needSecondaryConfirm && !isSecondaryConfirm) {
@@ -4352,7 +4389,7 @@ public class TdlibUi extends Handler {
       onDelete.run();
       return;
     }
-    context.showOptions(chatName, new int[] {R.id.btn_removeChatFromList, R.id.btn_clearChatHistory}, new String[] {Lang.getString(getDeleteChatStringRes(chatId, allowBlock)), Lang.getString(R.string.ClearHistory)}, new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.templarian_baseline_broom_24}, (itemView, id) -> {
+    context.showOptions(chatName, new int[] {R.id.btn_removeChatFromList, R.id.btn_clearChatHistory}, new String[] {Lang.getString(getDeleteChatStringRes(chatId, allowBlock)), Lang.getString(R.string.ClearHistory)}, new int[] {ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.templarian_baseline_broom_24}, (itemView, id) -> {
       if (id == R.id.btn_removeChatFromList) {
         onDelete.run();
       } else if (id == R.id.btn_clearChatHistory) {
@@ -4374,7 +4411,7 @@ public class TdlibUi extends Handler {
     context.showOptions(Lang.getPsaHideConfirm((TdApi.ChatSourcePublicServiceAnnouncement) source, tdlib.chatTitle(chatId)),
       new int[] {R.id.btn_delete, R.id.btn_cancel},
       new String[] {Lang.getString(R.string.PsaHideDone), Lang.getString(R.string.Cancel)},
-      new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL},
+      new int[] {ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL},
       new int[] {R.drawable.baseline_delete_sweep_24, R.drawable.baseline_cancel_24},
     (optionItemView, id) -> {
       if (id == R.id.btn_delete) {
@@ -4436,7 +4473,7 @@ public class TdlibUi extends Handler {
               })
             );
           } else {
-            context.showOptions(info, new int[] {R.id.btn_removeChatFromList, R.id.btn_cancel}, new String[] {Lang.getString(deleteAndStop ? R.string.DeleteAndStop : R.string.DeleteChat), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, resultId) -> {
+            context.showOptions(info, new int[] {R.id.btn_removeChatFromList, R.id.btn_cancel}, new String[] {Lang.getString(deleteAndStop ? R.string.DeleteAndStop : R.string.DeleteChat), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, resultId) -> {
               if (resultId == R.id.btn_removeChatFromList) {
                 if (blockUser) {
                   tdlib.blockSender(new TdApi.MessageSenderUser(userId), new TdApi.BlockListMain(), blockResult -> deleter.runWithBool(false));
@@ -4483,7 +4520,7 @@ public class TdlibUi extends Handler {
               })
             );
           } else {
-            context.showOptions(Lang.getStringBold(secretChat.state.getConstructor() == TdApi.SecretChatStatePending.CONSTRUCTOR ? R.string.DeleteSecretChatPendingConfirm : R.string.DeleteSecretChatClosedConfirm, userName), new int[] {R.id.btn_removeChatFromList, R.id.btn_cancel}, new String[]{Lang.getString(R.string.DeleteChat), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[]{R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+            context.showOptions(Lang.getStringBold(secretChat.state.getConstructor() == TdApi.SecretChatStatePending.CONSTRUCTOR ? R.string.DeleteSecretChatPendingConfirm : R.string.DeleteSecretChatClosedConfirm, userName), new int[] {R.id.btn_removeChatFromList, R.id.btn_cancel}, new String[]{Lang.getString(R.string.DeleteChat), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[]{R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
               if (id == R.id.btn_removeChatFromList) {
                 if (blockUser) {
                   tdlib.blockSender(new TdApi.MessageSenderUser(secretChat.userId), new TdApi.BlockListMain(), blockResult -> deleter.runWithBool(false));
@@ -4503,7 +4540,7 @@ public class TdlibUi extends Handler {
             if (status != null && TD.isMember(status, false)) {
               leaveJoinChat(context, chatId, false, after);
             } else {
-              context.showOptions(Lang.getString(R.string.AreYouSureDeleteThisChat), new int[] {R.id.btn_removeChatFromList, R.id.btn_cancel}, new String[] {Lang.getString(R.string.DeleteChat), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+              context.showOptions(Lang.getString(R.string.AreYouSureDeleteThisChat), new int[] {R.id.btn_removeChatFromList, R.id.btn_cancel}, new String[] {Lang.getString(R.string.DeleteChat), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
                 if (id == R.id.btn_removeChatFromList) {
                   deleter.runWithBool(false);
                 }
@@ -4581,21 +4618,21 @@ public class TdlibUi extends Handler {
     if (canSelect && onSelect != null) {
       ids.append(R.id.btn_selectChat);
       strings.append(isSelected ? R.string.Unselect : R.string.Select);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
       icons.append(R.drawable.baseline_playlist_add_check_24);
     }
 
     if (!tdlib.isSelfChat(chatId)) {
       ids.append(R.id.btn_notifications);
       strings.append(hasNotifications ? R.string.MuteNotifications : R.string.EnableNotifications);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
       icons.append(hasNotifications ? R.drawable.baseline_notifications_off_24 : R.drawable.baseline_notifications_24);
     }
 
     if (position != null) {
       ids.append(position.isPinned ? R.id.btn_unpinChat : R.id.btn_pinChat);
       strings.append(position.isPinned ? R.string.UnpinFromTop : R.string.PinToTop);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
       icons.append(position.isPinned ? R.drawable.deproko_baseline_pin_undo_24 : R.drawable.deproko_baseline_pin_24);
     }
 
@@ -4603,7 +4640,7 @@ public class TdlibUi extends Handler {
       boolean isArchived = chatList instanceof TdApi.ChatListArchive;
       ids.append(isArchived ? R.id.btn_unarchiveChat : R.id.btn_archiveChat);
       strings.append(isArchived ? R.string.UnarchiveChat : R.string.ArchiveChat);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
       icons.append(isArchived ? R.drawable.baseline_unarchive_24 : R.drawable.baseline_archive_24);
     }
 
@@ -4611,12 +4648,12 @@ public class TdlibUi extends Handler {
       if (TD.isChatListMain(chatList) || TD.isChatListArchive(chatList)) {
         ids.append(R.id.btn_addChatToFolder);
         strings.append(R.string.AddToFolder);
-        colors.append(ViewController.OPTION_COLOR_NORMAL);
+        colors.append(ViewController.OptionColor.NORMAL);
         icons.append(R.drawable.templarian_baseline_folder_plus_24);
       } else if (TD.isChatListFolder(chatList)) {
         ids.append(R.id.btn_removeChatFromFolder);
         strings.append(R.string.RemoveFromFolder);
-        colors.append(ViewController.OPTION_COLOR_NORMAL);
+        colors.append(ViewController.OptionColor.NORMAL);
         icons.append(R.drawable.templarian_baseline_folder_remove_24);
       }
     }
@@ -4627,18 +4664,18 @@ public class TdlibUi extends Handler {
     if (!canRead || chat.unreadCount == 0 || !hasPasscode) { // when passcode is set, "mark as read" is unavailable, when there are some unread messages
       ids.append(canRead ? R.id.btn_markChatAsRead : R.id.btn_markChatAsUnread);
       strings.append(canRead ? R.string.MarkAsRead : R.string.MarkAsUnread);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
       icons.append(canRead ? Config.ICON_MARK_AS_READ : Config.ICON_MARK_AS_UNREAD);
     }
 
     if (!hasPasscode && tdlib.canClearHistory(chat)) {
       ids.append(R.id.btn_clearChatHistory);
       strings.append(R.string.ClearHistory);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
       icons.append(R.drawable.templarian_baseline_broom_24);
     }
 
-    colors.append(ViewController.OPTION_COLOR_RED);
+    colors.append(ViewController.OptionColor.RED);
     icons.append(R.drawable.baseline_delete_24);
     switch (chat.type.getConstructor()) {
       case TdApi.ChatTypePrivate.CONSTRUCTOR: {
@@ -4734,21 +4771,21 @@ public class TdlibUi extends Handler {
       ids.append(R.id.btn_viewInviteLinkMembers);
       strings.append(R.string.InviteLinkViewMembers);
       icons.append(R.drawable.baseline_visibility_24);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
     }
 
     if (!deleted && link.createsJoinRequest && link.pendingJoinRequestCount > 0) {
       ids.append(R.id.btn_manageJoinRequests);
       strings.append(R.string.InviteLinkViewRequests);
       icons.append(R.drawable.baseline_pending_24);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
     }
 
     if (showNavigatingToLinks && tdlib.canManageInviteLinks(chat)) {
       ids.append(R.id.btn_manageInviteLinks);
       strings.append(R.string.InviteLinkManage);
       icons.append(R.drawable.baseline_add_link_24);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
     }
 
     if (!deleted && !link.isRevoked) {
@@ -4756,34 +4793,34 @@ public class TdlibUi extends Handler {
         ids.append(R.id.btn_edit);
         strings.append(R.string.InviteLinkEdit);
         icons.append(R.drawable.baseline_edit_24);
-        colors.append(ViewController.OPTION_COLOR_NORMAL);
+        colors.append(ViewController.OptionColor.NORMAL);
       }
 
       ids.append(R.id.btn_copyLink);
       strings.append(R.string.InviteLinkCopy);
       icons.append(R.drawable.baseline_content_copy_24);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
 
       ids.append(R.id.btn_shareLink);
       strings.append(R.string.ShareLink);
       icons.append(R.drawable.baseline_forward_24);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
 
       icons.append(R.drawable.baseline_link_off_24);
       ids.append(R.id.btn_revokeLink);
       strings.append(R.string.RevokeLink);
-      colors.append(ViewController.OPTION_COLOR_RED);
+      colors.append(ViewController.OptionColor.RED);
     } else {
       ids.append(R.id.btn_copyLink);
       strings.append(R.string.InviteLinkCopy);
       icons.append(R.drawable.baseline_content_copy_24);
-      colors.append(ViewController.OPTION_COLOR_NORMAL);
+      colors.append(ViewController.OptionColor.NORMAL);
 
       if (!deleted) {
         icons.append(R.drawable.baseline_delete_24);
         ids.append(R.id.btn_deleteLink);
         strings.append(R.string.InviteLinkDelete);
-        colors.append(ViewController.OPTION_COLOR_RED);
+        colors.append(ViewController.OptionColor.RED);
       }
     }
 
@@ -4824,7 +4861,7 @@ public class TdlibUi extends Handler {
         sc.setArguments(new ShareController.Args(text).setShare(exportText, null));
         sc.show();
       } else if (id == R.id.btn_deleteLink) {
-        context.showOptions(Lang.getString(R.string.AreYouSureDeleteInviteLink), new int[] {R.id.btn_deleteLink, R.id.btn_cancel}, new String[] {Lang.getString(R.string.InviteLinkDelete), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView2, id2) -> {
+        context.showOptions(Lang.getString(R.string.AreYouSureDeleteInviteLink), new int[] {R.id.btn_deleteLink, R.id.btn_cancel}, new String[] {Lang.getString(R.string.InviteLinkDelete), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView2, id2) -> {
           if (id2 == R.id.btn_deleteLink) {
             if (onLinkDeleted != null) onLinkDeleted.run();
             context.tdlib().client().send(new TdApi.DeleteRevokedChatInviteLink(chatId, link.inviteLink), tdlib.okHandler());
@@ -4833,7 +4870,7 @@ public class TdlibUi extends Handler {
           return true;
         });
       } else if (id == R.id.btn_revokeLink) {
-        context.showOptions(Lang.getString(context.tdlib().isChannel(chatId) ? R.string.AreYouSureRevokeInviteLinkChannel : R.string.AreYouSureRevokeInviteLinkGroup), new int[] {R.id.btn_revokeLink, R.id.btn_cancel}, new String[] {Lang.getString(R.string.RevokeLink), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_link_off_24, R.drawable.baseline_cancel_24}, (itemView2, id2) -> {
+        context.showOptions(Lang.getString(context.tdlib().isChannel(chatId) ? R.string.AreYouSureRevokeInviteLinkChannel : R.string.AreYouSureRevokeInviteLinkGroup), new int[] {R.id.btn_revokeLink, R.id.btn_cancel}, new String[] {Lang.getString(R.string.RevokeLink), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_link_off_24, R.drawable.baseline_cancel_24}, (itemView2, id2) -> {
           if (id2 == R.id.btn_revokeLink) {
             context.tdlib().client().send(new TdApi.RevokeChatInviteLink(chatId, link.inviteLink), result -> {
               if (result.getConstructor() == TdApi.ChatInviteLinks.CONSTRUCTOR && onLinkRevoked != null) {
@@ -4863,7 +4900,7 @@ public class TdlibUi extends Handler {
     for (TdApi.ChatFolderInfo chatFolderInfo : chatFolders) {
       items.add(new ListItem(ListItem.TYPE_SETTING, R.id.chatFolder, TD.findFolderIcon(chatFolderInfo.icon, R.drawable.baseline_folder_24), chatFolderInfo.title).setIntValue(chatFolderInfo.id));
     }
-    if (tdlib.chatFoldersCount() < tdlib.chatFolderCountMax()) {
+    if (tdlib.canCreateChatFolder()) {
       items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_createNewFolder, R.drawable.baseline_create_new_folder_24, R.string.CreateNewFolder).setTextColorId(ColorId.textNeutral));
     }
     SettingsWrap[] settings = new SettingsWrap[1];
@@ -4889,6 +4926,13 @@ public class TdlibUi extends Handler {
           after.run();
         }
       }));
+  }
+
+  public void showDeleteChatFolderConfirm (ViewController<?> context, boolean hasMyInviteLinks, Runnable after) {
+    // TODO(nikita-toropov) wording
+    int infoRes = hasMyInviteLinks ? R.string.DeleteFolderWithInviteLinksConfirm : R.string.RemoveFolderConfirm;
+    int actionRes = hasMyInviteLinks ? R.string.Delete : R.string.Remove;
+    context.showConfirm(Lang.getMarkdownString(context, infoRes), Lang.getString(actionRes), R.drawable.baseline_delete_24, ViewController.OptionColor.RED, after);
   }
 
   public boolean processChatAction (ViewController<?> context, final TdApi.ChatList chatList, final long chatId, final @Nullable ThreadInfo messageThread, final TdApi.MessageSource source, final int actionId, @Nullable Runnable after) {
@@ -5413,7 +5457,7 @@ public class TdlibUi extends Handler {
       return;
     }
     CharSequence text = Strings.buildMarkdown(c, Lang.getString(info.isOfficial ? R.string.LanguageAlert : R.string.LanguageCustomAlert, info.name, (int) Math.floor((float) info.translatedStringCount / (float) info.totalStringCount * 100f), info.translationUrl), null);
-    context.showOptions(text, new int[] {R.id.btn_done, R.id.btn_cancel}, new String[] {Lang.getString(R.string.LanguageChange), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OPTION_COLOR_BLUE, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_language_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+    context.showOptions(text, new int[] {R.id.btn_done, R.id.btn_cancel}, new String[] {Lang.getString(R.string.LanguageChange), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OptionColor.BLUE, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_language_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
       if (id == R.id.btn_done) {
         c.tdlib().client().send(new TdApi.AddCustomServerLanguagePack(info.id), result -> {
           switch (result.getConstructor()) {
@@ -5462,7 +5506,7 @@ public class TdlibUi extends Handler {
       out.getCompletenessPercentage(),
       out.isComplete() ? Lang.plural(R.string.xStrings, out.getStringsCount()) : Lang.plural(R.string.xStrings, out.getStringsCount()) + ", " + Lang.plural(R.string.TranslationsMissing, out.getMissingStringsCount())
       ),
-      new int[] {R.id.btn_messageApplyLocalization, R.id.btn_cancel}, new String[] {Lang.getString(R.string.LanguageInstall), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OPTION_COLOR_BLUE, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_language_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+      new int[] {R.id.btn_messageApplyLocalization, R.id.btn_cancel}, new String[] {Lang.getString(R.string.LanguageInstall), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OptionColor.BLUE, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_language_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
       if (id == R.id.btn_messageApplyLocalization) {
         applyLocalisation(c, out);
       }
@@ -5496,7 +5540,7 @@ public class TdlibUi extends Handler {
   }
 
   private static void removeAccount (ViewController<?> context, final TdlibAccount account, boolean isSignOut) {
-    context.showOptions(Lang.getStringBold(isSignOut ? R.string.SignOutHint2 : R.string.RemoveAccountHint2, account.getName()), new int[]{R.id.btn_removeAccount, R.id.btn_cancel}, new String[]{Lang.getString(R.string.LogOut), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_logout_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+    context.showOptions(Lang.getStringBold(isSignOut ? R.string.SignOutHint2 : R.string.RemoveAccountHint2, account.getName()), new int[]{R.id.btn_removeAccount, R.id.btn_cancel}, new String[]{Lang.getString(R.string.LogOut), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_logout_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
       if (id == R.id.btn_removeAccount) {
         account.tdlib().signOut();
       }
@@ -5537,7 +5581,7 @@ public class TdlibUi extends Handler {
     //noinspection WrongConstant
     if (!ThemeManager.isCustomTheme(theme.getId()))
       return;
-    context.showOptions(Lang.getString(R.string.ThemeRemoveInfo), new int[] {R.id.btn_done, R.id.btn_cancel}, new String[] {Lang.getString(R.string.ThemeRemoveConfirm), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_delete_forever_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+    context.showOptions(Lang.getString(R.string.ThemeRemoveInfo), new int[] {R.id.btn_done, R.id.btn_cancel}, new String[] {Lang.getString(R.string.ThemeRemoveConfirm), Lang.getString(R.string.Cancel)}, new int[] {ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_forever_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
       if (id == R.id.btn_done) {
         ThemeManager.instance().removeCustomTheme(tdlib, theme.getId(), theme.parentThemeId(), onDelete);
       }
@@ -5923,19 +5967,19 @@ public class TdlibUi extends Handler {
 
             ids.append(R.id.btn_done);
             icons.append(R.drawable.baseline_palette_24);
-            colors.append(ViewController.OPTION_COLOR_BLUE);
+            colors.append(ViewController.OptionColor.BLUE);
             strings.append(R.string.ThemeInstallDone);
 
             if (onError != null) {
               ids.append(R.id.btn_open);
               icons.append(R.drawable.baseline_open_in_browser_24);
-              colors.append(ViewController.OPTION_COLOR_NORMAL);
+              colors.append(ViewController.OptionColor.NORMAL);
               strings.append(R.string.Open);
             }
 
             ids.append(R.id.btn_cancel);
             icons.append(R.drawable.baseline_cancel_24);
-            colors.append(ViewController.OPTION_COLOR_NORMAL);
+            colors.append(ViewController.OptionColor.NORMAL);
             strings.append(R.string.Cancel);
 
             if (info != null) {
@@ -6453,7 +6497,7 @@ public class TdlibUi extends Handler {
 
   public void deleteContact (ViewController<?> context, long userId) {
     if (tdlib.cache().userContact(userId)) {
-      context.showOptions(Lang.getStringBold(R.string.DeleteContactConfirm, tdlib.cache().userName(userId)), new int[]{R.id.btn_delete, R.id.btn_cancel}, new String[]{Lang.getString(R.string.Delete), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[]{R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id1) -> {
+      context.showOptions(Lang.getStringBold(R.string.DeleteContactConfirm, tdlib.cache().userName(userId)), new int[]{R.id.btn_delete, R.id.btn_cancel}, new String[]{Lang.getString(R.string.Delete), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[]{R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id1) -> {
         if (!context.isDestroyed() && id1 == R.id.btn_delete) {
           tdlib.client().send(new TdApi.RemoveContacts(new long[] {userId}), tdlib.okHandler());
         }
@@ -6488,7 +6532,7 @@ public class TdlibUi extends Handler {
                 context.addOneShotFocusListener(() ->
                   context.showOptions(new ViewController.Options.Builder()
                     .info(Strings.getTitleAndText(Lang.getString(R.string.TransferOwnershipAlert), finalAlertMessageText))
-                    .item(new ViewController.OptionItem(R.id.btn_next, Lang.getString(R.string.TransferOwnershipConfirm), ViewController.OPTION_COLOR_RED, R.drawable.templarian_baseline_account_switch_24))
+                    .item(new ViewController.OptionItem(R.id.btn_next, Lang.getString(R.string.TransferOwnershipConfirm), ViewController.OptionColor.RED, R.drawable.templarian_baseline_account_switch_24))
                     .cancelItem()
                     .build(), (optionView, id) -> {
                     if (id == R.id.btn_next) {
@@ -6506,7 +6550,7 @@ public class TdlibUi extends Handler {
         case TdApi.CanTransferOwnershipResultPasswordNeeded.CONSTRUCTOR: {
           context.showOptions(new ViewController.Options.Builder()
             .info(Strings.getTitleAndText(Lang.getString(R.string.TransferOwnershipSecurityAlert), Lang.getMarkdownString(context, R.string.TransferOwnershipSecurityPasswordNeeded)))
-            .item(new ViewController.OptionItem(R.id.btn_next, Lang.getString(R.string.TransferOwnershipSecurityActionSetPassword), ViewController.OPTION_COLOR_BLUE, R.drawable.mrgrigri_baseline_textbox_password_24))
+            .item(new ViewController.OptionItem(R.id.btn_next, Lang.getString(R.string.TransferOwnershipSecurityActionSetPassword), ViewController.OptionColor.BLUE, R.drawable.mrgrigri_baseline_textbox_password_24))
             .cancelItem()
             .build(), (optionView, id) -> {
               if (id == R.id.btn_next) {
@@ -6522,7 +6566,7 @@ public class TdlibUi extends Handler {
         case TdApi.CanTransferOwnershipResultPasswordTooFresh.CONSTRUCTOR: {
           context.showOptions(new ViewController.Options.Builder()
             .info(Strings.getTitleAndText(Lang.getString(R.string.TransferOwnershipSecurityAlert), Lang.getMarkdownString(context, R.string.TransferOwnershipSecurityWaitPassword, Lang.getDuration(((TdApi.CanTransferOwnershipResultPasswordTooFresh) canTransferOwnership).retryAfter))))
-            .item(new ViewController.OptionItem(R.id.btn_next, Lang.getString(R.string.OK), ViewController.OPTION_COLOR_NORMAL, R.drawable.baseline_check_circle_24))
+            .item(new ViewController.OptionItem(R.id.btn_next, Lang.getString(R.string.OK), ViewController.OptionColor.NORMAL, R.drawable.baseline_check_circle_24))
             .cancelItem()
             .build(), (optionView, id) -> true
           );
@@ -6531,7 +6575,7 @@ public class TdlibUi extends Handler {
         case TdApi.CanTransferOwnershipResultSessionTooFresh.CONSTRUCTOR: {
           context.showOptions(new ViewController.Options.Builder()
             .info(Strings.getTitleAndText(Lang.getString(R.string.TransferOwnershipSecurityAlert), Lang.getMarkdownString(context, R.string.TransferOwnershipSecurityWaitSession, Lang.getDuration(((TdApi.CanTransferOwnershipResultSessionTooFresh) canTransferOwnership).retryAfter))))
-            .item(new ViewController.OptionItem(R.id.btn_next, Lang.getString(R.string.OK), ViewController.OPTION_COLOR_NORMAL, R.drawable.baseline_check_circle_24))
+            .item(new ViewController.OptionItem(R.id.btn_next, Lang.getString(R.string.OK), ViewController.OptionColor.NORMAL, R.drawable.baseline_check_circle_24))
             .cancelItem()
             .build(), (optionView, id) -> true
           );
@@ -6605,7 +6649,24 @@ public class TdlibUi extends Handler {
       RESTRICT_VOICE_AND_VIDEO_MESSAGES = 2;
   }
 
+  @Retention(RetentionPolicy.SOURCE)
+  @IntDef({
+    PremiumLimit.SHAREABLE_FOLDER_COUNT,
+    PremiumLimit.CHAT_FOLDER_COUNT,
+    PremiumLimit.CHAT_FOLDER_INVITE_LINK_COUNT,
+  })
+  public @interface PremiumLimit {
+    int
+      SHAREABLE_FOLDER_COUNT = 1,
+      CHAT_FOLDER_COUNT = 2,
+      CHAT_FOLDER_INVITE_LINK_COUNT = 3;
+  }
+
   public boolean showPremiumAlert (ViewController<?> context, View view, @PremiumFeature int premiumFeature) {
+    return showPremiumAlert(context, context.context().tooltipManager(), view, premiumFeature);
+  }
+
+  public boolean showPremiumAlert (ViewController<?> context, TooltipOverlayView tooltipManager, View view, @PremiumFeature int premiumFeature) {
     if (tdlib.hasPremium())
       return false;
     int stringRes;
@@ -6619,21 +6680,51 @@ public class TdlibUi extends Handler {
       default:
         throw new IllegalStateException();
     }
-    // TODO proper alert with sections
-    context
-      .context()
-      .tooltipManager()
+    showPremiumRequiredTooltip(context, tooltipManager, view, stringRes);
+    return true;
+  }
+
+  public void showPremiumLimitInfo (ViewController<?> context, View view, @PremiumLimit int premiumLimit) {
+    showPremiumLimitInfo(context, context.context().tooltipManager(), view, premiumLimit);
+  }
+
+  public void showPremiumLimitInfo (ViewController<?> context, TooltipOverlayView tooltipManager, View view, @PremiumLimit int premiumLimit) {
+    if (tdlib.hasPremium())
+      return;
+    switch (premiumLimit) {
+      case PremiumLimit.SHAREABLE_FOLDER_COUNT:
+        showPremiumLimitTooltip(context, tooltipManager, view, R.string.PremiumRequiredAddShareableFolder, new TdApi.PremiumLimitTypeShareableChatFolderCount());
+        break;
+      case PremiumLimit.CHAT_FOLDER_COUNT:
+        showPremiumLimitTooltip(context, tooltipManager, view, R.string.PremiumRequiredCreateFolder, new TdApi.PremiumLimitTypeChatFolderCount());
+        break;
+      case PremiumLimit.CHAT_FOLDER_INVITE_LINK_COUNT:
+        showPremiumRequiredTooltip(context, tooltipManager, view, R.string.PremiumRequiredCreateChatFolderInviteLink);
+        break;
+      default:
+        throw new IllegalStateException();
+    }
+  }
+
+  private void showPremiumLimitTooltip (ViewController<?> context, TooltipOverlayView tooltipManager, View view, @StringRes int markdownStringRes, TdApi.PremiumLimitType premiumLimitType) {
+    WeakReference<View> viewRef = new WeakReference<>(view);
+    Object viewTag = view.getTag();
+    tdlib.send(new TdApi.GetPremiumLimit(premiumLimitType), (result, error) -> context.runOnUiThreadOptional(() -> {
+      View targetView = viewRef.get();
+      if (targetView != null && ViewCompat.isAttachedToWindow(targetView) && viewTag == targetView.getTag() && result.defaultValue < result.premiumValue) {
+        showPremiumRequiredTooltip(context, tooltipManager, targetView, markdownStringRes, result.defaultValue, result.premiumValue);
+      }
+    }));
+  }
+
+  private void showPremiumRequiredTooltip (ViewController<?> context, TooltipOverlayView tooltipManager, View view, @StringRes int markdownStringRes, Object... formatArgs) {
+      // TODO proper alert with sections
+      tooltipManager
       .builder(view)
       .icon(R.drawable.baseline_warning_24)
       .controller(context)
-      .show(tdlib,
-        Strings.buildMarkdown(context,
-          Lang.getString(stringRes),
-          null
-        )
-      )
+      .show(tdlib, Lang.getMarkdownString(context, markdownStringRes, formatArgs))
       .hideDelayed();
-    return true;
   }
 
   // Video Chats & Live Streams
@@ -6692,9 +6783,9 @@ public class TdlibUi extends Handler {
         setStickers(object, StickersType.INSTALLED)
       );
       if (isComplexQuery) {
-        tdlib.client().send(new TdApi.SearchEmojis(query, false, U.getInputLanguages()), result -> {
-          String[] emojis = result.getConstructor() == TdApi.Emojis.CONSTRUCTOR ? ((TdApi.Emojis) result).emojis : null;
-          if (emojis != null && emojis.length > 0) {
+        tdlib.send(new TdApi.SearchEmojis(query, U.getInputLanguages()), (keywords, error) -> {
+          if (keywords != null && keywords.emojiKeywords.length > 0) {
+            String[] emojis = Td.findUniqueEmojis(keywords.emojiKeywords);
             String emojisQuery = TextUtils.join(" ", emojis);
             // Request 2x more than limit for the case all of the stickers returned by GetStickers
             tdlib.client().send(new TdApi.GetStickers(stickerType, emojisQuery, limit * 2, chatId), object ->
@@ -7071,16 +7162,16 @@ public class TdlibUi extends Handler {
 
       if (profilePhotoToDelete != 0 && !isPublic) {
         b.item(new ViewController.OptionItem(R.id.btn_open, Lang.getString(R.string.Open),
-          ViewController.OPTION_COLOR_NORMAL, R.drawable.baseline_visibility_24));
+          ViewController.OptionColor.NORMAL, R.drawable.baseline_visibility_24));
       }
 
       b.item(new ViewController.OptionItem(R.id.btn_changePhotoGallery, Lang.getString(isPublic ? R.string.SetPublicPhoto : R.string.SetProfilePhoto),
-        ViewController.OPTION_COLOR_NORMAL, R.drawable.baseline_image_24));
+        ViewController.OptionColor.NORMAL, R.drawable.baseline_image_24));
 
       final Runnable deleteRunnable = () -> showDeletePhotoConfirm(() -> deleteProfilePhoto(profilePhotoToDelete));
       if (profilePhotoToDelete != 0 && !isPublic) {
         b.item(new ViewController.OptionItem(R.id.btn_changePhotoDelete, Lang.getString(R.string.Delete),
-          ViewController.OPTION_COLOR_RED, R.drawable.baseline_delete_24));
+          ViewController.OptionColor.RED, R.drawable.baseline_delete_24));
       }
 
       showOptions(b.build(), (itemView, id) -> {
@@ -7107,11 +7198,11 @@ public class TdlibUi extends Handler {
 
       if (chat.photo != null && allowOpenPhoto) {
         b.item(new ViewController.OptionItem(R.id.btn_open, Lang.getString(R.string.Open),
-          ViewController.OPTION_COLOR_NORMAL, R.drawable.baseline_visibility_24));
+          ViewController.OptionColor.NORMAL, R.drawable.baseline_visibility_24));
       }
 
       b.item(new ViewController.OptionItem(R.id.btn_changePhotoGallery, Lang.getString(isChannel ? R.string.SetChannelPhoto : R.string.SetGroupPhoto),
-        ViewController.OPTION_COLOR_NORMAL, R.drawable.baseline_image_24));
+        ViewController.OptionColor.NORMAL, R.drawable.baseline_image_24));
 
       final boolean canDelete = chat.photo != null;
       showOptions(b.build(), (itemView, id) -> {
@@ -7131,7 +7222,7 @@ public class TdlibUi extends Handler {
       ViewController.Options.Builder b = new ViewController.Options.Builder();
 
       b.item(new ViewController.OptionItem(R.id.btn_changePhotoGallery, Lang.getString(isChannel ? R.string.SetChannelPhoto : R.string.SetGroupPhoto),
-        ViewController.OPTION_COLOR_NORMAL, R.drawable.baseline_image_24));
+        ViewController.OptionColor.NORMAL, R.drawable.baseline_image_24));
 
       final boolean canDelete = headerView.getImageFile() != null;
       showOptions(b.build(), (itemView, id) -> {
@@ -7144,7 +7235,7 @@ public class TdlibUi extends Handler {
     }
 
     private void showDeletePhotoConfirm (Runnable onConfirm) {
-      context.showConfirm(Lang.getString(R.string.RemovePhotoConfirm), Lang.getString(R.string.Delete), R.drawable.baseline_delete_24, ViewController.OPTION_COLOR_RED, () -> {
+      context.showConfirm(Lang.getString(R.string.RemovePhotoConfirm), Lang.getString(R.string.Delete), R.drawable.baseline_delete_24, ViewController.OptionColor.RED, () -> {
         onConfirm.run();
         if (currentMediaLayout != null) {
           currentMediaLayout.hide(false);

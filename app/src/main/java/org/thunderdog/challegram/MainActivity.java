@@ -33,7 +33,6 @@ import androidx.collection.SparseArrayCompat;
 
 import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.config.Config;
-import org.thunderdog.challegram.core.Background;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.TD;
 import org.thunderdog.challegram.helper.LiveLocationHelper;
@@ -89,6 +88,7 @@ import org.thunderdog.challegram.ui.SettingsNotificationController;
 import org.thunderdog.challegram.ui.SettingsPrivacyController;
 import org.thunderdog.challegram.ui.SettingsPrivacyKeyController;
 import org.thunderdog.challegram.ui.SettingsThemeController;
+import org.thunderdog.challegram.ui.EditChatFolderInviteLinkController;
 import org.thunderdog.challegram.unsorted.Settings;
 import org.thunderdog.challegram.util.Crash;
 import org.thunderdog.challegram.widget.GearView;
@@ -101,7 +101,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import me.vkryl.android.AnimatorUtils;
-import me.vkryl.android.DeviceUtils;
 import me.vkryl.android.animator.BoolAnimator;
 import me.vkryl.android.animator.FactorAnimator;
 import me.vkryl.core.ArrayUtils;
@@ -1248,6 +1247,8 @@ public class MainActivity extends BaseActivity implements GlobalAccountListener,
       restore = new SettingsFoldersController(context, tdlib);
     } else if (id == R.id.controller_editChatFolders) {
       restore = new EditChatFolderController(context, tdlib);
+    } else if (id == R.id.controller_editChatFolderInviteLink) {
+      restore = new EditChatFolderInviteLinkController(context, tdlib);
     } else if (id == R.id.controller_bug_killer) {
       restore = new SettingsBugController(context, tdlib);
     } else {
@@ -1438,8 +1439,6 @@ public class MainActivity extends BaseActivity implements GlobalAccountListener,
     }
   }
 
-  private boolean madeEmulatorChecks;
-
   @Override
   public void onResume () {
     super.onResume();
@@ -1449,15 +1448,6 @@ public class MainActivity extends BaseActivity implements GlobalAccountListener,
     tdlib.context().global().notifyResolvableProblemAvailabilityMightHaveChanged();
     tdlib.context().dateManager().checkCurrentDate();
     UI.startNotificationService();
-    if (!madeEmulatorChecks && !Settings.instance().isEmulator()) {
-      madeEmulatorChecks = true;
-      Background.instance().post(() -> {
-        boolean isEmulator = DeviceUtils.detectEmulator(MainActivity.this);
-        if (isEmulator) {
-          Settings.instance().markAsEmulator();
-        }
-      });
-    }
   }
 
   @Override

@@ -96,7 +96,8 @@ public class AvatarReceiver implements Receiver, ChatListener, TdlibCache.UserDa
     Options.FORCE_ANIMATION,
     Options.FORCE_FORUM,
     Options.NO_UPDATES,
-    Options.SHOW_ONLINE
+    Options.SHOW_ONLINE,
+    Options.FORCE_IGNORE_FORUM
   }, flag = true)
   public @interface Options {
     int
@@ -105,7 +106,8 @@ public class AvatarReceiver implements Receiver, ChatListener, TdlibCache.UserDa
       FORCE_ANIMATION = 1 << 1,
       FORCE_FORUM = 1 << 2,
       NO_UPDATES = 1 << 3,
-      SHOW_ONLINE = 1 << 4
+      SHOW_ONLINE = 1 << 4,
+      FORCE_IGNORE_FORUM = 1 << 5
     ;
   }
 
@@ -522,17 +524,17 @@ public class AvatarReceiver implements Receiver, ChatListener, TdlibCache.UserDa
         break;
       }
       case DataType.SPECIFIC_PHOTO: {
-        setIsForum(BitwiseUtils.hasFlag(options, Options.FORCE_FORUM) || (specificPhoto != null && tdlib.isForum(specificPhoto.chatId)), isUpdate);
+        setIsForum(!BitwiseUtils.hasFlag(options, Options.FORCE_IGNORE_FORUM) && (BitwiseUtils.hasFlag(options, Options.FORCE_FORUM) || (specificPhoto != null && tdlib.isForum(specificPhoto.chatId))), isUpdate);
         break;
       }
       case DataType.SPECIFIC_FILE:
       case DataType.PLACEHOLDER:
       case DataType.USER: {
-        setIsForum(BitwiseUtils.hasFlag(options, Options.FORCE_FORUM), isUpdate);
+        setIsForum(!BitwiseUtils.hasFlag(options, Options.FORCE_IGNORE_FORUM) && BitwiseUtils.hasFlag(options, Options.FORCE_FORUM), isUpdate);
         break;
       }
       case DataType.CHAT: {
-        setIsForum(BitwiseUtils.hasFlag(options, Options.FORCE_FORUM) || tdlib.isForum(dataId), isUpdate);
+        setIsForum(!BitwiseUtils.hasFlag(options, Options.FORCE_IGNORE_FORUM) && (BitwiseUtils.hasFlag(options, Options.FORCE_FORUM) || tdlib.isForum(dataId)), isUpdate);
         break;
       }
     }
@@ -768,7 +770,7 @@ public class AvatarReceiver implements Receiver, ChatListener, TdlibCache.UserDa
       boolean fullSize = BitwiseUtils.hasFlag(options, Options.FULL_SIZE);
       TdApi.AnimatedChatPhoto smallAnimation = photo.smallAnimation == null ? photo.animation : photo.smallAnimation;
       TdApi.AnimatedChatPhoto fullAnimation = photo.smallAnimation != null ? photo.animation : null;
-      loadPreviewAnimation(!fullSize || fullAnimation == null ? smallAnimation : null);
+      loadPreviewAnimation(!fullSize || fullAnimation == null || displayFullSizeOnlyInFullScreen ? smallAnimation : null);
       loadFullAnimation(fullSize ? fullAnimation : null);
     } else {
       loadPreviewAnimation(null);

@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import com.android.build.gradle.internal.api.ApkVariantOutputImpl
 import java.util.*
 
@@ -7,27 +9,27 @@ plugins {
   id("cmake-plugin")
 }
 
-task<me.vkryl.task.GenerateResourcesAndThemesTask>("generateResourcesAndThemes") {
+val generateResourcesAndThemes by tasks.registering(me.vkryl.task.GenerateResourcesAndThemesTask::class) {
   group = "Setup"
   description = "Generates fresh strings, ids, theme resources and utility methods based on current static files"
 }
-task<me.vkryl.task.FetchLanguagesTask>("updateLanguages") {
+val updateLanguages by tasks.registering(me.vkryl.task.FetchLanguagesTask::class) {
   group = "Setup"
   description = "Generates and updates all strings.xml resources based on translations.telegram.org"
 }
-task<me.vkryl.task.ValidateApiTokensTask>("validateApiTokens") {
+val validateApiTokens by tasks.registering(me.vkryl.task.ValidateApiTokensTask::class) {
   group = "Setup"
   description = "Validates some API tokens to make sure they work properly and won't cause problems"
 }
-task<me.vkryl.task.UpdateExceptionsTask>("updateExceptions") {
+val updateExceptions by tasks.registering(me.vkryl.task.UpdateExceptionsTask::class) {
   group = "Setup"
   description = "Updates exception class names with the app or TDLib version number in order to have separate group on Google Play Developer Console"
 }
-task<me.vkryl.task.GeneratePhoneFormatTask>("generatePhoneFormat") {
+val generatePhoneFormat by tasks.registering(me.vkryl.task.GeneratePhoneFormatTask::class) {
   group = "Setup"
   description = "Generates utility methods for phone formatting, e.g. +12345678901 -> +1 (234) 567 89-01"
 }
-task<me.vkryl.task.CheckEmojiKeyboardTask>("checkEmojiKeyboard") {
+val checkEmojiKeyboard by tasks.registering(me.vkryl.task.CheckEmojiKeyboardTask::class) {
   group = "Setup"
   description = "Checks that all supported emoji can be entered from the keyboard"
 }
@@ -77,8 +79,8 @@ android {
       "./jni/third_party/webrtc/sdk/android/src/java",
       "../thirdparty/WebRTC/src/java"
     )
-    Config.EXOPLAYER_EXTENSIONS.forEach { module ->
-      java.srcDirs("../thirdparty/ExoPlayer/extensions/${module}/src/main/java")
+    Config.ANDROIDX_MEDIA_EXTENSIONS.forEach { extension ->
+      java.srcDirs("../thirdparty/androidx-media/libraries/${extension}/src/main/java")
     }
   }
 
@@ -87,12 +89,18 @@ android {
     checkDependencies = true
   }
 
+  buildFeatures {
+    buildConfig = true
+  }
+
   buildTypes {
-    getByName("release") {
-      Config.EXOPLAYER_EXTENSIONS.forEach { module ->
-        val proguardFile = file("../thirdparty/ExoPlayer/extensions/${module}/proguard-rules.txt")
+    release {
+      Config.ANDROIDX_MEDIA_EXTENSIONS.forEach { extension ->
+        val proguardFile = file(
+          "../thirdparty/androidx-media/libraries/${extension}/proguard-rules.txt"
+        )
         if (proguardFile.exists()) {
-          project.logger.lifecycle("Applying thirdparty/ExoPlayer/extensions/${module}/proguard-rules.pro")
+          project.logger.lifecycle("Applying ${proguardFile.path}")
           proguardFile(proguardFile)
         }
       }
@@ -115,7 +123,6 @@ android {
         ndkPath = File(sdkDirectory, "ndk/$ndkVersion").absolutePath
         buildConfigString("NDK_VERSION", ndkVersion)
         buildConfigBool("WEBP_ENABLED", true) // variant.minSdkVersion < 19
-        buildConfigBool("SIDE_LOAD_ONLY", variant.sideLoadOnly)
         ndk.abiFilters.clear()
         ndk.abiFilters.addAll(variant.filters)
         externalNativeBuild.ndkBuild.abiFilters(*variant.filters)
@@ -123,32 +130,31 @@ android {
       }
     }
   }
-  applicationVariants.all {
-    val variant = this
 
-    val abi = (variant.productFlavors[0].versionCode ?: error("null")) - 1
+  applicationVariants.configureEach {
+    val abi = (productFlavors[0].versionCode ?: error("null")) - 1
     val abiVariant = Abi.VARIANTS[abi] ?: error("null")
     val versionCode = defaultConfig.versionCode ?: error("null")
 
     val versionCodeOverride = versionCode * 1000 + abi * 10
-    val versionNameOverride = "${variant.versionName}.${defaultConfig.versionCode}${if (extra.has("app_version_suffix")) extra["app_version_suffix"] else ""}-${abiVariant.displayName}${if (extra.has("app_name_suffix")) "-" + extra["app_name_suffix"] else ""}${if (variant.buildType.isDebuggable) "-debug" else ""}"
+    val versionNameOverride = "${versionName}.${defaultConfig.versionCode}${if (extra.has("app_version_suffix")) extra["app_version_suffix"] else ""}-${abiVariant.displayName}${if (extra.has("app_name_suffix")) "-" + extra["app_name_suffix"] else ""}${if (buildType.isDebuggable) "-debug" else ""}"
     val outputFileNamePrefix = properties.getProperty("app.file", projectName.replace(" ", "-").replace("#", ""))
     val fileName = "${outputFileNamePrefix}-${versionNameOverride.replace("-universal(?=-|\$)", "")}"
 
-    variant.buildConfigField("int", "ORIGINAL_VERSION_CODE", versionCode.toString())
-    variant.buildConfigField("int", "ABI", abi.toString())
-    variant.buildConfigField("String", "ORIGINAL_VERSION_NAME", "\"${variant.versionName}.${defaultConfig.versionCode}\"")
+    buildConfigField("int", "ORIGINAL_VERSION_CODE", versionCode.toString())
+    buildConfigField("int", "ABI", abi.toString())
+    buildConfigField("String", "ORIGINAL_VERSION_NAME", "\"${versionName}.${defaultConfig.versionCode}\"")
 
-    variant.outputs.map { it as ApkVariantOutputImpl }.forEach { output ->
+    outputs.map { it as ApkVariantOutputImpl }.forEach { output ->
       output.versionCodeOverride = versionCodeOverride
       output.versionNameOverride = versionNameOverride
       output.outputFileName = "${fileName}.apk"
     }
 
-    if (variant.buildType.isMinifyEnabled) {
-      variant.assembleProvider!!.configure {
+    if (buildType.isMinifyEnabled) {
+      assembleProvider!!.configure {
         doLast {
-          variant.mappingFileProvider.get().files.forEach { mappingFile ->
+          mappingFileProvider.get().files.forEach { mappingFile ->
             mappingFile.renameTo(File(mappingFile.parentFile, "${fileName}.txt"))
           }
         }
@@ -171,17 +177,19 @@ android {
 }
 
 gradle.projectsEvaluated {
-  tasks.getByName("preBuild").dependsOn(
-    "generateResourcesAndThemes",
-    "checkEmojiKeyboard",
-    "generatePhoneFormat",
-    "updateExceptions"
-  )
+  tasks.named("preBuild").configure {
+    dependsOn(
+      generateResourcesAndThemes,
+      checkEmojiKeyboard,
+      generatePhoneFormat,
+      updateExceptions,
+    )
+  }
   Abi.VARIANTS.forEach { (_, variant) ->
-    tasks.getByName("pre${variant.flavor[0].uppercaseChar() + variant.flavor.substring(1)}ReleaseBuild").let { task ->
-      task.dependsOn("updateLanguages")
+    tasks.named("pre${variant.flavor[0].uppercaseChar() + variant.flavor.substring(1)}ReleaseBuild") {
+      dependsOn(updateLanguages)
       if (!isExperimentalBuild) {
-        task.dependsOn("validateApiTokens")
+        dependsOn(validateApiTokens)
       }
     }
   }
@@ -195,6 +203,7 @@ dependencies {
   implementation(project(":vkryl:android"))
   implementation(project(":vkryl:td"))
   // AndroidX: https://developer.android.com/jetpack/androidx/versions
+  implementation("androidx.core:core:${LibraryVersions.ANDROIDX_CORE}")
   implementation("androidx.activity:activity:1.8.2")
   implementation("androidx.palette:palette:1.0.0")
   implementation("androidx.recyclerview:recyclerview:1.3.2")
@@ -202,13 +211,14 @@ dependencies {
   implementation("androidx.work:work-runtime:2.9.0")
   implementation("androidx.browser:browser:1.5.0") // 1.7.0+ requires minSdkVersion 19
   implementation("androidx.exifinterface:exifinterface:1.3.7")
-  implementation("androidx.collection:collection:1.3.0")
+  implementation("androidx.collection:collection:1.4.0")
   implementation("androidx.interpolator:interpolator:1.0.0")
   implementation("androidx.gridlayout:gridlayout:1.0.0")
   // CameraX: https://developer.android.com/jetpack/androidx/releases/camera
-  implementation("androidx.camera:camera-camera2:1.2.3")
-  implementation("androidx.camera:camera-lifecycle:1.2.3")
-  implementation("androidx.camera:camera-view:1.2.3")
+  implementation("androidx.camera:camera-camera2:1.3.1")
+  implementation("androidx.camera:camera-video:1.3.1")
+  implementation("androidx.camera:camera-lifecycle:1.3.1")
+  implementation("androidx.camera:camera-view:1.3.1")
   // Google Play Services: https://developers.google.com/android/guides/releases
   implementation("com.google.android.gms:play-services-base:17.6.0")
   implementation("com.google.android.gms:play-services-basement:17.6.0")
@@ -224,8 +234,8 @@ dependencies {
   implementation("com.google.firebase:firebase-appcheck-safetynet:16.1.2")
   // Play In-App Updates: https://developer.android.com/reference/com/google/android/play/core/release-notes-in_app_updates
   implementation("com.google.android.play:app-update:2.1.0")
-  // ExoPlayer: https://github.com/google/ExoPlayer/blob/release-v2/RELEASENOTES.md
-  implementation("com.google.android.exoplayer:exoplayer-core:2.19.1")
+  // AndroidX/media: https://github.com/androidx/media/blob/release/RELEASENOTES.md
+  implementation("androidx.media3:media3-exoplayer:1.2.1")
   // 17.x version requires minSdk 19 or higher
   implementation("com.google.mlkit:language-id:16.1.1")
   // The Checker Framework: https://checkerframework.org/CHANGELOG.md

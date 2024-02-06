@@ -148,7 +148,7 @@ public class TD {
       case RightId.INVITE_USERS:
       case RightId.PIN_MESSAGES:
       case RightId.MANAGE_VIDEO_CHATS:
-      case RightId.MANAGE_TOPICS:
+      case RightId.MANAGE_OR_CREATE_TOPICS:
       case RightId.POST_STORIES:
       case RightId.EDIT_STORIES:
       case RightId.DELETE_STORIES:
@@ -176,6 +176,42 @@ public class TD {
   }
 
   public static boolean checkRight (TdApi.ChatPermissions permissions, @RightId int rightId) {
+    if (false) {
+      // compile check
+      new TdApi.ChatPermissions(
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      );
+      new TdApi.ChatAdministratorRights(
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      );
+    }
     switch (rightId) {
       case RightId.READ_MESSAGES:
         return true;
@@ -189,29 +225,31 @@ public class TD {
         return permissions.canSendPhotos;
       case RightId.SEND_VIDEOS:
         return permissions.canSendVideos;
-      case RightId.SEND_VOICE_NOTES:
-        return permissions.canSendVoiceNotes;
       case RightId.SEND_VIDEO_NOTES:
         return permissions.canSendVideoNotes;
-      case RightId.SEND_OTHER_MESSAGES:
-        return permissions.canSendOtherMessages;
+      case RightId.SEND_VOICE_NOTES:
+        return permissions.canSendVoiceNotes;
       case RightId.SEND_POLLS:
         return permissions.canSendPolls;
+      case RightId.SEND_OTHER_MESSAGES:
+        return permissions.canSendOtherMessages;
       case RightId.EMBED_LINKS:
         return permissions.canAddWebPagePreviews;
+      case RightId.CHANGE_CHAT_INFO:
+        return permissions.canChangeInfo;
       case RightId.INVITE_USERS:
         return permissions.canInviteUsers;
       case RightId.PIN_MESSAGES:
         return permissions.canPinMessages;
-      case RightId.CHANGE_CHAT_INFO:
-        return permissions.canChangeInfo;
+      // Same right, but different meaning
+      case RightId.MANAGE_OR_CREATE_TOPICS:
+        return permissions.canCreateTopics;
       // Admin-only
       case RightId.ADD_NEW_ADMINS:
       case RightId.BAN_USERS:
       case RightId.DELETE_MESSAGES:
       case RightId.EDIT_MESSAGES:
       case RightId.MANAGE_VIDEO_CHATS:
-      case RightId.MANAGE_TOPICS:
       case RightId.POST_STORIES:
       case RightId.EDIT_STORIES:
       case RightId.DELETE_STORIES:
@@ -232,7 +270,7 @@ public class TD {
     if (a.forwardInfo == null) {
       return a.chatId == b.chatId;
     }
-    if (a.forwardInfo.origin.getConstructor() != b.forwardInfo.origin.getConstructor() || a.forwardInfo.fromChatId != b.forwardInfo.fromChatId)
+    if (a.forwardInfo.origin.getConstructor() != b.forwardInfo.origin.getConstructor() || !Td.equalsTo(a.forwardInfo.source, b.forwardInfo.source, false))
       return false;
     if (splitAuthors) {
       switch (a.forwardInfo.origin.getConstructor()) {
@@ -1056,7 +1094,7 @@ public class TD {
         return false;
       }
       default: {
-        Td.assertMessageContent_d40af239();
+        Td.assertMessageContent_cfe6660a();
       }
     }
     return true;
@@ -1148,6 +1186,24 @@ public class TD {
   }
 
   public static boolean hasRestrictions (TdApi.ChatPermissions a, TdApi.ChatPermissions defaultPermissions) {
+    if (Config.COMPILE_CHECK) {
+      new TdApi.ChatPermissions(
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      );
+    }
     return
       (a.canSendBasicMessages != defaultPermissions.canSendBasicMessages && defaultPermissions.canSendBasicMessages) ||
       (a.canSendAudios != defaultPermissions.canSendAudios && defaultPermissions.canSendAudios) ||
@@ -1161,7 +1217,8 @@ public class TD {
       (a.canSendPolls != defaultPermissions.canSendPolls && defaultPermissions.canSendPolls) ||
       (a.canInviteUsers != defaultPermissions.canInviteUsers && defaultPermissions.canInviteUsers) ||
       (a.canPinMessages != defaultPermissions.canPinMessages && defaultPermissions.canPinMessages) ||
-      (a.canChangeInfo != defaultPermissions.canChangeInfo && defaultPermissions.canChangeInfo);
+      (a.canChangeInfo != defaultPermissions.canChangeInfo && defaultPermissions.canChangeInfo) ||
+      (a.canCreateTopics != defaultPermissions.canCreateTopics && defaultPermissions.canCreateTopics);
   }
 
   public static int getCombineMode (TdApi.Message message) {
@@ -1555,6 +1612,18 @@ public class TD {
       return "User#" + userId;
     }
     return getFirstName(user);
+  }
+
+  @Nullable
+  public static String getShorterUserNameOrNull (String firstName, String lastName) {
+    if (!StringUtils.isEmpty(firstName) && !StringUtils.isEmpty(lastName) && firstName.codePointCount(0, firstName.length()) > 1) {
+      return new StringBuilder()
+        .appendCodePoint(firstName.codePointAt(0))
+        .append(". ")
+        .append(lastName)
+        .toString();
+    }
+    return null;
   }
 
   public static Letters getLetters () {
@@ -1959,17 +2028,11 @@ public class TD {
       TdlibAccentColor.defaultAccentColorIdForUserId(userId), 0,
       0, 0,
       null,
-      false,
-      false,
-      false,
-      false,
-      false,
-      false,
-      null,
-      false,
-      false,
+      false, false, false,
       false, false,
-      true,
+      false, null, false, false,
+      false, false,
+      false, true,
       new TdApi.UserTypeRegular(),
       null,
       false
@@ -2190,6 +2253,7 @@ public class TD {
   public static final String ERROR_USER_CHANNELS_TOO_MUCH = "USER_CHANNELS_TOO_MUCH";
   public static final String ERROR_CHANNELS_ADMIN_PUBLIC_TOO_MUCH = "CHANNELS_ADMIN_PUBLIC_TOO_MUCH";
   public static final String ERROR_CHANNELS_ADMIN_LOCATED_TOO_MUCH = "CHANNELS_ADMIN_LOCATED_TOO_MUCH";
+  public static final String ERROR_CHATLISTS_TOO_MUCH = "CHATLISTS_TOO_MUCH";
 
   public static @Nullable String translateError (int code, String message) {
     if (StringUtils.isEmpty(message)) {
@@ -2228,6 +2292,8 @@ public class TD {
       case "PEER_FLOOD": res = R.string.NobodyLikesSpam2; break;
       case "STICKERSET_INVALID": res = R.string.error_STICKERSET_INVALID; break;
       case "CHANNELS_TOO_MUCH": res = R.string.error_CHANNELS_TOO_MUCH; break;
+      case ERROR_CHATLISTS_TOO_MUCH: res = R.string.error_CHATLISTS_TOO_MUCH; break;
+      case "INVITES_TOO_MUCH": res = R.string.error_INVITES_TOO_MUCH; break;
       case "BOTS_TOO_MUCH": res = R.string.error_BOTS_TOO_MUCH; break;
       case "ADMINS_TOO_MUCH": res = R.string.error_ADMINS_TOO_MUCH; break;
       case "Not enough rights to invite members to the group chat": res = R.string.YouCantInviteMembers; break;
@@ -3786,7 +3852,7 @@ public class TD {
     }
     final String size = Strings.buildSize(totalSize);
     final long totalSizeFinal = totalSize;
-    context.showOptions(Lang.getString(files.length == 1 ? R.string.DeleteFileHint : R.string.DeleteMultipleFilesHint), new int[]{R.id.btn_deleteFile, R.id.btn_cancel}, new String[]{Lang.getString(R.string.ClearX, size), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL}, new int[]{R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+    context.showOptions(Lang.getString(files.length == 1 ? R.string.DeleteFileHint : R.string.DeleteMultipleFilesHint), new int[]{R.id.btn_deleteFile, R.id.btn_cancel}, new String[]{Lang.getString(R.string.ClearX, size), Lang.getString(R.string.Cancel)}, new int[]{ViewController.OptionColor.RED, ViewController.OptionColor.NORMAL}, new int[]{R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
       if (id == R.id.btn_deleteFile) {
         TdlibManager.instance().player().stopPlaybackIfPlayingAnyOf(files);
         context.context().closeFilePip(files);
@@ -4978,9 +5044,11 @@ public class TD {
     switch (message.content.getConstructor()) {
       case TdApi.MessageExpiredPhoto.CONSTRUCTOR:
       case TdApi.MessageExpiredVideo.CONSTRUCTOR:
+      case TdApi.MessageExpiredVoiceNote.CONSTRUCTOR:
+      case TdApi.MessageExpiredVideoNote.CONSTRUCTOR:
         return true;
       default:
-        Td.assertMessageContent_d40af239();
+        Td.assertMessageContent_cfe6660a();
         break;
     }
     return false;
@@ -5310,6 +5378,14 @@ public class TD {
     }
   }
 
+  public static @Nullable String getIconName (@Nullable TdApi.ChatFolderInfo info) {
+    return info != null && info.icon != null ? info.icon.name : null;
+  }
+
+  public static @Nullable String getIconName (@Nullable TdApi.ChatFolder folder) {
+    return folder != null && folder.icon != null ? folder.icon.name : null;
+  }
+
   public static @DrawableRes int iconByName (String iconName, @DrawableRes int defaultIcon) {
     if (StringUtils.isEmpty(iconName))
       return defaultIcon;
@@ -5331,7 +5407,7 @@ public class TD {
       case "Cat":
         return R.drawable.templarian_baseline_cat_24;
       case "Crown":
-        return R.drawable.baseline_crown_circle_24;
+        return R.drawable.baseline_crown_24;
       case "Favorite":
         return R.drawable.baseline_star_24;
       case "Flower":
@@ -5353,7 +5429,6 @@ public class TD {
       case "Work":
         return R.drawable.baseline_work_24;
       case "Airplane":
-        // return R.drawable.baseline_flight_24;
         return R.drawable.baseline_logo_telegram_24;
       case "Book":
         return R.drawable.baseline_book_24;
@@ -5366,13 +5441,11 @@ public class TD {
       case "Note":
         return R.drawable.baseline_music_note_24;
       case "Palette":
-        // return R.drawable.baseline_palette_24;
-        return R.drawable.baseline_brush_24;
+        return R.drawable.baseline_palette_24;
       case "Unread":
         return R.drawable.baseline_mark_chat_unread_24;
       case "Travel":
-        // return R.drawable.baseline_explore_24;
-        return R.drawable.baseline_flight_24;
+        return R.drawable.baseline_airplane_24;
       case "Custom":
         return R.drawable.baseline_folder_24;
       case "Trade":

@@ -2163,7 +2163,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
       if (user == null) {
         return;
       }
-      showOptions(TD.getUserName(user) + ", " + Strings.formatPhone(user.phoneNumber), new int[] {R.id.btn_shareMyContact, R.id.btn_cancel}, new String[] {Lang.getString(R.string.ShareMyContactInfo), Lang.getString(R.string.Cancel)}, new int[] {OPTION_COLOR_BLUE, OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_contact_phone_24, R.drawable.baseline_cancel_24}, (itemView, id1) -> {
+      showOptions(TD.getUserName(user) + ", " + Strings.formatPhone(user.phoneNumber), new int[] {R.id.btn_shareMyContact, R.id.btn_cancel}, new String[] {Lang.getString(R.string.ShareMyContactInfo), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.BLUE, OptionColor.NORMAL}, new int[] {R.drawable.baseline_contact_phone_24, R.drawable.baseline_cancel_24}, (itemView, id1) -> {
         if (id1 == R.id.btn_shareMyContact) {
           sendContact(tdlib.myUser(), true, Td.newSendOptions());
         }
@@ -3741,7 +3741,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
       }
     } else if (id == R.id.menu_btn_unpinAll) {
       if (selectedMessageIds != null && selectedMessageIds.size() > 0) {
-        showOptions(Lang.pluralBold(R.string.UnpinXMessages, selectedMessageIds.size()), new int[] {R.id.btn_unpinAll, R.id.btn_cancel}, new String[] {Lang.getString(R.string.Unpin), Lang.getString(R.string.Cancel)}, new int[] {OPTION_COLOR_RED, OPTION_COLOR_NORMAL}, new int[] {R.drawable.deproko_baseline_pin_undo_24, R.drawable.baseline_cancel_24}, (itemView, viewId) -> {
+        showOptions(Lang.pluralBold(R.string.UnpinXMessages, selectedMessageIds.size()), new int[] {R.id.btn_unpinAll, R.id.btn_cancel}, new String[] {Lang.getString(R.string.Unpin), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.deproko_baseline_pin_undo_24, R.drawable.baseline_cancel_24}, (itemView, viewId) -> {
           if (viewId == R.id.btn_unpinAll) {
             final int size = selectedMessageIds.size();
             for (int i = 0; i < size; i++) {
@@ -3786,7 +3786,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
           }
         }
         if (count > 0) {
-          showOptions(new int[] {R.id.btn_messageResend, R.id.btn_cancel}, new String[] {Lang.plural(R.string.ResendXMessages, count), Lang.getString(R.string.Cancel)}, new int[] {OPTION_COLOR_BLUE, OPTION_COLOR_NORMAL}, (v, optionId) -> {
+          showOptions(new int[] {R.id.btn_messageResend, R.id.btn_cancel}, new String[] {Lang.plural(R.string.ResendXMessages, count), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.BLUE, OptionColor.NORMAL}, (v, optionId) -> {
             if (optionId == R.id.btn_messageResend) {
               resendSelectedMessages();
               finishSelectMode(-1);
@@ -4235,6 +4235,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
       headerCell.pause();
     }
 
+    Views.destroyRecyclerView(messagesView);
+
     // TODO chat = null;
 
     if (destroyInstance || !reuseEnabled) {
@@ -4263,7 +4265,6 @@ public class MessagesController extends ViewController<MessagesController.Argume
         botHelper.destroy();
       }
       removeStaticListeners();
-      Views.destroyRecyclerView(messagesView);
       Views.destroyRecyclerView(wallpapersList);
       if (wallpapersList != null) {
         ((WallpaperAdapter) wallpapersList.getAdapter()).destroy();
@@ -4618,7 +4619,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
 
     FrameLayout frameLayout = new FrameLayoutFix(layout.getContext());
     frameLayout.setLayoutParams(new LinearLayout.LayoutParams(0, Screen.dp(54f), 1f));
-    TextView receiptText = OptionsLayout.genOptionView(layout.getContext(), R.id.more_btn_openReadReceipts, Lang.getString(R.string.LoadingMessageSeen), ViewController.OPTION_COLOR_NORMAL, 0, null, getThemeListeners(), null);
+    TextView receiptText = OptionsLayout.genOptionView(layout.getContext(), R.id.more_btn_openReadReceipts, Lang.getString(R.string.LoadingMessageSeen), OptionColor.NORMAL, 0, null, getThemeListeners(), null);
 
     TripleAvatarView tav = new TripleAvatarView(layout.getContext());
 
@@ -4649,7 +4650,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
 
     optionsLayout.addView(receiptWrap, 2);
 
-    TextView subtitleView = OptionsLayout.genOptionView(layout.getContext(), 0, null, OPTION_COLOR_NORMAL, 0, null, getThemeListeners(), null);
+    TextView subtitleView = OptionsLayout.genOptionView(layout.getContext(), 0, null, OptionColor.NORMAL, 0, null, getThemeListeners(), null);
 
     BoolAnimator isSubtitleVisible = new BoolAnimator(0, (id, factor, fraction, callee) -> {
       receiptText.setTranslationY(-Screen.dp(10f) * factor);
@@ -5371,7 +5372,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
         TdApi.Message message = selectedMessage.getMessage();
         TdApi.Poll poll = ((TdApi.MessagePoll) message.content).poll;
         boolean isQuiz = poll.type.getConstructor() == TdApi.PollTypeQuiz.CONSTRUCTOR;
-        showOptions(Lang.getStringBold(isQuiz ? R.string.StopQuizWarn : R.string.StopPollWarn, poll.question), new int[] {R.id.btn_done, R.id.btn_cancel}, new String[] {Lang.getString(isQuiz ? R.string.StopQuiz : R.string.StopPoll), Lang.getString(R.string.Cancel)}, new int[] {OPTION_COLOR_RED, OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_poll_24, R.drawable.baseline_cancel_24}, (optionItemView, optionId) -> {
+        showOptions(Lang.getStringBold(isQuiz ? R.string.StopQuizWarn : R.string.StopPollWarn, poll.question), new int[] {R.id.btn_done, R.id.btn_cancel}, new String[] {Lang.getString(isQuiz ? R.string.StopQuiz : R.string.StopPoll), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_poll_24, R.drawable.baseline_cancel_24}, (optionItemView, optionId) -> {
           if (optionId == R.id.btn_done) {
             tdlib.client().send(new TdApi.StopPoll(message.chatId, message.id, message.replyMarkup), tdlib.okHandler());
           }
@@ -6587,7 +6588,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
           return !Td.equalsTo(oldText, newText);
         }
         default: {
-          Td.assertMessageContent_d40af239();
+          Td.assertMessageContent_cfe6660a();
           break;
         }
       }
@@ -6950,7 +6951,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
         break;
       }
       default: {
-        Td.assertMessageContent_d40af239();
+        Td.assertMessageContent_cfe6660a();
         throw Td.unsupported(editContext.message.content);
       }
     }
@@ -7608,7 +7609,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
       .item(canPinAnyMessage(false) ? new OptionItem.Builder()
         .id(R.id.btn_unpinMessage)
         .name(Lang.getString(pinnedCount == 1 ? R.string.UnpinMessage : R.string.UnpinMessagesConfirm))
-        .color(OPTION_COLOR_RED)
+        .color(OptionColor.RED)
         .icon(R.drawable.deproko_baseline_pin_undo_24)
         .build() : null
       )
@@ -7812,7 +7813,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
               Lang.getString(R.string.ReportLocationTitle),
               Lang.getStringBold(R.string.ReportLocationDesc, location.address)
             );
-            showOptions(title, new int[] {R.id.btn_reportChat, R.id.btn_cancel}, new String[] {Lang.getString(R.string.ReportLocationAction), Lang.getString(R.string.Cancel)}, new int[] {OPTION_COLOR_RED, OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_report_24, R.drawable.baseline_cancel_24}, (v, optionId) -> {
+            showOptions(title, new int[] {R.id.btn_reportChat, R.id.btn_cancel}, new String[] {Lang.getString(R.string.ReportLocationAction), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_report_24, R.drawable.baseline_cancel_24}, (v, optionId) -> {
               if (optionId == R.id.btn_reportChat) {
                 tdlib.client().send(new TdApi.ReportChat(chatId, null, new TdApi.ReportReasonUnrelatedLocation(), null), tdlib.okHandler());
                 dismissActionBar();
@@ -7886,7 +7887,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
           items.add(new TopBarView.Item(R.id.btn_shareMyContact, R.string.SharePhoneNumber, v -> {
             TdApi.User user = tdlib.myUser();
             if (user != null) {
-              showOptions(TD.getUserName(user) + ", " + Strings.formatPhone(user.phoneNumber), new int[] {R.id.btn_shareMyContact, R.id.btn_cancel}, new String[] {Lang.getString(R.string.SharePhoneNumberAction), Lang.getString(R.string.Cancel)}, new int[] {OPTION_COLOR_BLUE, OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_contact_phone_24, R.drawable.baseline_cancel_24}, (itemView, id1) -> {
+              showOptions(TD.getUserName(user) + ", " + Strings.formatPhone(user.phoneNumber), new int[] {R.id.btn_shareMyContact, R.id.btn_cancel}, new String[] {Lang.getString(R.string.SharePhoneNumberAction), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.BLUE, OptionColor.NORMAL}, new int[] {R.drawable.baseline_contact_phone_24, R.drawable.baseline_cancel_24}, (itemView, id1) -> {
                 if (id1 == R.id.btn_shareMyContact) {
                   tdlib.client().send(new TdApi.SharePhoneNumber(tdlib.chatUserId(chatId)), tdlib.okHandler());
                 }
@@ -9424,10 +9425,10 @@ public class MessagesController extends ViewController<MessagesController.Argume
     if (record.getWaveform() == null) {
       Background.instance().post(() -> {
         byte[] waveform = N.getWaveform(record.getPath());
-        tdlib.sendMessage(chatId, getMessageThreadId(), replyTo, finalSendOptions, new TdApi.InputMessageVoiceNote(record.toInputFile(), record.getDuration(), waveform, null), null);
+        tdlib.sendMessage(chatId, getMessageThreadId(), replyTo, finalSendOptions, new TdApi.InputMessageVoiceNote(record.toInputFile(), record.getDuration(), waveform, null, null), null);
       });
     } else {
-      tdlib.sendMessage(chatId, getMessageThreadId(), replyTo, finalSendOptions, new TdApi.InputMessageVoiceNote(record.toInputFile(), record.getDuration(), record.getWaveform(), null), null);
+      tdlib.sendMessage(chatId, getMessageThreadId(), replyTo, finalSendOptions, new TdApi.InputMessageVoiceNote(record.toInputFile(), record.getDuration(), record.getWaveform(), null, null), null);
     }
     return true;
   }

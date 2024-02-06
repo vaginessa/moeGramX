@@ -82,22 +82,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.os.EnvironmentCompat;
 import androidx.exifinterface.media.ExifInterface;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.datasource.FileDataSource;
+import androidx.media3.exoplayer.DefaultLoadControl;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
+import androidx.media3.exoplayer.ExoPlaybackException;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.RenderersFactory;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
+import androidx.media3.exoplayer.source.MediaSource;
+import androidx.media3.exoplayer.source.MediaSourceFactory;
+import androidx.media3.exoplayer.source.ProgressiveMediaSource;
+import androidx.media3.exoplayer.source.UnrecognizedInputFormatException;
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.extractor.DefaultExtractorsFactory;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.RenderersFactory;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.MediaSourceFactory;
-import com.google.android.exoplayer2.source.ProgressiveMediaSource;
-import com.google.android.exoplayer2.source.UnrecognizedInputFormatException;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.upstream.FileDataSource;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
@@ -107,7 +107,6 @@ import org.thunderdog.challegram.config.Device;
 import org.thunderdog.challegram.core.Background;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.TD;
-import org.thunderdog.challegram.emoji.EmojiSpan;
 import org.thunderdog.challegram.loader.ImageGalleryFile;
 import org.thunderdog.challegram.loader.ImageLoader;
 import org.thunderdog.challegram.loader.ImageReader;
@@ -126,8 +125,8 @@ import org.thunderdog.challegram.tool.TGMimeType;
 import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.ui.TextController;
 import org.thunderdog.challegram.util.AppBuildInfo;
-import org.thunderdog.challegram.util.AppInstallationUtil;
 import org.thunderdog.challegram.util.Permissions;
+import org.thunderdog.challegram.util.text.TextReplacementSpan;
 import org.thunderdog.challegram.widget.NoScrollTextView;
 
 import java.io.BufferedReader;
@@ -166,6 +165,7 @@ import java.util.zip.GZIPInputStream;
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGL11;
 
+import me.vkryl.android.AppInstallationUtil;
 import me.vkryl.android.LocaleUtils;
 import me.vkryl.android.SdkVersion;
 import me.vkryl.core.ArrayUtils;
@@ -733,8 +733,8 @@ public class U {
     return new ProgressiveMediaSource.Factory(new FileDataSource.Factory()).createMediaSource(newMediaItem(Uri.fromFile(file)));
   }
 
-  public static com.google.android.exoplayer2.MediaItem newMediaItem (Uri uri) {
-    return new com.google.android.exoplayer2.MediaItem.Builder().setUri(uri).build();
+  public static androidx.media3.common.MediaItem newMediaItem (Uri uri) {
+    return new androidx.media3.common.MediaItem.Builder().setUri(uri).build();
   }
 
   public static MediaSource newMediaSource (int accountId, TdApi.Message message) {
@@ -2056,7 +2056,7 @@ public class U {
     }
 
     final Spannable s = (Spannable) in;
-    EmojiSpan[] spans = s.getSpans(start, end, EmojiSpan.class);
+    TextReplacementSpan[] spans = s.getSpans(start, end, TextReplacementSpan.class);
     if (spans == null || spans.length == 0) {
       return measureText(in, start, end, p);
     }
@@ -2069,7 +2069,7 @@ public class U {
 
     float textWidth = 0;
     int startIndex = start;
-    for (EmojiSpan span : spans) {
+    for (TextReplacementSpan span : spans) {
       int spanStart = s.getSpanStart(span);
       if (startIndex < spanStart) {
         textWidth += measureText(in, startIndex, spanStart, p);
@@ -2397,9 +2397,13 @@ public class U {
       "Build: `" + Build.FINGERPRINT + "`\n" +
       "Package: " + UI.getAppContext().getPackageName() + "\n" +
       "Locale: " + locale + (!locale.equals(appLocale) ? " (app: " + appLocale + ")" : "");
-    String installerName = AppInstallationUtil.getInstallerPrettyName();
+    String installerName = AppInstallationUtil.getInstallerPackageName(UI.getAppContext());
     if (!StringUtils.isEmpty(installerName)) {
-      metadata += "\nInstaller: " + installerName;
+      metadata += "\nInstaller: " + AppInstallationUtil.prettifyPackageName(installerName);
+    }
+    String initiatorName = AppInstallationUtil.getInitiatorPackageName(UI.getAppContext());
+    if (!StringUtils.isEmpty(initiatorName)) {
+      metadata += "\nInitiator: " + AppInstallationUtil.prettifyPackageName(initiatorName);
     }
     String fingerprint = U.getApkFingerprint("SHA1");
     if (!StringUtils.isEmpty(fingerprint)) {
@@ -3681,5 +3685,11 @@ public class U {
       set.add(value);
     }
     return Collections.unmodifiableSet(set);
+  }
+
+  public static long[] concat (long[] first, long[] second) {
+    long[] result = Arrays.copyOf(first, first.length + second.length);
+    System.arraycopy(second, 0, result, first.length, second.length);
+    return result;
   }
 }

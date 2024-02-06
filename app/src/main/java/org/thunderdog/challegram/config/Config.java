@@ -35,6 +35,7 @@ public class Config {
   public static final boolean CHAT_FOLDERS_SMART_CHAT_DELETION_ENABLED = true;
   public static final boolean CHAT_FOLDERS_HIDE_BOTTOM_BAR_ON_SCROLL = true;
   public static final boolean CHAT_FOLDERS_APPEARANCE_IS_GLOBAL = true;
+  public static final boolean CHAT_FOLDERS_REDESIGN = true;
   public static final boolean RESTRICT_HIDING_MAIN_LIST = false; //true
   public static final boolean SEARCH_MESSAGES_ONLY_IN_SELECTED_FOLDER = true; //BuildConfig.EXPERIMENTAL
 
@@ -315,4 +316,6 @@ public class Config {
   public static final boolean FORCE_REPLY_WHEN_FORWARDING_WITH_COMMENT = false;
   public static final boolean DEBUG_VIEW_MESSAGES = false;
   public static final boolean ENABLE_TEXT_ANIMATIONS = false;
+
+  public static final boolean COMPILE_CHECK = false /*never set to true*/;
 }

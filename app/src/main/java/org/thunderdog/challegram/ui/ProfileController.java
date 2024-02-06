@@ -15,14 +15,12 @@
 package org.thunderdog.challegram.ui;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputFilter;
@@ -68,7 +66,6 @@ import org.thunderdog.challegram.data.TGUser;
 import org.thunderdog.challegram.data.ThreadInfo;
 import org.thunderdog.challegram.data.TranslationsManager;
 import org.thunderdog.challegram.emoji.EmojiFilter;
-import org.thunderdog.challegram.filegen.SimpleGenerationInfo;
 import org.thunderdog.challegram.loader.AvatarReceiver;
 import org.thunderdog.challegram.mediaview.MediaViewController;
 import org.thunderdog.challegram.mediaview.data.MediaStack;
@@ -99,7 +96,6 @@ import org.thunderdog.challegram.telegram.TdlibUi;
 import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.ColorState;
 import org.thunderdog.challegram.theme.Theme;
-import org.thunderdog.challegram.tool.Intents;
 import org.thunderdog.challegram.tool.Keyboard;
 import org.thunderdog.challegram.tool.Paints;
 import org.thunderdog.challegram.tool.Screen;
@@ -131,7 +127,6 @@ import org.thunderdog.challegram.widget.ViewControllerPagerAdapter;
 import org.thunderdog.challegram.widget.ViewPager;
 import org.thunderdog.challegram.widget.rtl.RtlViewPager;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -339,8 +334,8 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     if (isEditing()) {
       TdApi.SupergroupFullInfo supergroupFullInfo = tdlib.cache().supergroupFull(supergroupId);
       if (supergroupFullInfo == null) {
-        tdlib.client().send(new TdApi.GetSupergroupFullInfo(supergroupId), result -> {
-          if (result.getConstructor() == TdApi.SupergroupFullInfo.CONSTRUCTOR) {
+        tdlib.send(new TdApi.GetSupergroupFullInfo(supergroupId), (supergroupFull, error) -> {
+          if (error == null) {
             tdlib.ui().post(() -> replaceWithSupergroup(supergroupId));
           }
         });
@@ -349,8 +344,8 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     }
     TdApi.Chat chat = tdlib.chat(ChatId.fromSupergroupId(supergroupId));
     if (chat == null) {
-      tdlib.client().send(new TdApi.CreateSupergroupChat(supergroupId, false), result -> {
-        if (result.getConstructor() == TdApi.Chat.CONSTRUCTOR) {
+      tdlib.send(new TdApi.CreateSupergroupChat(supergroupId, false), (supergroup, error) -> {
+        if (error == null) {
           tdlib.ui().post(() -> replaceWithSupergroup(supergroupId));
         }
       });
@@ -709,7 +704,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
             final boolean needBlock = !tdlib.chatFullyBlocked(chat.id);
             final boolean isBot = tdlib.isBotChat(chat.id);
             if (needBlock) {
-              showOptions(Lang.getStringBold(isBot ? R.string.BlockBotConfirm : R.string.BlockUserConfirm, tdlib.chatTitle(chat.id)), new int[] {R.id.btn_blockSender, R.id.btn_cancel}, new String[] {Lang.getString(isBot ? R.string.BlockBot : R.string.BlockContact), Lang.getString(R.string.Cancel)}, new int[] {OPTION_COLOR_RED, OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_block_24, R.drawable.baseline_cancel_24}, (itemView, id1) -> {
+              showOptions(Lang.getStringBold(isBot ? R.string.BlockBotConfirm : R.string.BlockUserConfirm, tdlib.chatTitle(chat.id)), new int[] {R.id.btn_blockSender, R.id.btn_cancel}, new String[] {Lang.getString(isBot ? R.string.BlockBot : R.string.BlockContact), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_block_24, R.drawable.baseline_cancel_24}, (itemView, id1) -> {
                 if (!isDestroyed() && id1 == R.id.btn_blockSender) {
                   tdlib.blockSender(tdlib.sender(chat.id), new TdApi.BlockListMain(), result -> {
                     if (TD.isOk(result)) {
@@ -1848,7 +1843,11 @@ public class ProfileController extends ViewController<ProfileController.Args> im
               break;
           }
         } else if (itemId == R.id.btn_chatPermissions) {
-          view.setData(Lang.plural(R.string.xPermissions, Td.count(chat.permissions), TdConstants.CHAT_PERMISSIONS_COUNT));
+          int totalPermissionsCount = TdConstants.CHAT_PERMISSIONS_COUNT;
+          if (!tdlib.isForum(chat.id)) {
+            totalPermissionsCount--;
+          }
+          view.setData(Lang.plural(R.string.xPermissions, Td.count(chat.permissions), totalPermissionsCount));
         } else if (itemId == R.id.btn_enabledReactions) {
           TdApi.ChatAvailableReactions availableReactions = chat.availableReactions;
           switch (availableReactions.getConstructor()) {
@@ -3150,6 +3149,28 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     }
   }
 
+  private void checkConvertToBroadcastGroup () {
+    boolean needConvertToBroadcastGroup = tdlib.suggestConvertToBroadcastGroup(chat.id);
+    int index = baseAdapter.indexOfViewById(R.id.btn_convertToBroadcastGroup);
+    boolean hasConvertToBroadcastGroup = index != -1;
+    if (needConvertToBroadcastGroup != hasConvertToBroadcastGroup) {
+      if (needConvertToBroadcastGroup) {
+        index = baseAdapter.indexOfView(aggressiveAntiSpamItem);
+        if (index != -1) {
+          index += 3;
+          baseAdapter.addItems(index,
+            new ListItem(ListItem.TYPE_SHADOW_TOP),
+            new ListItem(ListItem.TYPE_SETTING, R.id.btn_convertToBroadcastGroup, 0, R.string.ConvertToBroadcastGroup),
+            new ListItem(ListItem.TYPE_SHADOW_BOTTOM),
+            new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.pluralBold(R.string.ConvertToBroadcastGroupDesc, tdlib.supergroupMaxSize()))
+          );
+        }
+      } else {
+        baseAdapter.removeRange(index - 1, 4);
+      }
+    }
+  }
+
   private void toggleAggressiveAntiSpam (View v) {
     boolean canToggleAggressiveAntiSpam =
       (supergroupFull != null && supergroupFull.canToggleAggressiveAntiSpam) ||
@@ -3324,10 +3345,10 @@ public class ProfileController extends ViewController<ProfileController.Args> im
         icons.append(R.drawable.baseline_group_add_24);
         strings.append(R.string.ChannelGroupNew);
 
-        showOptions(info, ids.get(), strings.get(), size == 3 ? new int[]{OPTION_COLOR_RED, OPTION_COLOR_NORMAL, OPTION_COLOR_NORMAL} : null, icons.get(), (v, id) -> {
+        showOptions(info, ids.get(), strings.get(), size == 3 ? new int[]{OptionColor.RED, OptionColor.NORMAL, OptionColor.NORMAL} : null, icons.get(), (v, id) -> {
           if (id == R.id.btn_delete) {
             if (linkedChat != null) {
-              showConfirm(Lang.getString(R.string.UnlinkGroupConfirm, linkedChatCreator, tdlib.chatTitle(linkedChat)), Lang.getString(R.string.UnlinkGroupDone), R.drawable.baseline_remove_circle_24, OPTION_COLOR_RED, () ->
+              showConfirm(Lang.getString(R.string.UnlinkGroupConfirm, linkedChatCreator, tdlib.chatTitle(linkedChat)), Lang.getString(R.string.UnlinkGroupDone), R.drawable.baseline_remove_circle_24, OptionColor.RED, () ->
                 tdlib.client().send(new TdApi.SetChatDiscussionGroup(chat.id, 0), tdlib.okHandler())
               );
             }
@@ -3369,9 +3390,9 @@ public class ProfileController extends ViewController<ProfileController.Args> im
         if (linkedChat == null)
           return;
         CharSequence info = Lang.getString(R.string.GroupChannelInfo, linkedChatCreator, tdlib.chatTitle(linkedChat));
-        showOptions(info, new int[]{R.id.btn_delete, R.id.btn_cancel}, new String[]{Lang.getString(R.string.GroupChannelUnlink), Lang.getString(R.string.Cancel)}, new int[]{OPTION_COLOR_RED, OPTION_COLOR_NORMAL}, new int[]{R.drawable.baseline_remove_circle_24, R.drawable.baseline_cancel_24}, (v, id) -> {
+        showOptions(info, new int[]{R.id.btn_delete, R.id.btn_cancel}, new String[]{Lang.getString(R.string.GroupChannelUnlink), Lang.getString(R.string.Cancel)}, new int[]{OptionColor.RED, OptionColor.NORMAL}, new int[]{R.drawable.baseline_remove_circle_24, R.drawable.baseline_cancel_24}, (v, id) -> {
           if (id == R.id.btn_delete) {
-            showConfirm(Lang.getString(R.string.UnlinkChannelConfirm, linkedChatCreator, tdlib.chatTitle(linkedChat)), Lang.getString(R.string.UnlinkChannelDone), R.drawable.baseline_remove_circle_24, OPTION_COLOR_RED, () ->
+            showConfirm(Lang.getString(R.string.UnlinkChannelConfirm, linkedChatCreator, tdlib.chatTitle(linkedChat)), Lang.getString(R.string.UnlinkChannelDone), R.drawable.baseline_remove_circle_24, OptionColor.RED, () ->
               tdlib.client().send(new TdApi.SetChatDiscussionGroup(0, chat.id), tdlib.okHandler())
             );
           }
@@ -3414,7 +3435,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
                 public void onClick (@NonNull View widget) {
                   tdlib.ui().openChat(ProfileController.this, argIndex == 0 ? selectedChatId : currentChatId, new TdlibUi.ChatOpenParameters().keepStack().removeDuplicates());
                 }
-              }, tdlib.chatTitle(selectedChatId), tdlib.chatTitle(currentChatId)), Lang.getString(R.string.LinkGroupConfirmOverrideDone), R.drawable.baseline_remove_circle_24, OPTION_COLOR_RED, () -> {
+              }, tdlib.chatTitle(selectedChatId), tdlib.chatTitle(currentChatId)), Lang.getString(R.string.LinkGroupConfirmOverrideDone), R.drawable.baseline_remove_circle_24, OptionColor.RED, () -> {
                 act.runWithLong(selectedChatId);
               });
             } else {
@@ -3448,7 +3469,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       if (selectedFullInfo != null && !selectedFullInfo.isAllHistoryAvailable) {
         b.append("\n\n").append(Lang.getMarkdownString(this, R.string.LinkGroupConfirmWarnPreHistory));
       }
-      showOptions(b, new int[]{R.id.btn_done, R.id.btn_cancel}, new String[]{Lang.getString(R.string.LinkGroupConfirmDone), Lang.getString(R.string.Cancel)}, new int[]{OPTION_COLOR_BLUE, OPTION_COLOR_NORMAL}, new int[]{R.drawable.baseline_link_24, R.drawable.baseline_cancel_24}, (optionView, optionId) -> {
+      showOptions(b, new int[]{R.id.btn_done, R.id.btn_cancel}, new String[]{Lang.getString(R.string.LinkGroupConfirmDone), Lang.getString(R.string.Cancel)}, new int[]{OptionColor.BLUE, OptionColor.NORMAL}, new int[]{R.drawable.baseline_link_24, R.drawable.baseline_cancel_24}, (optionView, optionId) -> {
         if (optionId == R.id.btn_done) {
           doneAct.run();
         }
@@ -3837,6 +3858,13 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       items.add(aggressiveAntiSpamItem = new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_toggleAggressiveAntiSpam, 0, R.string.AggressiveAntiSpam, aggressiveAntiSpamEnabled));
       items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
       items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.AggressiveAntiSpamDesc));
+    }
+
+    if (tdlib.suggestConvertToBroadcastGroup(chat.id)) {
+      items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
+      items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_convertToBroadcastGroup, 0, R.string.ConvertToBroadcastGroup));
+      items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
+      items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.pluralBold(R.string.ConvertToBroadcastGroupDesc, tdlib.supergroupMaxSize())));
     }
 
     if ((supergroupFull != null && supergroupFull.canHideMembers) || (groupFull != null && groupFull.canHideMembers && tdlib.canUpgradeChat(chat.id))) {
@@ -4291,7 +4319,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
         if (needConfirm) {
           showOptions(new Options.Builder()
               .info(Lang.getStringBold(isChannel() ? R.string.QAddXToChannel : R.string.AddToTheGroup, memberName))
-              .item(new OptionItem(R.id.btn_addMember, Lang.getString(R.string.AddMember), OPTION_COLOR_NORMAL, R.drawable.baseline_person_add_24))
+              .item(new OptionItem(R.id.btn_addMember, Lang.getString(R.string.AddMember), OptionColor.NORMAL, R.drawable.baseline_person_add_24))
               .cancelItem()
               .build(),
             (itemView, id) -> {
@@ -4348,7 +4376,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
           return;
         }
         if (isBasicGroup() || isChannel()) {
-          showOptions(Lang.getStringBold(isBasicGroup() ? R.string.MemberCannotJoinGroup : R.string.MemberCannotJoinChannel, memberName), new int[] {R.id.btn_blockSender, R.id.btn_cancel}, new String[]{Lang.getString(R.string.BlockUser), Lang.getString(R.string.Cancel)}, new int[]{OPTION_COLOR_RED, OPTION_COLOR_NORMAL}, new int[]{R.drawable.baseline_remove_circle_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+          showOptions(Lang.getStringBold(isBasicGroup() ? R.string.MemberCannotJoinGroup : R.string.MemberCannotJoinChannel, memberName), new int[] {R.id.btn_blockSender, R.id.btn_cancel}, new String[]{Lang.getString(R.string.BlockUser), Lang.getString(R.string.Cancel)}, new int[]{OptionColor.RED, OptionColor.NORMAL}, new int[]{R.drawable.baseline_remove_circle_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
             if (id == R.id.btn_blockSender) {
               tdlib.setChatMemberStatus(chat.id, member.memberId, new TdApi.ChatMemberStatusBanned(), member.status, (success, error) -> {
                 if (success) {
@@ -4469,14 +4497,14 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     showOptions(msg,
       new int[] {R.id.btn_destroyChat, R.id.btn_cancel},
       new String[] {Lang.getString(isChannel ? R.string.DestroyChannel : R.string.DestroyGroup), Lang.getString(R.string.Cancel)},
-      new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL},
+      new int[] {OptionColor.RED, OptionColor.NORMAL},
       new int[] {R.drawable.baseline_delete_forever_24, R.drawable.baseline_cancel_24},
       (itemView, id) -> {
         if (id == R.id.btn_destroyChat) {
           showOptions(Lang.getString(isChannel ? R.string.DestroyChannelHint : R.string.DestroyGroupHint),
             new int[] {R.id.btn_destroyChat, R.id.btn_cancel},
             new String[] {Lang.getString(isChannel ? R.string.DestroyChannel : R.string.DestroyGroup), Lang.getString(R.string.Cancel)},
-            new int[] {ViewController.OPTION_COLOR_RED, ViewController.OPTION_COLOR_NORMAL},
+            new int[] {OptionColor.RED, OptionColor.NORMAL},
             new int[] {R.drawable.baseline_delete_forever_24, R.drawable.baseline_cancel_24}, (resultItemView, resultId) -> {
             if (resultId == R.id.btn_destroyChat) {
               tdlib.client().send(new TdApi.DeleteChat(getChatId()), tdlib.okHandler());
@@ -4632,7 +4660,68 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       toggleContentProtection(v);
     } else if (viewId == R.id.btn_toggleJoinByRequest) {
       toggleJoinByRequests(v);
+    } else if (viewId == R.id.btn_convertToBroadcastGroup) {
+      showOptions(
+        Lang.getMarkdownString(this, R.string.ConvertToBroadcastGroupHint),
+        new int[] {R.id.btn_confirmConvertBroadcast, R.id.btn_cancel},
+        new String[] {
+          Lang.getString(R.string.ConvertToBroadcastGroupButton),
+          Lang.getString(R.string.Cancel)
+        },
+        new int[] {
+          OptionColor.RED,
+          OptionColor.NORMAL
+        },
+        new int[] {
+          R.drawable.baseline_bullhorn_24,
+          R.drawable.baseline_cancel_24
+        },
+        (itemView, optionId) -> {
+          if (optionId == R.id.btn_confirmConvertBroadcast) {
+            convertToBroadcastGroup(v);
+          }
+          return true;
+        });
     }
+  }
+
+  private void convertToBroadcastGroup (View view) {
+    showOptions(
+      Lang.getMarkdownString(this, R.string.ConvertToBroadcastGroupConfirmHint),
+      new int[] {R.id.btn_convertBroadcastGroup, R.id.btn_cancel},
+      new String[] {
+        Lang.getString(R.string.ConvertToBroadcastGroupConfirm),
+        Lang.getString(R.string.Cancel)
+      },
+      new int[] {
+        OptionColor.RED,
+        OptionColor.NORMAL
+      },
+      new int[] {
+        R.drawable.baseline_check_24,
+        R.drawable.baseline_cancel_24
+      },
+      (itemView, optionId) -> {
+        if (optionId == R.id.btn_convertBroadcastGroup) {
+          if (supergroup != null) {
+            tdlib.send(new TdApi.ToggleSupergroupIsBroadcastGroup(supergroup.id), (ok, error) -> runOnUiThreadOptional(() -> {
+              if (error != null) {
+                context().tooltipManager().builder(view).icon(R.drawable.baseline_warning_24).show(tdlib, TD.toErrorString(error));
+              } else {
+                openAlert(
+                  R.string.ConvertToBroadcastGroupAlertTitle,
+                  Lang.getStringBold(R.string.ConvertToBroadcastGroupAlertText, tdlib.chatTitle(chat.id)),
+                  Lang.getString(R.string.ConvertToBroadcastGroupAlertClose),
+                  (dialog, which) -> dialog.dismiss(),
+                  ALERT_NO_CANCELABLE | ALERT_NO_CANCEL
+                );
+                checkConvertToBroadcastGroup();
+              }
+            }));
+          }
+        }
+        return true;
+      });
   }
 
   private boolean canSetUsername () {
@@ -4742,29 +4831,29 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     ids.append(R.id.btn_manageInviteLinks);
     strings.append(R.string.InviteLinkManage);
     icons.append(R.drawable.baseline_add_link_24);
-    colors.append(OPTION_COLOR_NORMAL);
+    colors.append(OptionColor.NORMAL);
 
     if (chat.pendingJoinRequests != null && chat.pendingJoinRequests.totalCount > 0) {
       ids.append(R.id.btn_manageJoinRequests);
       strings.append(R.string.InviteLinkRequests);
       icons.append(R.drawable.baseline_pending_24);
-      colors.append(OPTION_COLOR_NORMAL);
+      colors.append(OptionColor.NORMAL);
     }
 
     ids.append(R.id.btn_copyLink);
     strings.append(R.string.InviteLinkCopy);
     icons.append(R.drawable.baseline_content_copy_24);
-    colors.append(OPTION_COLOR_NORMAL);
+    colors.append(OptionColor.NORMAL);
 
     ids.append(R.id.btn_shareLink);
     strings.append(R.string.ShareLink);
     icons.append(R.drawable.baseline_forward_24);
-    colors.append(OPTION_COLOR_NORMAL);
+    colors.append(OptionColor.NORMAL);
 
     icons.append(R.drawable.baseline_link_off_24);
     ids.append(R.id.btn_revokeLink);
     strings.append(R.string.RevokeLink);
-    colors.append(OPTION_COLOR_RED);
+    colors.append(OptionColor.RED);
 
     CharSequence info = TD.makeClickable(Lang.getString(R.string.CreatedByXOnDate, ((target, argStart, argEnd, spanIndex, needFakeBold) -> spanIndex == 0 ? Lang.newUserSpan(new TdlibContext(context, tdlib), link.creatorUserId) : null), tdlib.cache().userName(link.creatorUserId), Lang.getRelativeTimestamp(link.date, TimeUnit.SECONDS)));
     Lang.SpanCreator firstBoldCreator = (target, argStart, argEnd, spanIndex, needFakeBold) -> spanIndex == 0 ? Lang.newBoldSpan(needFakeBold) : null;
@@ -4781,7 +4870,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
         c.setArguments(new ShareController.Args(text).setShare(exportText, null));
         c.show();
       } else if (id == R.id.btn_revokeLink) {
-        showOptions(Lang.getString(tdlib.isChannel(chat.id) ? R.string.AreYouSureRevokeInviteLinkChannel : R.string.AreYouSureRevokeInviteLinkGroup), new int[] {R.id.btn_revokeLink, R.id.btn_cancel}, new String[] {Lang.getString(R.string.RevokeLink), Lang.getString(R.string.Cancel)}, new int[] {OPTION_COLOR_RED, OPTION_COLOR_NORMAL}, new int[] {R.drawable.baseline_link_off_24, R.drawable.baseline_cancel_24}, (itemView2, id2) -> {
+        showOptions(Lang.getString(tdlib.isChannel(chat.id) ? R.string.AreYouSureRevokeInviteLinkChannel : R.string.AreYouSureRevokeInviteLinkGroup), new int[] {R.id.btn_revokeLink, R.id.btn_cancel}, new String[] {Lang.getString(R.string.RevokeLink), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_link_off_24, R.drawable.baseline_cancel_24}, (itemView2, id2) -> {
           if (id2 == R.id.btn_revokeLink) {
             tdlib.client().send(new TdApi.RevokeChatInviteLink(chat.id, link.inviteLink), result -> {
               if (result.getConstructor() == TdApi.ChatInviteLinks.CONSTRUCTOR) {
@@ -5536,7 +5625,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
   }
 
   private void getMessageCount (TdApi.SearchMessagesFilter filter, boolean returnLocal) {
-    tdlib.send(new TdApi.GetChatMessageCount(getChatId(), filter, returnLocal), (messageCount, error) -> {
+    tdlib.send(new TdApi.GetChatMessageCount(getChatId(), filter, /*TODO*/ null, returnLocal), (messageCount, error) -> {
       int count;
       if (error != null) {
         Log.e("TDLib error getMessageCount chatId:%d, filter:%s, returnLocal:%b: %s", getChatId(), filter, returnLocal, TD.toErrorString(error));
@@ -6036,6 +6125,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
           ProfileController.this.supergroup = supergroup;
           checkUsername();
           checkEasterEggs();
+          checkConvertToBroadcastGroup();
           updateHeader(false);
         }
       });

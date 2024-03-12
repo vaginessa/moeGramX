@@ -39,8 +39,6 @@
   <string name="SizeLimitDesc">此功能不稳定，可能会导致一些错误。如果您看到任何有关已发送图片的显示bug，请修改为 **1280px** 并通过存储设置清除缓存。</string>
   <string name="CopiedPhoto">图片已复制至剪切板</string>
   <string name="CopyPhoto">复制图片</string>
-  <string name="CopySticker">复制贴纸</string>
-  <string name="CopiedSticker">贴纸已复制至剪切板</string>
   <string name="Repeat">复读</string>
   <string name="changeHeaderText">自定义标题</string>
   <string name="RememberOptions">记住发送时选项</string>

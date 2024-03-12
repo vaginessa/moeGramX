@@ -39,8 +39,6 @@
   <string name="SizeLimitDesc">Эта функция нестабильна и может повлечь за собой пару визуальных проблем. Выбирите **1280px** и очистите данные через меню хранилища если наблюдаете критические ошибки, связанные с отправкой фото</string>
   <string name="CopiedPhoto">Фотография была скопирована в буфер</string>
   <string name="CopyPhoto">Копировать фото</string>
-  <string name="CopySticker">Копировать стикер</string>
-  <string name="CopiedSticker">Стикер был скопирован в буфер</string>
   <string name="Repeat">Повторить</string>
   <string name="changeHeaderText">Текст заголовка</string>
   <string name="RememberOptions">Запомнить опции отправки</string>

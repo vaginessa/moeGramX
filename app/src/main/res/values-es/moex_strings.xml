@@ -39,8 +39,6 @@
   <string name="SizeLimitDesc">Esta función es inestable y puede causar un poco de errores menores de la interfaz. Cambia a **1280px** y limpia la caché a través de los ajustes de almacenamiento si ves algún error visual con las fotos enviadas.</string>
   <string name="CopiedPhoto">La foto ha sido copiada al portapapeles</string>
   <string name="CopyPhoto">Copiar foto</string>
-  <string name="CopySticker">Copiar sticker</string>
-  <string name="CopiedSticker">Sticker copiado al portapapeles</string>
   <string name="Repeat">Repetir</string>
   <string name="changeHeaderText">Texto de cabecera</string>
   <string name="RememberOptions">Recordar opciones de envío</string>

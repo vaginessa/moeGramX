@@ -37,8 +37,6 @@
   <string name="SizeLimitDesc">Ta funkcja jest niestabilna i może powodować drobne błędy interfejsu. Zmień na **1280px** i wyczyść pamięć podręczną za pomocą ustawień, jeśli wystąpią problemy wizualne z wysyłanymi zdjęciami.</string>
   <string name="CopiedPhoto">Zdjęcie zostało skopiowane do schowka</string>
   <string name="CopyPhoto">Kopiuj zdjęcie</string>
-  <string name="CopySticker">Kopiuj naklejkę</string>
-  <string name="CopiedSticker">Naklejka została skopiowana do schowka</string>
   <string name="Repeat">Powtórz</string>
   <string name="changeHeaderText">Tekst nagłówka</string>
   <string name="RememberOptions">Zapamiętaj opcje wysyłania</string>

@@ -53,8 +53,6 @@
   <string name="SizeLimitDesc">This feature is unstable and can cause a bit of minor interface bugs. Change to **1280px** and clear cache via storage settings if you see any visual bugs with sent photos.</string>
   <string name="CopiedPhoto">Photo has been copied to the clipboard</string>
   <string name="CopyPhoto">Copy photo</string>
-  <string name="CopySticker">Copy sticker</string>
-  <string name="CopiedSticker">Sticker has been copied to the clipboard</string>
   <string name="Repeat">Repeat</string>
   <string name="moexHeaderClient" translatable="false">moeGramX</string>
   <string name="changeHeaderText">Header text</string>

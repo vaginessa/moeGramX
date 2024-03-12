@@ -3678,6 +3678,10 @@ public class TD {
       return new DownloadedFile(voice.voice, "voice.ogg", voice.mimeType, new TdApi.FileTypeVoiceNote());
     }
 
+    public static DownloadedFile valueOf (TdApi.Sticker sticker, String mime) {
+      return new DownloadedFile(sticker.sticker, mime.equals("image/webp") ? "sticker.webp" : mime.equals("video/webm") ? "sticker.webm" : "sticker.tgs", mime, new TdApi.FileTypeSticker());
+    }
+
     public int getFileId () {
       return file.id;
     }
@@ -4084,6 +4088,14 @@ public class TD {
         TdApi.Audio audio = ((TdApi.MessageAudio) msg.content).audio;
         if (audio != null && TD.isFileLoaded(audio.audio)) {
           return DownloadedFile.valueOf(audio);
+        }
+        return null;
+      }
+      case TdApi.MessageSticker.CONSTRUCTOR: {
+        TdApi.Sticker sticker = ((TdApi.MessageSticker) msg.content).sticker;
+        String mime = U.resolveMimeType(sticker.sticker.local.path);
+        if (sticker != null && TD.isFileLoaded(sticker.sticker)) {
+          return DownloadedFile.valueOf(sticker, mime);
         }
         return null;
       }

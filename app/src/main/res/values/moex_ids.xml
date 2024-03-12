@@ -27,7 +27,7 @@
   <item name="btn_sizeLimit1280" type="id" />
   <item name="btn_sizeLimit2560" type="id" />
   <item name="btn_copyPhoto" type="id" />
-  <item name="btn_copySticker" type="id" />
+  <item name="btn_saveSticker" type="id" />
   <item name="btn_msgRepeat" type="id" />
   <item name="btn_savePhoto" type="id" />
   <item name="btn_rememberOptions" type="id" />

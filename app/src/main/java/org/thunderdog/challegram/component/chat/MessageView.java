@@ -975,7 +975,6 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
             }
 
             if (msg.canBeSaved()) {
-              String mime = baseDownloadedFile.getMimeType();
               ids.append(R.id.btn_saveFile);
               if (allMessages.length == 1) {
                 strings.append(R.string.SaveToDownloads);
@@ -983,7 +982,7 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
                 strings.append(Lang.plural(R.string.SaveXToDownloads, downloadedFiles.size()));
               }
               icons.append(R.drawable.baseline_file_download_24);
-              if (mime != null && mime.startsWith("image/")) {
+              if (baseDownloadedFile.getMimeType().startsWith("image/") && baseDownloadedFile.getFileType().getConstructor() != TdApi.FileTypeSticker.CONSTRUCTOR) {
                 ids.append(R.id.btn_savePhoto);
                 if (allMessages.length == 1) {
                   strings.append(R.string.SaveToGallery);
@@ -1055,8 +1054,7 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
     boolean isPhoto = constructor == TdApi.MessagePhoto.CONSTRUCTOR;
     if (msg.canBeSaved() && (isPhoto || constructor == TdApi.MessageDocument.CONSTRUCTOR) && TD.isFileLoaded(msg.getMessage())) {
       TD.DownloadedFile downloadedFile = TD.getDownloadedFile(msg.getMessage());
-      String mime = downloadedFile != null ? downloadedFile.getMimeType() : null;
-      if (isPhoto || (!StringUtils.isEmpty(mime) && mime.startsWith("image"))) {
+      if (isPhoto || (downloadedFile != null && downloadedFile.getMimeType().startsWith("image/"))) {
         if (isMore) {
           ids.append(R.id.btn_copyPhoto);
           strings.append(R.string.CopyPhoto);
@@ -1066,19 +1064,6 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
         }
       }
     }
-
-    if (constructor == TdApi.MessageSticker.CONSTRUCTOR) {
-      TdApi.Sticker sticker = ((TdApi.MessageSticker) content).sticker;
-      if (sticker.format.getConstructor() == TdApi.StickerFormatWebp.CONSTRUCTOR) {
-        if (isMore) {
-          ids.append(R.id.btn_copySticker);
-          strings.append(R.string.CopySticker);
-          icons.append(R.drawable.baseline_content_copy_24);
-        } else {
-          moreOptions++;
-        }
-      }
-  }
 
     if (m.canWriteMessages() && !m.shouldDisallowScreenshots()) {
       if (isMore) {

@@ -5609,15 +5609,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
         TdApi.File file = TD.getFile(selectedMessage);
         tdlib.files().isFileLoadedAndExists(file, isLoadedAndExists -> {
           if (isLoadedAndExists) {
-            runOnUiThreadOptional(() -> SystemUtils.copyFileToClipboard(file, R.string.CopiedPhoto));
-          }
-        });
-      } else if (id == R.id.btn_copySticker) {
-        TdApi.MessageContent content = selectedMessage.getMessage().content;
-        TdApi.File file = ((TdApi.MessageSticker) content).sticker.sticker;
-        tdlib.files().isFileLoadedAndExists(file, isLoadedAndExists -> {
-          if (isLoadedAndExists) {
-            runOnUiThreadOptional(() -> SystemUtils.copyFileToClipboard(file, R.string.CopiedSticker));
+            SystemUtils.copyFileToClipboard(file, R.string.CopiedPhoto);
           }
         });
       } else if (id == R.id.btn_msgRepeat) {

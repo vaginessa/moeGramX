@@ -224,8 +224,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
 
     private boolean reverseMode;
 
-    private long receiverChatId, messageThreadId;
-    private @Nullable TdApi.SavedMessagesTopic savedMessagesTopic;
+    private long receiverChatId, messageThreadId, savedMessagesTopicId;
 
     private boolean areOnlyScheduled, deleteOnExit;
 
@@ -282,8 +281,8 @@ public class MediaViewController extends ViewController<MediaViewController.Args
       return this;
     }
 
-    public Args setSavedMessagesTopic (@Nullable TdApi.SavedMessagesTopic savedMessagesTopic) {
-      this.savedMessagesTopic = savedMessagesTopic;
+    public Args setSavedMessagesTopicId (long savedMessagesTopicId) {
+      this.savedMessagesTopicId = savedMessagesTopicId;
       return this;
     }
 
@@ -313,8 +312,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
   private @Nullable MediaSendDelegate sendDelegate;
   private MediaStack stack;
   private @Nullable TdApi.SearchMessagesFilter filter;
-  private long messageThreadId;
-  private @Nullable TdApi.SavedMessagesTopic savedMessagesTopic;
+  private long messageThreadId, savedMessagesTopicId;
 
   @Override
   public void setArguments (Args args) {
@@ -327,7 +325,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
     this.reverseMode = args.reverseMode;
     this.filter = args.filter;
     this.messageThreadId = args.messageThreadId;
-    this.savedMessagesTopic = args.savedMessagesTopic;
+    this.savedMessagesTopicId = args.savedMessagesTopicId;
   }
 
   public MediaViewThumbLocation getCurrentTargetLocation () {
@@ -1385,11 +1383,15 @@ public class MediaViewController extends ViewController<MediaViewController.Args
       boolean isVideo = item.isVideo();
       if (isVideo) {
         adjustOrTextButton.setIcon(R.drawable.baseline_settings_24, animated, false);
-        cropOrStickerButton.setIcon(R.drawable.baseline_rotate_90_degrees_ccw_24, animated, false);
+        if (!Config.MODERN_VIDEO_TRANSCODING_ENABLED) {
+          cropOrStickerButton.setIcon(R.drawable.baseline_rotate_90_degrees_ccw_24, animated, false);
+        }
         paintOrMuteButton.setIcon(R.drawable.baseline_volume_up_24, animated, item.needMute());
       } else {
         adjustOrTextButton.setIcon(R.drawable.baseline_tune_24, animated, false);
-        cropOrStickerButton.setIcon(R.drawable.baseline_crop_rotate_24, animated, false);
+        if (!Config.MODERN_VIDEO_TRANSCODING_ENABLED) {
+          cropOrStickerButton.setIcon(R.drawable.baseline_crop_rotate_24, animated, false);
+        }
         paintOrMuteButton.setIcon(R.drawable.baseline_brush_24, animated, false);
       }
       // paintButton.setVisibility(isVideo ? View.GONE : View.VISIBLE);
@@ -2089,7 +2091,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
             initialFromMessageId, 0,
             LOAD_COUNT, searchFilter(),
             messageThreadId,
-            savedMessagesTopic
+            savedMessagesTopicId
           );
           tdlib.client().send(searchFunction, foundChatMessagesHandler(chatId, initialFromMessageId, LOAD_COUNT));
         }
@@ -2106,7 +2108,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
             initialFromMessageId, 0,
             LOAD_COUNT_PROFILE, searchFilter(),
             messageThreadId,
-            savedMessagesTopic
+            savedMessagesTopicId
           );
           tdlib.client().send(searchFunction, foundChatMessagesHandler(chatId, initialFromMessageId, LOAD_COUNT_PROFILE));
         }
@@ -2214,7 +2216,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
         messages.nextFromMessageId, 0,
         loadCount, searchFilter(),
         messageThreadId,
-        savedMessagesTopic
+        savedMessagesTopicId
       );
       tdlib.client().send(retryFunction, foundChatMessagesHandler(chatId, messages.nextFromMessageId, loadCount));
       return;
@@ -5324,7 +5326,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
               if (startTimeSeconds == 0 && endTimeSeconds == totalDuration) {
                 changed = item.getSourceGalleryFile().setTrim(-1, -1, (long) (totalDuration * 1_000_000.0));
               } else {
-                changed = item.getSourceGalleryFile().setTrim((long) (startTimeSeconds * 1_000_000.0), (long) (endTimeSeconds * 1_000_000.0), (long) (totalDuration * 1_000_000.0));
+                changed = item.getSourceGalleryFile().setTrim((long) (startTimeSeconds * 1_000_000.0), endTimeSeconds >= totalDuration ? -1 : (long) (endTimeSeconds * 1_000_000.0), (long) (totalDuration * 1_000_000.0));
               }
               if (changed) {
                 boolean needFrameUpdate = item.checkTrim();
@@ -6494,6 +6496,15 @@ public class MediaViewController extends ViewController<MediaViewController.Args
         break;
       }
     }
+    if (section != SECTION_CAPTION) {
+      MediaItem item = stack.getCurrent();
+      if (item != null && item.isVideo()) {
+        MediaCellView cellView = mediaView.findCellForItem(item);
+        if (cellView != null) {
+          cellView.stopPlaying();
+        }
+      }
+    }
   }
 
   private FiltersState getFilterState (boolean createIfEmpty) {
@@ -6515,7 +6526,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
 
   private static final int ANIMATOR_CROP = 18;
 
-  private BoolAnimator cropAnimator = new BoolAnimator(ANIMATOR_CROP, this, AnimatorUtils.DECELERATE_INTERPOLATOR, 140l);
+  private final BoolAnimator cropAnimator = new BoolAnimator(ANIMATOR_CROP, this, AnimatorUtils.DECELERATE_INTERPOLATOR, 140l);
 
   private int sectionAfterCrop = -1;
   private boolean sectionAfterCropReady;
@@ -6576,8 +6587,18 @@ public class MediaViewController extends ViewController<MediaViewController.Args
   }
 
   @Override
-  public boolean allowPreciseRotation () {
-    return (sectionChangeAnimator == null || !sectionChangeAnimator.isAnimating()) && inCrop && (cropAreaView.canRotate());
+  public boolean allowPreciseRotation (RotationControlView view) {
+    if ((sectionChangeAnimator == null || !sectionChangeAnimator.isAnimating()) && inCrop && (cropAreaView.canRotate())) {
+      MediaItem item = stack.getCurrent();
+      if (item.isVideoOrGif()) {
+        context().tooltipManager().builder(view).icon(R.drawable.baseline_warning_24)
+          .show(tdlib, R.string.MediaFeatureUnavailable)
+          .hideDelayed();
+        return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   private static final int ANIMATOR_IMAGE_ROTATE = 19;
@@ -6695,7 +6716,16 @@ public class MediaViewController extends ViewController<MediaViewController.Args
   private final BoolAnimator imageFlipAnimatorVertically = new BoolAnimator(ANIMATOR_IMAGE_FLIP_VERTICALLY, this, AnimatorUtils.DECELERATE_INTERPOLATOR, 250L);
 
   private boolean imageMirrorAnimate (int mirrorFlag, boolean needMirror, boolean animated) {
-    final BoolAnimator animator = mirrorFlag == CropState.FLAG_MIRROR_HORIZONTALLY ?
+    if (mirrorFlag == 0) {
+      return false;
+    }
+    int oldFlags = currentCropState.getFlags();
+    int newFlags = BitwiseUtils.setFlag(oldFlags, mirrorFlag, needMirror);
+    if (oldFlags == newFlags) {
+      return false;
+    }
+
+    final BoolAnimator animator = mirrorFlag == CropState.Flags.MIRROR_HORIZONTALLY ?
       imageFlipAnimatorHorizontally : imageFlipAnimatorVertically;
 
     if (!animator.isAnimating()) {
@@ -6703,7 +6733,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
     } else {
       return false;
     }
-    currentCropState.setFlags(BitwiseUtils.setFlag(currentCropState.getFlags(), mirrorFlag, needMirror));
+    currentCropState.setFlags(newFlags);
     animator.setValue(needMirror, animated);
     return true;
   }
@@ -6713,7 +6743,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
   }
 
   private void applyImageMirror () {
-    cropTargetView.setMirrorFactors(currentCropState.hasFlag(CropState.FLAG_MIRROR_HORIZONTALLY) ? 1 : 0, currentCropState.hasFlag(CropState.FLAG_MIRROR_VERTICALLY) ? 1 : 0);
+    cropTargetView.setMirrorFactors(currentCropState.hasFlag(CropState.Flags.MIRROR_HORIZONTALLY) ? 1 : 0, currentCropState.hasFlag(CropState.Flags.MIRROR_VERTICALLY) ? 1 : 0);
   }
 
   private void cancelImageMirrorAnimations () {
@@ -6781,7 +6811,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
     proportionButton.setActive(false, false);
     int cropRotation = MathUtils.modulo(this.cropRotation + (oldCropState != null ? oldCropState.getRotateBy() : 0), 360);
     cropTargetView.resetState(cropBitmap, cropRotation, currentCropState.getDegreesAroundCenter(), currentPaintState);
-    cropTargetView.setMirrorFactors(currentCropState.hasFlag(CropState.FLAG_MIRROR_HORIZONTALLY) ? 1f : 0f, currentCropState.hasFlag(CropState.FLAG_MIRROR_VERTICALLY) ? 1f : 0f);
+    cropTargetView.setMirrorFactors(currentCropState.hasFlag(CropState.Flags.MIRROR_HORIZONTALLY) ? 1f : 0f, currentCropState.hasFlag(CropState.Flags.MIRROR_VERTICALLY) ? 1f : 0f);
     mirrorButton.setActive(currentCropState.needMirror(), false);
     rotationControlView.reset(currentCropState.getDegreesAroundCenter(), false);
     cropAreaView.resetProportion();
@@ -6794,8 +6824,8 @@ public class MediaViewController extends ViewController<MediaViewController.Args
     }
     MediaItem item = stack.getCurrent();
     ImageReceiver receiver = mediaView.getBaseCell().getImageReceiver();
-    if (item.isVideo() || item.isGif() || receiver == null) {
-      UI.showToast(R.string.MediaTypeUnsupported, Toast.LENGTH_SHORT);
+    if ((!Config.MODERN_VIDEO_TRANSCODING_ENABLED && item.isVideoOrGif()) || receiver == null) {
+      UI.showToast(R.string.MediaFeatureUnavailable, Toast.LENGTH_SHORT);
       return false;
     }
 
@@ -6803,7 +6833,11 @@ public class MediaViewController extends ViewController<MediaViewController.Args
     if (cropBitmap == null || cropBitmap.isRecycled()) {
       return false;
     }
-    cropRotation = item.getSourceGalleryFile().getRotation();
+    if (item.isVideoOrGif()) {
+      cropRotation = 0;
+    } else {
+      cropRotation = item.getSourceGalleryFile().getRotation();
+    }
     currentCropState = obtainCropState(true);
     currentPaintState = obtainPaintState(false);
     oldCropState = new CropState(currentCropState);
@@ -6824,8 +6858,15 @@ public class MediaViewController extends ViewController<MediaViewController.Args
   }
 
   public int getMirrorHorizontallyFlag () {
-    return stack != null && stack.getCurrent() != null && stack.getCurrent().isRotated() ?
-      CropState.FLAG_MIRROR_VERTICALLY : CropState.FLAG_MIRROR_HORIZONTALLY;
+    MediaItem item = stack != null ? stack.getCurrent() : null;
+    if (item == null) {
+      return 0;
+    }
+    if (item.isVideoOrGif()) {
+      return U.isRotated(item.getCropRotateBy()) ? CropState.Flags.MIRROR_VERTICALLY : CropState.Flags.MIRROR_HORIZONTALLY;
+    } else {
+      return item.isRotated() ? CropState.Flags.MIRROR_VERTICALLY : CropState.Flags.MIRROR_HORIZONTALLY;
+    }
   }
 
   private void setMirrorHorizontally (boolean newValue) {
@@ -6907,7 +6948,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
       return;
     }
 
-    if (!item.isVideo()) {
+    if (Config.MODERN_VIDEO_TRANSCODING_ENABLED || !item.isVideoOrGif()) {
       cropRotateByDegrees(-90);
       return;
     }
@@ -6944,8 +6985,8 @@ public class MediaViewController extends ViewController<MediaViewController.Args
   private boolean preparePaint () {
     MediaItem item = stack.getCurrent();
     ImageReceiver receiver = mediaView.getBaseCell().getImageReceiver();
-    if (item.isVideo() || item.isGif() || receiver == null) {
-      UI.showToast(R.string.MediaTypeUnsupported, Toast.LENGTH_SHORT);
+    if (item.isVideoOrGif() || receiver == null) {
+      UI.showToast(R.string.MediaFeatureUnavailable, Toast.LENGTH_SHORT);
       return false;
     }
 
@@ -7392,7 +7433,15 @@ public class MediaViewController extends ViewController<MediaViewController.Args
         if (!currentCropState.isEmpty()) {
           selectMediaIfItsNot();
         }
-        stack.getCurrent().setCropState(currentCropState);
+        MediaItem item = stack.getCurrent();
+        item.setCropState(currentCropState);
+
+        MediaCellView cellView = mediaView != null ? mediaView.findCellForItem(item) : null;
+        if (cellView != null) {
+          cellView.checkCrop();
+          mediaView.requestLayout();
+        }
+
         break;
       }
       case SECTION_PAINT: {
@@ -7601,10 +7650,14 @@ public class MediaViewController extends ViewController<MediaViewController.Args
     } else {
       if (stack.getCurrent().isVideo()) {
         adjustOrTextButton.setIcon(R.drawable.baseline_settings_24, true, section == SECTION_QUALITY);
-        cropOrStickerButton.setIcon(R.drawable.baseline_rotate_90_degrees_ccw_24, true, false);
+        if (!Config.MODERN_VIDEO_TRANSCODING_ENABLED) {
+          cropOrStickerButton.setIcon(R.drawable.baseline_rotate_90_degrees_ccw_24, true, false);
+        }
       } else {
         adjustOrTextButton.setIcon(R.drawable.baseline_tune_24, true, section == SECTION_FILTERS);
-        cropOrStickerButton.setIcon(R.drawable.baseline_crop_rotate_24, true, section == SECTION_CROP);
+        if (!Config.MODERN_VIDEO_TRANSCODING_ENABLED) {
+          cropOrStickerButton.setIcon(R.drawable.baseline_crop_rotate_24, true, section == SECTION_CROP);
+        }
       }
     }
 
@@ -8076,10 +8129,10 @@ public class MediaViewController extends ViewController<MediaViewController.Args
       }
     } else if (viewId == R.id.btn_crop) {
       if (!Config.MASKS_TEXTS_AVAILABLE || currentSection != SECTION_PAINT) {
-        if (stack.getCurrent().isVideo()) {
-          rotateBy90Degrees();
-        } else {
+        if (Config.MODERN_VIDEO_TRANSCODING_ENABLED || !stack.getCurrent().isVideoOrGif()) {
           openCrop();
+        } else {
+          rotateBy90Degrees();
         }
       } else {
         openMasks();

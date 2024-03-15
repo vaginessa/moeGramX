@@ -164,6 +164,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -178,6 +179,7 @@ import me.vkryl.android.widget.FrameLayoutFix;
 import me.vkryl.core.ArrayUtils;
 import me.vkryl.core.BitwiseUtils;
 import me.vkryl.core.ColorUtils;
+import me.vkryl.core.DateUtils;
 import me.vkryl.core.StringUtils;
 import me.vkryl.core.collection.IntList;
 import me.vkryl.core.collection.LongSet;
@@ -220,13 +222,17 @@ public class TdlibUi extends Handler {
         android.app.NotificationManager.IMPORTANCE_MIN, // Silent and minimized
       };
     } else {
-      //noinspection deprecation
-      return new int[] {
-        android.app.Notification.PRIORITY_MAX,
-        android.app.Notification.PRIORITY_HIGH, // (default)
-        android.app.Notification.PRIORITY_LOW,
-      };
+      return getAvailablePriorityListLegacy();
     }
+  }
+
+  @SuppressWarnings("deprecation")
+  private static int[] getAvailablePriorityListLegacy () {
+    return new int[] {
+      android.app.Notification.PRIORITY_MAX,
+      android.app.Notification.PRIORITY_HIGH, // (default)
+      android.app.Notification.PRIORITY_LOW,
+    };
   }
 
   @IdRes
@@ -414,7 +420,7 @@ public class TdlibUi extends Handler {
         }
       });
       // TODO TDLib / server: ability to get totalCount with limit=0
-      tdlib.client().send(new TdApi.SearchChatMessages(chatId, null, senderId, 0, 0, 1, null, 0, null), result -> {
+      tdlib.client().send(new TdApi.SearchChatMessages(chatId, null, senderId, 0, 0, 1, null, 0, 0), result -> {
         if (result.getConstructor() == TdApi.FoundChatMessages.CONSTRUCTOR) {
           int moreCount = ((TdApi.FoundChatMessages) result).totalCount - deletingMessages.length;
           if (moreCount > 0) {
@@ -6449,6 +6455,10 @@ public class TdlibUi extends Handler {
     strings.append(Lang.plural(isSelfChat ? R.string.RemindInXHours : R.string.SendInXHours, 8));
     icons.append(R.drawable.baseline_schedule_24);
 
+    ids.append(R.id.btn_sendScheduled1Yr);
+    strings.append(Lang.plural(isSelfChat ? R.string.RemindInXYears : R.string.SendInXYears, 1));
+    icons.append(R.drawable.baseline_schedule_24);
+
     ids.append(R.id.btn_sendScheduledCustom);
     strings.append(Lang.getString(isSelfChat ? R.string.RemindAtCustomTime : R.string.SendAtCustomTime));
     icons.append(R.drawable.baseline_date_range_24);
@@ -6467,6 +6477,12 @@ public class TdlibUi extends Handler {
         seconds = TimeUnit.HOURS.toSeconds(2);
       } else if (optionId == R.id.btn_sendScheduled8Hr) {
         seconds = TimeUnit.HOURS.toSeconds(8);
+      } else if (optionId == R.id.btn_sendScheduled1Yr) {
+        long tdlibTimeMs = tdlib.currentTimeMillis();
+        Calendar c = DateUtils.calendarInstance(tdlibTimeMs);
+        c.add(Calendar.YEAR, 1);
+        long elapsedMs = c.getTimeInMillis() - tdlibTimeMs;
+        seconds = TimeUnit.MILLISECONDS.toSeconds(elapsedMs);
       } else if (optionId == R.id.btn_sendScheduledCustom) {
         int titleRes, todayRes, tomorrowRes, futureRes;
         if (isSelfChat) {
@@ -6481,7 +6497,7 @@ public class TdlibUi extends Handler {
           futureRes = R.string.SendDateAt;
         }
         context.showDateTimePicker(Lang.getString(titleRes), todayRes, tomorrowRes, futureRes, millis -> {
-          int sendDate = (int) (millis / 1000l); // (int) (tdlib.toTdlibTimeMillis(millis) / 1000l);
+          int sendDate = (int) TimeUnit.MILLISECONDS.toSeconds(millis);
           callback.runWithData(Td.newSendOptions(defaultSendOptions, new TdApi.MessageSchedulingStateSendAtDate(sendDate)));
         }, forcedTheme);
         return true;

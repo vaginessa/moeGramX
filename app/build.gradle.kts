@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import com.android.build.gradle.internal.api.ApkVariantOutputImpl
+import me.vkryl.task.*
 import java.util.*
 
 plugins {
@@ -9,27 +10,27 @@ plugins {
   id("cmake-plugin")
 }
 
-val generateResourcesAndThemes by tasks.registering(me.vkryl.task.GenerateResourcesAndThemesTask::class) {
+val generateResourcesAndThemes by tasks.registering(GenerateResourcesAndThemesTask::class) {
   group = "Setup"
   description = "Generates fresh strings, ids, theme resources and utility methods based on current static files"
 }
-val updateLanguages by tasks.registering(me.vkryl.task.FetchLanguagesTask::class) {
+val updateLanguages by tasks.registering(FetchLanguagesTask::class) {
   group = "Setup"
   description = "Generates and updates all strings.xml resources based on translations.telegram.org"
 }
-val validateApiTokens by tasks.registering(me.vkryl.task.ValidateApiTokensTask::class) {
+val validateApiTokens by tasks.registering(ValidateApiTokensTask::class) {
   group = "Setup"
   description = "Validates some API tokens to make sure they work properly and won't cause problems"
 }
-val updateExceptions by tasks.registering(me.vkryl.task.UpdateExceptionsTask::class) {
+val updateExceptions by tasks.registering(UpdateExceptionsTask::class) {
   group = "Setup"
   description = "Updates exception class names with the app or TDLib version number in order to have separate group on Google Play Developer Console"
 }
-val generatePhoneFormat by tasks.registering(me.vkryl.task.GeneratePhoneFormatTask::class) {
+val generatePhoneFormat by tasks.registering(GeneratePhoneFormatTask::class) {
   group = "Setup"
   description = "Generates utility methods for phone formatting, e.g. +12345678901 -> +1 (234) 567 89-01"
 }
-val checkEmojiKeyboard by tasks.registering(me.vkryl.task.CheckEmojiKeyboardTask::class) {
+val checkEmojiKeyboard by tasks.registering(CheckEmojiKeyboardTask::class) {
   group = "Setup"
   description = "Checks that all supported emoji can be entered from the keyboard"
 }
@@ -38,6 +39,22 @@ val isExperimentalBuild = extra["experimental"] as Boolean? ?: false
 val properties = extra["properties"] as Properties
 val projectName = extra["app_name"] as String
 val versions = extra["versions"] as Properties
+
+data class PullRequest (
+  val id: Long,
+  val commitShort: String,
+  val commitLong: String,
+  val commitDate: Long,
+  val author: String
+) {
+  constructor(id: Long, properties: Properties) : this(
+    id,
+    properties.getOrThrow("pr.$id.commit_short"),
+    properties.getOrThrow("pr.$id.commit_long"),
+    properties.getLongOrThrow("pr.$id.date"),
+    properties.getOrThrow("pr.$id.author")
+  )
+}
 
 android {
   namespace = "org.thunderdog.challegram"
@@ -65,6 +82,115 @@ android {
     buildConfigString("LANGUAGE_PACK", Telegram.LANGUAGE_PACK)
 
     buildConfigString("THEME_FILE_EXTENSION", App.THEME_EXTENSION)
+
+    // Library versions in BuildConfig.java
+
+    var openSslVersion = ""
+    var openSslVersionFull = ""
+    val openSslVersionFile = File(project.rootDir.absoluteFile, "tdlib/source/openssl/include/openssl/opensslv.h")
+    openSslVersionFile.bufferedReader().use { reader ->
+      val regex = Regex("^#\\s*define OPENSSL_VERSION_NUMBER\\s*((?:0x)[0-9a-fAF]+)L?\$")
+      while (true) {
+        val line = reader.readLine() ?: break
+        val result = regex.find(line)
+        if (result != null) {
+          val rawVersion = result.groupValues[1]
+          val version = if (rawVersion.startsWith("0x")) {
+            rawVersion.substring(2).toLong(16)
+          } else {
+            rawVersion.toLong()
+          }
+          // MNNFFPPS: major minor fix patch status
+          val major = ((version shr 28) and 0xf).toInt()
+          val minor = ((version shr 20) and 0xff).toInt()
+          val fix = ((version shr 12) and 0xff).toInt()
+          val patch = ((version shr 4) and 0xff).toInt()
+          val status = (version and 0xf).toInt()
+          if (status != 0xf) {
+            error("Using non-stable OpenSSL version: $rawVersion (status = ${status.toString(16)})")
+          }
+          openSslVersion = "${major}.${minor}"
+          openSslVersionFull = "${major}.${minor}.${fix}${('a'.code - 1 + patch).toChar()}"
+          break
+        }
+      }
+    }
+    if (openSslVersion.isEmpty()) {
+      error("OpenSSL not found!")
+    }
+
+    var tdlibVersion = ""
+    val tdlibCommit = File(project.rootDir.absoluteFile, "tdlib/version.txt").bufferedReader().readLine().take(7)
+    val tdlibVersionFile = File(project.rootDir.absoluteFile, "tdlib/source/td/CMakeLists.txt")
+    tdlibVersionFile.bufferedReader().use { reader ->
+      val regex = Regex("^project\\(TDLib VERSION (\\d+\\.\\d+\\.\\d+) LANGUAGES CXX C\\)$")
+      while (true) {
+        val line = reader.readLine() ?: break
+        val result = regex.find(line)
+        if (result != null) {
+          tdlibVersion = "${result.groupValues[1]}-${tdlibCommit}"
+          break
+        }
+      }
+    }
+    if (tdlibVersion.isEmpty()) {
+      error("TDLib not found!")
+    }
+
+    val pullRequests: List<PullRequest> = properties.getProperty("pr.ids", "").split(',').filter { it.matches(Regex("^[0-9]+$")) }.map {
+      PullRequest(it.toLong(), properties)
+    }.sortedBy { it.id }
+
+    buildConfigString("OPENSSL_VERSION", openSslVersion)
+    buildConfigString("OPENSSL_VERSION_FULL", openSslVersionFull)
+    buildConfigString("TDLIB_VERSION", tdlibVersion)
+
+    val gitVersionProvider = providers.of(GitVersionValueSource::class) {}
+    val git = gitVersionProvider.get()
+
+    buildConfigString("REMOTE_URL", git.remoteUrl)
+    buildConfigString("COMMIT_URL", git.commitUrl)
+    buildConfigString("COMMIT", git.commitHashShort)
+    buildConfigString("COMMIT_FULL", git.commitHashLong)
+    buildConfigLong("COMMIT_DATE", git.commitDate)
+    buildConfigString("SOURCES_URL", properties.getProperty("app.sources_url", git.remoteUrl))
+
+    buildConfigField("long[]", "PULL_REQUEST_ID", "{${
+      pullRequests.joinToString(", ") { it.id.toString() }
+    }}")
+    buildConfigField("long[]", "PULL_REQUEST_COMMIT_DATE", "{${
+      pullRequests.joinToString(", ") { it.commitDate.toString() }
+    }}")
+    buildConfigField("String[]", "PULL_REQUEST_COMMIT", "{${
+      pullRequests.joinToString(", ") { "\"${it.commitShort}\"" }
+    }}")
+    buildConfigField("String[]", "PULL_REQUEST_COMMIT_FULL", "{${
+      pullRequests.joinToString(", ") { "\"${it.commitLong}\"" }
+    }}")
+    buildConfigField("String[]", "PULL_REQUEST_URL", "{${
+      pullRequests.joinToString(", ") { "\"${git.remoteUrl}/pull/${it.id}/files/${it.commitLong}\"" }
+    }}")
+    buildConfigField("String[]", "PULL_REQUEST_AUTHOR", "{${
+      pullRequests.joinToString(", ") { "\"${it.author}\"" }
+    }}")
+
+    // Set application version
+
+    val appVersionOverride = properties.getProperty("app.version", "0").toInt()
+    val appVersion = if (appVersionOverride > 0) appVersionOverride else versions.getOrThrow("version.app").toInt()
+    val majorVersion = versions.getOrThrow("version.major").toInt()
+
+    val timeZone = TimeZone.getTimeZone("UTC")
+    val then = Calendar.getInstance(timeZone)
+    then.timeInMillis = versions.getOrThrow("version.creation").toLong()
+    val now = Calendar.getInstance(timeZone)
+    now.timeInMillis = git.commitDate * 1000L
+    if (now.timeInMillis < then.timeInMillis)
+      error("Invalid commit time!")
+    val minorVersion = monthYears(now, then)
+
+    versionCode = appVersion
+    versionName = "${majorVersion}.${minorVersion}"
   }
 
   // TODO: needs performance tests. Must be used once custom icon sets will be available
@@ -95,7 +221,18 @@ android {
 
   buildTypes {
     release {
-      Config.ANDROIDX_MEDIA_EXTENSIONS.forEach { extension ->
+      arrayOf(
+        "exoplayer",
+        "common",
+        "transformer",
+        "extractor",
+        "muxer",
+        "decoder",
+        "container",
+        "datasource",
+        "database",
+        "effect"
+      ).plus(Config.ANDROIDX_MEDIA_EXTENSIONS).forEach { extension ->
         val proguardFile = file(
           "../thirdparty/androidx-media/libraries/${extension}/proguard-rules.txt"
         )
@@ -118,6 +255,9 @@ android {
           "version.ndk_primary"
         } else {
           "version.ndk_legacy"
+        }
+        if (variant.minSdkVersion < Config.PRIMARY_SDK_VERSION) {
+          proguardFile("proguard-r8-bug-android-4.x-workaround.pro")
         }
         ndkVersion = versions.getProperty(ndkVersionKey)
         ndkPath = File(sdkDirectory, "ndk/$ndkVersion").absolutePath
@@ -203,7 +343,6 @@ dependencies {
   implementation(project(":vkryl:android"))
   implementation(project(":vkryl:td"))
   // AndroidX: https://developer.android.com/jetpack/androidx/versions
-  implementation("androidx.core:core:${LibraryVersions.ANDROIDX_CORE}")
   implementation("androidx.activity:activity:1.8.2")
   implementation("androidx.palette:palette:1.0.0")
   implementation("androidx.recyclerview:recyclerview:1.3.2")
@@ -215,10 +354,10 @@ dependencies {
   implementation("androidx.interpolator:interpolator:1.0.0")
   implementation("androidx.gridlayout:gridlayout:1.0.0")
   // CameraX: https://developer.android.com/jetpack/androidx/releases/camera
-  implementation("androidx.camera:camera-camera2:1.3.1")
-  implementation("androidx.camera:camera-video:1.3.1")
-  implementation("androidx.camera:camera-lifecycle:1.3.1")
-  implementation("androidx.camera:camera-view:1.3.1")
+  implementation("androidx.camera:camera-camera2:${LibraryVersions.ANDROIDX_CAMERA}")
+  implementation("androidx.camera:camera-video:${LibraryVersions.ANDROIDX_CAMERA}")
+  implementation("androidx.camera:camera-lifecycle:${LibraryVersions.ANDROIDX_CAMERA}")
+  implementation("androidx.camera:camera-view:${LibraryVersions.ANDROIDX_CAMERA}")
   // Google Play Services: https://developers.google.com/android/guides/releases
   implementation("com.google.android.gms:play-services-base:17.6.0")
   implementation("com.google.android.gms:play-services-basement:17.6.0")
@@ -235,7 +374,10 @@ dependencies {
   // Play In-App Updates: https://developer.android.com/reference/com/google/android/play/core/release-notes-in_app_updates
   implementation("com.google.android.play:app-update:2.1.0")
   // AndroidX/media: https://github.com/androidx/media/blob/release/RELEASENOTES.md
-  implementation("androidx.media3:media3-exoplayer:1.2.1")
+  implementation("androidx.media3:media3-exoplayer:${LibraryVersions.ANDROIDX_MEDIA}")
+  implementation("androidx.media3:media3-transformer:${LibraryVersions.ANDROIDX_MEDIA}")
+  implementation("androidx.media3:media3-effect:${LibraryVersions.ANDROIDX_MEDIA}")
+  implementation("androidx.media3:media3-common:${LibraryVersions.ANDROIDX_MEDIA}")
   // 17.x version requires minSdk 19 or higher
   implementation("com.google.mlkit:language-id:16.1.1")
   // The Checker Framework: https://checkerframework.org/CHANGELOG.md
@@ -254,7 +396,7 @@ dependencies {
   implementation("com.luckycatlabs:SunriseSunsetCalculator:1.2")
 
   // ZXing: https://github.com/zxing/zxing/blob/master/CHANGES
-  implementation("com.google.zxing:core:3.5.2")
+  implementation("com.google.zxing:core:3.5.3")
 
   // subsampling-scale-image-view: https://github.com/davemorrissey/subsampling-scale-image-view
   implementation("com.davemorrissey.labs:subsampling-scale-image-view-androidx:3.10.0")

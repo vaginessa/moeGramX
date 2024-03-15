@@ -82,7 +82,7 @@ import me.vkryl.td.ChatId;
 import me.vkryl.td.Td;
 
 public class TdlibNotificationStyle implements TdlibNotificationStyleDelegate, FileUpdateListener {
-  private static final boolean USE_GROUPS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH;
+  private static final boolean USE_GROUPS = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
 
   static final long MEDIA_LOAD_TIMEOUT = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ? 15000 : 7500;
   static final long SUMMARY_MEDIA_LOAD_TIMEOUT = 100;
@@ -240,6 +240,7 @@ public class TdlibNotificationStyle implements TdlibNotificationStyleDelegate, F
 
   private static final long CHAT_MAX_DELAY = 200;
 
+  @SuppressWarnings("deprecation")
   protected final int displayChildNotification (NotificationManagerCompat manager, Context context, @NonNull TdlibNotificationHelper helper, int badgeCount, boolean allowPreview, @NonNull TdlibNotificationGroup group, TdlibNotificationSettings settings, int notificationId, boolean isSummary, boolean isRebuild) {
     if (!allowPreview || group.isEmpty()) {
       manager.cancel(notificationId);
@@ -599,8 +600,7 @@ public class TdlibNotificationStyle implements TdlibNotificationStyleDelegate, F
         Log.i(Log.TAG_FCM, "displaying notification with behavior:%d", behavior);
       }
     } else {
-      //noinspection deprecation
-      builder = new NotificationCompat.Builder(UI.getAppContext()/*, notificationChannel*/);
+      builder = new NotificationCompat.Builder(UI.getAppContext());
     }
 
     builder
@@ -634,16 +634,20 @@ public class TdlibNotificationStyle implements TdlibNotificationStyleDelegate, F
     }
 
     if (!Passcode.instance().isLocked()) {
-      if (muteAction != null)
-        builder.addInvisibleAction(muteAction);
-      if (unmuteAction != null)
-        builder.addInvisibleAction(unmuteAction);
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (muteAction != null)
+          builder.addInvisibleAction(muteAction);
+        if (unmuteAction != null)
+          builder.addInvisibleAction(unmuteAction);
+      }
       if (replyAction != null)
         builder.addAction(replyAction);
       if (readAction != null)
         builder.addAction(readAction);
     }
-    builder.extend(new NotificationCompat.CarExtender());
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      builder.extend(new NotificationCompat.CarExtender());
+    }
 
     styleNotification(tdlib, builder, chatId, chat, allowPreview);
 
@@ -782,7 +786,8 @@ public class TdlibNotificationStyle implements TdlibNotificationStyleDelegate, F
       manager.cancel(notificationId);
       return;
     }
-    if (allowPreview) {
+    if (USE_GROUPS && allowPreview) {
+      // Display single child notification as primary notification, as there's no need in a group
       TdlibNotificationGroup singleGroup = null;
       for (TdlibNotification notification : notifications) {
         if (singleGroup == null) {
@@ -996,14 +1001,16 @@ public class TdlibNotificationStyle implements TdlibNotificationStyleDelegate, F
     style.addMessage(new NotificationCompat.MessagingStyle.Message(Lang.getSilentNotificationTitle(messageText, false, tdlib.isSelfChat(chat), tdlib.isMultiChat(chat), tdlib.isChannelChat(chat), isExclusivelyScheduled, isExclusivelySilent), TimeUnit.SECONDS.toMillis(notification.getDate()), person));
   }
 
+  @SuppressWarnings("deprecation")
   public static NotificationCompat.MessagingStyle newMessagingStyle (TdlibNotificationManager context, TdApi.Chat chat, int messageCount, boolean areMentions, boolean arePinned, boolean areOnlyScheduled, boolean areOnlySilent, boolean allowDownload) {
     Tdlib tdlib = context.tdlib();
     TdApi.User user = context.myUser();
     NotificationCompat.MessagingStyle style;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && user != null) {
-      style = new NotificationCompat.MessagingStyle(buildPerson(context, tdlib.isSelfChat(chat), tdlib.isMultiChat(chat), tdlib.isChannelChat(chat), user, null, false, false, allowDownload));
+      Person person = buildPerson(context, tdlib.isSelfChat(chat), tdlib.isMultiChat(chat), tdlib.isChannelChat(chat), user, null, false, false, allowDownload);
+      style = new NotificationCompat.MessagingStyle(person);
     } else {
-      //noinspection deprecation
+      // Person person = new Person.Builder().setName("\u200B" /*zero-width space*/).build();
       style = new NotificationCompat.MessagingStyle("");
     }
 

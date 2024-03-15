@@ -416,6 +416,7 @@ public class Settings {
   public static final long SETTING_FLAG_NO_EMBEDS = 1 << 13;
   public static final long SETTING_FLAG_LIMIT_STICKERS_FPS = 1 << 14;
   public static final long SETTING_FLAG_EXPAND_RECENT_STICKERS = 1 << 15;
+  public static final long SETTING_FLAG_FOREGROUND_SERVICE_ENABLED = 1 << 16;
 
   public static final long EXPERIMENT_FLAG_ALLOW_EXPERIMENTS = 1;
   public static final long EXPERIMENT_FLAG_ENABLE_FOLDERS = 1 << 1;
@@ -3221,11 +3222,16 @@ public class Settings {
     }
 
     public int getOutputFrameRate (int frameRate) {
-      return fps > 0 ? Math.min(frameRate, this.fps) : DEFAULT_FRAME_RATE;
+      return Math.min(
+        frameRate > 0 ? frameRate : DEFAULT_FRAME_RATE,
+        fps > 0 ? fps : DEFAULT_FRAME_RATE
+      );
     }
 
+    public static final double BITRATE_SCALE = 0.109;
+
     public long getOutputBitrate (Settings.VideoSize size, int frameRate, long inputBitrate) {
-      return Math.round((size.majorSize * size.minorSize * frameRate) * 0.089);
+      return Math.round((size.majorSize * size.minorSize * frameRate) * BITRATE_SCALE);
     }
 
     @Nullable

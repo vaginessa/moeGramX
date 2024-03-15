@@ -2,7 +2,7 @@ plugins {
   `kotlin-dsl`
 }
 
-val kotlinVersion = "1.8.20"
+val kotlinVersion = "1.9.23"
 
 gradlePlugin {
   plugins {
@@ -26,17 +26,21 @@ configurations.all {
   resolutionStrategy.eachDependency {
     if (requested.group == "org.jetbrains.kotlin") {
       when (requested.name) {
+        "kotlin-assignment",
+        "kotlin-assignment-compiler-plugin-embeddable",
         "kotlin-stdlib",
         "kotlin-stdlib-common",
+        "kotlin-stdlib-jdk7",
         "kotlin-stdlib-jdk8",
         "kotlin-reflect",
         "kotlin-compiler-embeddable",
         "kotlin-scripting-compiler-embeddable",
-        "kotlin-sam-with-receiver" -> {
+        "kotlin-sam-with-receiver",
+        "kotlin-sam-with-receiver-compiler-plugin-embeddable" -> {
           this.useVersion(kotlinVersion)
         }
         else -> if (requested.version != kotlinVersion) {
-          throw RuntimeException("Incompatible package: ${requested.group}:${requested.name}:${requested.version}, ${target.group}:${target.name}:${target.version}")
+          error("Incompatible package: ${requested.group}:${requested.name}:${requested.version}, ${target.group}:${target.name}:${target.version}")
         }
       }
     }
@@ -45,9 +49,8 @@ configurations.all {
 
 dependencies {
   compileOnly(gradleApi())
-  // 8.1.0-8.1.2 create APKs that do not launch on Android 4.x (armeabi-v7a)
-  implementation("com.android.tools.build:gradle:8.0.2")
-  implementation("com.google.gms:google-services:4.4.0")
+  implementation("com.android.tools.build:gradle:8.3.0")
+  implementation("com.google.gms:google-services:4.4.1")
   implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
   implementation("com.squareup.okhttp3:okhttp:4.12.0")
   implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")

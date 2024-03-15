@@ -376,7 +376,7 @@ public final class TGMessageService extends TGMessageServiceImpl {
               staticResId = R.string.ActionPinnedNoText;
               break;
             default:
-              Td.assertMessageContent_cfe6660a();
+              Td.assertMessageContent_4113f183();
               throw Td.unsupported(message.content);
           }
           String format = Lang.getString(staticResId);
@@ -1492,6 +1492,26 @@ public final class TGMessageService extends TGMessageServiceImpl {
     }
   }
 
+  public TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.ChatEventCustomEmojiStickerSetChanged customEmojiStickerSetChanged) {
+    super(context, msg);
+    setTextCreator(() ->
+      getText(
+        customEmojiStickerSetChanged.newStickerSetId != 0 ?
+          R.string.XChangedGroupEmojiSet :
+          R.string.XRemovedGroupStickerSet,
+        new SenderArgument(sender)
+      )
+    );
+    long stickerSetId = customEmojiStickerSetChanged.newStickerSetId != 0 ?
+      customEmojiStickerSetChanged.newStickerSetId :
+      customEmojiStickerSetChanged.oldStickerSetId;
+    if (stickerSetId != 0) {
+      setOnClickListener(() ->
+        tdlib.ui().showStickerSet(controller(), stickerSetId, openParameters())
+      );
+    }
+  }
+
   public TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.ChatEventLinkedChatChanged linkedChatChanged) {
     super(context, msg);
     TdlibSender linkedChat = new TdlibSender(tdlib, msg.chatId, new TdApi.MessageSenderChat(
@@ -1589,6 +1609,35 @@ public final class TGMessageService extends TGMessageServiceImpl {
     if (chatPhoto != null) {
       setDisplayChatPhoto(chatPhoto);
     }
+  }
+
+  public TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.ChatEventBackgroundChanged backgroundChanged) {
+    super(context, msg);
+    setTextCreator(() -> {
+      if (backgroundChanged.newBackground != null) {
+        if (msg.isOutgoing) {
+          return getText(
+            msg.isChannelPost ? R.string.EventLogChannelBackgroundChangedYou : R.string.EventLogChatBackgroundChangedYou
+          );
+        } else {
+          return getText(
+            msg.isChannelPost ? R.string.EventLogChannelBackgroundChanged : R.string.EventLogChatBackgroundChanged,
+            new SenderArgument(sender)
+          );
+        }
+      } else {
+        if (msg.isOutgoing) {
+          return getText(
+            msg.isChannelPost ? R.string.EventLogChannelBackgroundUnsetYou : R.string.EventLogChatBackgroundUnsetYou
+          );
+        } else {
+          return getText(
+            msg.isChannelPost ? R.string.EventLogChannelBackgroundUnset : R.string.EventLogChatBackgroundUnset,
+            new SenderArgument(sender)
+          );
+        }
+      }
+    });
   }
 
   private void setBackgroundTextCreator (int oldAccentColorId, int newAccentColorId,

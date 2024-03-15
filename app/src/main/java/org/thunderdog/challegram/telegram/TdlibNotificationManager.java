@@ -77,7 +77,8 @@ public class TdlibNotificationManager implements UI.StateListener, Passcode.Lock
   public static final int ID_ONGOING_CALL_NOTIFICATION = Integer.MAX_VALUE - 2;
   public static final int ID_INCOMING_CALL_NOTIFICATION = Integer.MAX_VALUE - 3;
   public static final int ID_PENDING_TASK = Integer.MAX_VALUE - 4;
-  public static final int IDS_COUNT = 5;
+  public static final int ID_TEMPORARY_NOTIFICATION = Integer.MAX_VALUE - 5;
+  public static final int IDS_COUNT = 6;
   public static final int IDS_PER_ACCOUNT = (int) ((long) (Integer.MAX_VALUE - IDS_COUNT) / (long) TdlibAccount.ID_MAX) - 1;
 
   public static int calculateBaseNotificationId (Tdlib tdlib) {
@@ -1919,6 +1920,7 @@ public class TdlibNotificationManager implements UI.StateListener, Passcode.Lock
   private final SparseIntArray loadedSounds;
   private final SparseIntArray sounds;
 
+  @SuppressWarnings("deprecation")
   private void playSound (@RawRes int soundResource, int delayAfter) {
     if (audioManager() == null || Recorder.instance().isRecording()) {
       return;
@@ -1940,9 +1942,11 @@ public class TdlibNotificationManager implements UI.StateListener, Passcode.Lock
             .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
             .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build();
-          soundPool = new SoundPool.Builder().setMaxStreams(MAX_STREAM_COUNT).setAudioAttributes(attributes).build();
+          soundPool = new SoundPool.Builder()
+            .setMaxStreams(MAX_STREAM_COUNT)
+            .setAudioAttributes(attributes)
+            .build();
         } else {
-          //noinspection deprecation
           soundPool = new SoundPool(3, AudioManager.STREAM_SYSTEM, 0);
         }
         soundPool.setOnLoadCompleteListener((soundPool, sampleId, status) -> {

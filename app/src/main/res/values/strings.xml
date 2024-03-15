@@ -1176,6 +1176,7 @@
   <string name="YouSetAutoDeletePostsMonths_one">You set posts to auto-delete in %1$s month</string>
   <string name="YouSetAutoDeletePostsMonths_other">You set posts to auto-delete in %1$s months</string>
 
+  <string name="Caption">Сaption</string>
   <string name="AddCaption">Add a caption…</string>
   <string name="Enhance">Enhance</string>
   <string name="Exposure">Exposure</string>
@@ -2189,6 +2190,16 @@
   <string name="EventLogProfileColorIconUnset">%1$s changed profile color and icon from %2$s to none</string>
   <string name="EventLogProfileColorIconUnsetYou">You changed profile color and icon from %1$s to none</string>
 
+  <string name="EventLogChannelBackgroundChanged">%1$s changed the channel background</string>
+  <string name="EventLogChannelBackgroundChangedYou">You changed the channel background</string>
+  <string name="EventLogChannelBackgroundUnset">%1$s unset the channel background</string>
+  <string name="EventLogChannelBackgroundUnsetYou">You unset the channel background</string>
+
+  <string name="EventLogChatBackgroundChanged">%1$s changed the chat background</string>
+  <string name="EventLogChatBackgroundChangedYou">You changed the chat background</string>
+  <string name="EventLogChatBackgroundUnset">%1$s unset the chat background</string>
+  <string name="EventLogChatBackgroundUnsetYou">You unset the chat background</string>
+
   <string name="UntilX">Until %1$s</string>
   <string name="NetworkUsage">Network Usage</string>
   <string name="RecentStickers">Recently Used</string>
@@ -2203,11 +2214,13 @@
   <string name="DiscardVideoMessageTitle">Discard Video Message</string>
   <string name="DiscardVideoMessageDescription">Are you sure you want to discard your video message?</string>
   <string name="Discard">Discard</string>
-  <string name="MediaTypeUnsupported">Feature is unsupported for this type of media</string>
+  <string name="MediaFeatureUnavailable">Feature is not available for this type of media</string>
   <string name="XMadeGroupHistoryHidden">%1$s made group history hidden for new members</string>
   <string name="XMadeGroupHistoryVisible">%1$s made group history visible for new members</string>
   <string name="XChangedGroupStickerSet">%1$s changed group sticker set</string>
   <string name="XRemovedGroupStickerSet">%1$s removed group sticker set</string>
+  <string name="XChangedGroupEmojiSet">%1$s changed group emoji set</string>
+  <string name="XRemovedGroupEmojiSet">%1$s removed group emoji set</string>
   <string name="ChatHistory">Chat History for New Members</string>
   <string name="ChatHistoryVisibleInfo">New members will see messages that were sent before they joined.</string>
   <string name="ChatHistoryHiddenInfo">New members won\'t see earlier messages.</string>
@@ -3422,6 +3435,9 @@
   <string name="RetrievingMessages">Checking for new messages</string>
   <string name="RetrievingText">Account: %1$s</string>
   <string name="RetrieveMessagesError">Failed to fetch messages. Tap to resolve.</string>
+  <string name="MissingMessages">You may have a new message</string>
+  <string name="MissingMessagesText">Account: %1$s</string>
+  <string name="NotificationChannelMaybe">Missed notifications</string>
 
   <string name="AllowNotifications">Display Notifications Content</string>
   <string name="AllowNotificationsInfo">If enabled, you will see notifications content when app is locked, however, actions such as Reply or Mark as Read will not be available until you unlock the app.</string>
@@ -3639,6 +3655,7 @@
   <string name="DiscardEditMsgHint">Are you sure you want to discard edited message? These changes will be lost.</string>
 
   <string name="DiscardEditCaption">Discard caption</string>
+  <string name="DiscardCaptionHint">Are you sure you want to discard caption? These changes will be lost.</string>
   <string name="DiscardEditCaptionHint">Are you sure you want to discard edited caption? These changes will be lost.</string>
 
   <string name="ChatContentScreenshot">Took a screenshot</string>
@@ -3967,12 +3984,16 @@
   <string name="SendInXMinutes_other">Send in %1$s minutes</string>
   <string name="SendInXHours_one">Send in %1$s hour</string>
   <string name="SendInXHours_other">Send in %1$s hours</string>
+  <string name="SendInXYears_one">Send in %1$s year</string>
+  <string name="SendInXYears_other">Send in %1$s years</string>
   <string name="SendAtCustomTime">Send at specific date…</string>
 
   <string name="RemindInXMinutes_one">Remind in %1$s minute</string>
   <string name="RemindInXMinutes_other">Remind in %1$s minutes</string>
   <string name="RemindInXHours_one">Remind in %1$s hour</string>
   <string name="RemindInXHours_other">Remind in %1$s hours</string>
+  <string name="RemindInXYears_one">Remind in %1$s year</string>
+  <string name="RemindInXYears_other">Remind in %1$s years</string>
   <string name="RemindAtCustomTime">Remind at specific date…</string>
 
   <string name="ScheduledMessages">Scheduled Messages</string>
@@ -5188,5 +5209,12 @@
   <string name="ThisChatCantBeShared">This chat can’t be shared</string>
   <string name="ArchiveAsFolder">Archive as Folder</string>
   <string name="HoldAndDragToReorder">Hold and drag to reorder</string>
+
+  <string name="SlowFileAccess">Slow file access. Message will be sent after reading the files</string>
+
+  <string name="ForegroundSync">Fetch missing notifications</string>
+  <string name="ForegroundSyncDesc">Allow app to show **\"Checking for new messages\"** in the system tray to fetch missing data required to display a notification about a new message.</string>
+  <string name="ForegroundSyncDescOn">You may periodically see **\"Checking for new messages\"** in the system tray while app is closed until all notifications are properly shown.</string>
+  <string name="ForegroundSyncDescOff">You may see **\"You may have a new message\"** notification in the system tray when some notifications couldn\'t be shown.</string>
 
 </resources>

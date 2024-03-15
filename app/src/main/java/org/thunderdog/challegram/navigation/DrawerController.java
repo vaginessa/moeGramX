@@ -91,6 +91,7 @@ import me.vkryl.core.StringUtils;
 import me.vkryl.core.collection.IntList;
 import me.vkryl.core.lambda.CancellableRunnable;
 import me.vkryl.td.ChatId;
+import me.vkryl.td.ChatPosition;
 import moe.kirao.mgx.MoexConfig;
 
 public class DrawerController extends ViewController<Void> implements View.OnClickListener, Settings.ProxyChangeListener, GlobalAccountListener, GlobalCountersListener, BaseView.CustomControllerProvider, BaseView.ActionListProvider, View.OnLongClickListener, TdlibSettingsManager.NotificationProblemListener, TdlibOptionListener, SessionListener, GlobalTokenStateListener {
@@ -259,6 +260,7 @@ public class DrawerController extends ViewController<Void> implements View.OnCli
     }
 
     items.add(new ListItem(ListItem.TYPE_DRAWER_ITEM, R.id.btn_contacts, R.drawable.baseline_perm_contact_calendar_24, R.string.Contacts));
+    items.add(new ListItem(ListItem.TYPE_DRAWER_ITEM, R.id.btn_archive, R.drawable.baseline_archive_24, R.string.OpenArchive));
     if (Settings.instance().chatFoldersEnabled()) {
       items.add(new ListItem(ListItem.TYPE_DRAWER_ITEM, R.id.btn_calls, R.drawable.baseline_call_24, R.string.Calls));
     }
@@ -830,6 +832,8 @@ public class DrawerController extends ViewController<Void> implements View.OnCli
     } else if (viewId == R.id.btn_contacts) {
       openContacts();
       // openEmptyChat();
+    } else if (viewId == R.id.btn_archive) {
+      openArchive();
     } else if (viewId == R.id.btn_calls) {
       openCallList();
     } else if (viewId == R.id.btn_reportBug) {
@@ -966,6 +970,12 @@ public class DrawerController extends ViewController<Void> implements View.OnCli
       c.setNeedSearch();
       openController(c);
     });
+  }
+
+  private void openArchive () {
+    ChatsController c = new ChatsController(context, context.currentTdlib());
+    c.setArguments(new ChatsController.Arguments(ChatPosition.CHAT_LIST_ARCHIVE).setNeedMessagesSearch(true));
+    openController(c);
   }
 
   private void openCallList() {

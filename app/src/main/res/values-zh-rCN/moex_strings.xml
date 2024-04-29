@@ -31,8 +31,6 @@
   <string name="HideCameraButtonInfo">此选项可将相机按钮从消息界面隐藏到附加选项。</string>
   <string name="IncreaseRecents">增加更多的最近贴纸</string>
   <string name="hideMessagesBadge">隐藏未读消息数</string>
-  <string name="ReorderStickers">重新排序已添加贴纸包</string>
-  <string name="ReorderStickersInfo">自动将最近使用过的贴纸包显示在其它贴纸包之前。</string>
   <string name="MoexCuteSettings">一点点可爱可以产生很大的影响 ~</string>
   <string name="changeSizeLimit">图片分辨率</string>
   <string name="changeSizeLimitInfo">更改发送图片的最大分辨率</string>

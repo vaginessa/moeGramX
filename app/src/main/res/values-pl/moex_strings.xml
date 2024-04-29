@@ -30,8 +30,6 @@
   <string name="HideCameraButtonInfo">Ta opcja przynosi przycisk aparatu z panelu wiadomości do menu załączania</string>
   <string name="IncreaseRecents">Zwiększ liczbę ostatnich naklejek</string>
   <string name="hideMessagesBadge">Ukryj plakietkę nieprzeczytanych wiadomości</string>
-  <string name="ReorderStickers">Zmieniaj kolejność zainstalowanych naklejek</string>
-  <string name="ReorderStickersInfo">Automatycznie umieszczaj niedawno używane pakiety naklejek nad innymi.</string>
   <string name="changeSizeLimit">Rozdzielczość zdjęć</string>
   <string name="changeSizeLimitInfo">Zmień rozdzielczość wysyłanych zdjęć</string>
   <string name="SizeLimitDesc">Ta funkcja jest niestabilna i może powodować drobne błędy interfejsu. Zmień na **1280px** i wyczyść pamięć podręczną za pomocą ustawień, jeśli wystąpią problemy wizualne z wysyłanymi zdjęciami.</string>

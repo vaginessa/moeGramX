@@ -31,8 +31,6 @@
   <string name="HideCameraButtonInfo">Опция выше также так же добавляет плавающую кнопку камеры в меню отправки медиа.</string>
   <string name="IncreaseRecents">Увеличить количество недавних</string>
   <string name="hideMessagesBadge">Скрыть метку с кнопки меню</string>
-  <string name="ReorderStickers">Динамический порядок стикеров</string>
-  <string name="ReorderStickersInfo">Автоматически размещать недавно использованные стикеры перед другими</string>
   <string name="MoexCuteSettings">Попробуйте что-нибудь интересное ~</string>
   <string name="changeSizeLimit">Разрешение фото</string>
   <string name="changeSizeLimitInfo">Изменить разрешение отправленных фото</string>

@@ -118,9 +118,6 @@ public class SettingsMoexController extends RecyclerViewController<SettingsMoexC
     } else if (viewId == R.id.btn_IncreaseRecents) {
       MoexConfig.instance().toggleIncreaseRecents();
       adapter.updateValuedSettingById(R.id.btn_IncreaseRecents);
-    } else if (viewId == R.id.btn_reorderStickers) {
-      MoexConfig.instance().toggleEnableReorderStickers();
-      adapter.updateValuedSettingById(R.id.btn_reorderStickers);
     } else if (viewId == R.id.btn_rememberOptions) {
       MoexConfig.instance().toggleRememberSendOptions();
       adapter.updateValuedSettingById(R.id.btn_rememberOptions);
@@ -309,8 +306,6 @@ public class SettingsMoexController extends RecyclerViewController<SettingsMoexC
           view.getToggler().setRadioEnabled(MoexConfig.roundedStickers, isUpdate);
         } else if (itemId == R.id.btn_IncreaseRecents) {
           view.getToggler().setRadioEnabled(MoexConfig.increaseRecents, isUpdate);
-        } else if (itemId == R.id.btn_reorderStickers) {
-          view.getToggler().setRadioEnabled(MoexConfig.reorderStickers, isUpdate);
         } else if (itemId == R.id.btn_rememberOptions) {
           view.getToggler().setRadioEnabled(MoexConfig.rememberOptions, isUpdate);
         } else if (itemId == R.id.btn_typingInstead) {
@@ -402,11 +397,7 @@ public class SettingsMoexController extends RecyclerViewController<SettingsMoexC
         items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_roundedStickers, 0, R.string.RoundedStickers));
         items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
         items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_IncreaseRecents, 0, R.string.IncreaseRecents));
-        items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-        items.add(new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_reorderStickers, 0, R.string.ReorderStickers));
         items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
-        items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getMarkdownString(this, R.string.ReorderStickersInfo), false));
-        items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
 
         items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.ActivityOptions));
         items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));

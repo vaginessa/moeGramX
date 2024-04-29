@@ -31,8 +31,6 @@
   <string name="HideCameraButtonInfo">Esta opción mueve el botón de la cámara del panel de mensajes al menú adjuntar.</string>
   <string name="IncreaseRecents">Incrementar stickers recientes</string>
   <string name="hideMessagesBadge">Ocultar icono de mensajes no leídos</string>
-  <string name="ReorderStickers">Reordenar stickers instalados</string>
-  <string name="ReorderStickersInfo">Colocar automáticamente packs de stickers usados recientemente por encima de otros.</string>
   <string name="MoexCuteSettings">Un pequeño moe va a un largo camino ~</string>
   <string name="changeSizeLimit">Resolución de fotos</string>
   <string name="changeSizeLimitInfo">Cambiar la resolución de las fotos enviadas</string>

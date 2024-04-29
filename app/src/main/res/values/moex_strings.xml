@@ -38,8 +38,6 @@
   <string name="HideCameraButtonInfo">Hide camera button option also adds a camera button to the buttom of the attach menu</string>
   <string name="IncreaseRecents">Increase recent stickers</string>
   <string name="hideMessagesBadge">Hide unread messages badge</string>
-  <string name="ReorderStickers">Reorder installed stickers</string>
-  <string name="ReorderStickersInfo">Automatically place recently used sticker packs above others.</string>
   <string name="moexChannel" translatable="false">\@moeGramX</string>
   <string name="moexChat" translatable="false">\@moe_chat</string>
   <string name="moexUpdates" translatable="false">\@moex_log</string>

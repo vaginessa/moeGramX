@@ -36,7 +36,6 @@ public class MoexConfig {
   public static final String KEY_ROUNDED_STICKERS = "rounded_stickers";
   public static final String KEY_INCREASE_RECENTS_COUNT = "increase_recents_count";
   public static final String KEY_HIDE_MESSAGES_BADGE = "hide_messages_badge";
-  public static final String KEY_ENABLE_REORDER_STICKERS = "reorder_stickers";
   public static final String KEY_CHANGE_SIZE_LIMIT = "change_size_limit";
   public static final String KEY_REMEMBER_SEND_OPTIONS = "remember_send_options";
   public static final String KEY_REMEMBER_SEND_OPTIONS_AUTHOR = "remember_send_options_author";
@@ -69,7 +68,6 @@ public class MoexConfig {
   public static boolean roundedStickers = instance().getBoolean(KEY_ROUNDED_STICKERS, false);
   public static boolean increaseRecents = instance().getBoolean(KEY_INCREASE_RECENTS_COUNT, false);
   public static boolean hideMessagesBadge = instance().getBoolean(KEY_HIDE_MESSAGES_BADGE, false);
-  public static boolean reorderStickers = instance().getBoolean(KEY_ENABLE_REORDER_STICKERS, false);
   public static boolean rememberOptions = instance().getBoolean(KEY_REMEMBER_SEND_OPTIONS, false);
   public static boolean squareAvatar = instance().getBoolean(KEY_SQUARE_AVATAR, false);
   public static boolean blurDrawer = instance().getBoolean(KEY_BLUR_DRAWER, false);
@@ -199,6 +197,12 @@ public class MoexConfig {
     newSettingsListeners.add(listener);
   }
 
+  public void removeNewSettingsListener (SettingsChangeListener listener) {
+    if (newSettingsListeners != null) {
+      newSettingsListeners.remove(listener);
+    }
+  }
+
   private void notifyNewSettingsListeners (String key, Object newSettings, Object oldSettings) {
     if (newSettingsListeners != null) {
       for (SettingsChangeListener listener : newSettingsListeners) {
@@ -254,10 +258,6 @@ public class MoexConfig {
 
   public void toggleHideMessagesBadge () {
     putBoolean(KEY_HIDE_MESSAGES_BADGE, hideMessagesBadge ^= true);
-  }
-
-  public void toggleEnableReorderStickers () {
-    putBoolean(KEY_ENABLE_REORDER_STICKERS, reorderStickers ^= true);
   }
 
   public int getSizeLimit () {

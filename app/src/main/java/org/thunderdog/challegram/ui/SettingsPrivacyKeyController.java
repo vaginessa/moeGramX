@@ -24,9 +24,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.R;
+import org.thunderdog.challegram.component.attach.AvatarPickerManager;
 import org.thunderdog.challegram.component.base.SettingView;
 import org.thunderdog.challegram.component.dialogs.SearchManager;
 import org.thunderdog.challegram.component.user.BubbleView;
@@ -48,6 +50,7 @@ import org.thunderdog.challegram.util.UserPickerMultiDelegate;
 import org.thunderdog.challegram.v.CustomRecyclerView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import me.vkryl.core.StringUtils;
@@ -77,6 +80,8 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
         return R.drawable.baseline_call_24;
       case TdApi.UserPrivacySettingShowBio.CONSTRUCTOR:
         return R.drawable.baseline_info_24;
+      case TdApi.UserPrivacySettingShowBirthdate.CONSTRUCTOR:
+        return R.drawable.baseline_cake_variant_24;
       case TdApi.UserPrivacySettingAllowFindingByPhoneNumber.CONSTRUCTOR:
         return R.drawable.baseline_search_24;
       case TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR:
@@ -94,7 +99,7 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
       case TdApi.UserPrivacySettingAllowPrivateVoiceAndVideoNoteMessages.CONSTRUCTOR:
         return R.drawable.baseline_mic_24;
       default:
-        Td.assertUserPrivacySetting_21d3f4();
+        Td.assertUserPrivacySetting_39dfff4d();
         throw Td.unsupported(privacySetting);
     }
   }
@@ -107,6 +112,8 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
         return R.string.FindingByPhoneNumber;
       case TdApi.UserPrivacySettingShowBio.CONSTRUCTOR:
         return isException ? R.string.EditPrivacyBio : R.string.UserBio;
+      case TdApi.UserPrivacySettingShowBirthdate.CONSTRUCTOR:
+        return isException ? R.string.EditPrivacyBirthdate : R.string.UserBirthdate;
       case TdApi.UserPrivacySettingAllowChatInvites.CONSTRUCTOR:
         return isException ? (isMultiChatException ? R.string.EditPrivacyChatInviteGroup : R.string.EditPrivacyChatInvite) : R.string.GroupsAndChannels;
       case TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR:
@@ -122,7 +129,7 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
       case TdApi.UserPrivacySettingAllowPrivateVoiceAndVideoNoteMessages.CONSTRUCTOR:
         return isException ? R.string.EditPrivacyVoice : R.string.PrivacyVoiceVideoTitle;
       default:
-        Td.assertUserPrivacySetting_21d3f4();
+        Td.assertUserPrivacySetting_39dfff4d();
         throw Td.unsupported(privacyKey);
     }
   }
@@ -148,6 +155,7 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
 
   private SettingsAdapter adapter;
   private PrivacySettings privacyRules, changedPrivacyRules;
+  private @Nullable TdApi.ReadDatePrivacySettings readDatePrivacySetting;
 
   private PrivacySettings currentRules () {
     return changedPrivacyRules != null ? changedPrivacyRules : privacyRules;
@@ -167,13 +175,13 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
         int newMode = currentRules().getMode();
         int modeId;
         switch (newMode) {
-          case PrivacySettings.MODE_CONTACTS:
+          case PrivacySettings.Mode.CONTACTS:
             modeId = R.id.btn_contacts;
             break;
-          case PrivacySettings.MODE_EVERYBODY:
+          case PrivacySettings.Mode.EVERYBODY:
             modeId = R.id.btn_everybody;
             break;
-          case PrivacySettings.MODE_NOBODY:
+          case PrivacySettings.Mode.NOBODY:
             modeId = R.id.btn_nobody;
             break;
           default:
@@ -257,12 +265,17 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
         hintItem = new ListItem(ListItem.TYPE_DESCRIPTION, R.id.btn_description, 0, R.string.WhoCanSeeBioInfo);
         break;
       }
+      case TdApi.UserPrivacySettingShowBirthdate.CONSTRUCTOR: {
+        headerItem = new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.WhoCanSeeBirthdate);
+        hintItem = new ListItem(ListItem.TYPE_DESCRIPTION, R.id.btn_description, 0, R.string.WhoCanSeeBirthdateInfo);
+        break;
+      }
       case TdApi.UserPrivacySettingAllowFindingByPhoneNumber.CONSTRUCTOR: {
         headerItem = new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.WhoCanFindByPhone);
-        hintItem = new ListItem(ListItem.TYPE_DESCRIPTION, R.id.btn_description, 0, rulesType == PrivacySettings.MODE_EVERYBODY ? R.string.WhoCanFindByPhoneInfoEveryone : R.string.WhoCanFindByPhoneInfoContacts);
+        hintItem = new ListItem(ListItem.TYPE_DESCRIPTION, R.id.btn_description, 0, rulesType == PrivacySettings.Mode.EVERYBODY ? R.string.WhoCanFindByPhoneInfoEveryone : R.string.WhoCanFindByPhoneInfoContacts);
         TdApi.User user = tdlib.myUser();
         if (user != null) {
-          internalLinkType = new TdApi.InternalLinkTypeUserPhoneNumber(user.phoneNumber);
+          internalLinkType = new TdApi.InternalLinkTypeUserPhoneNumber(user.phoneNumber, "");
         }
         break;
       }
@@ -291,18 +304,18 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
         break;
       }
       default: {
-        Td.assertUserPrivacySetting_21d3f4();
+        Td.assertUserPrivacySetting_39dfff4d();
         throw Td.unsupported(getArgumentsStrict());
       }
     }
 
     if (!loadingLink && StringUtils.isEmpty(additionalLink) && internalLinkType != null) {
       loadingLink = true;
-      tdlib.client().send(new TdApi.GetInternalLink(internalLinkType, true), result -> runOnUiThreadOptional(() -> {
+      tdlib.send(new TdApi.GetInternalLink(internalLinkType, true), (httpUrl, error) -> runOnUiThreadOptional(() -> {
         if (loadingLink) {
           loadingLink = false;
-          if (result.getConstructor() == TdApi.HttpUrl.CONSTRUCTOR) {
-            additionalLink = ((TdApi.HttpUrl) result).url;
+          if (httpUrl != null) {
+            additionalLink = httpUrl.url;
             updateHints();
           }
           if (!needAsynchronousAnimation()) {
@@ -318,12 +331,12 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
     items.add(headerItem);
 
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
-    items.add(new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_everybody, 0, R.string.Everybody, null, R.id.btn_privacyRadio, rulesType == PrivacySettings.MODE_EVERYBODY));
+    items.add(new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_everybody, 0, R.string.Everybody, null, R.id.btn_privacyRadio, rulesType == PrivacySettings.Mode.EVERYBODY));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-    items.add(new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_contacts, 0, R.string.MyContacts, null, R.id.btn_privacyRadio, rulesType == PrivacySettings.MODE_CONTACTS));
-    if (needNobodyOption() || rulesType == PrivacySettings.MODE_NOBODY) {
+    items.add(new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_contacts, 0, R.string.MyContacts, null, R.id.btn_privacyRadio, rulesType == PrivacySettings.Mode.CONTACTS));
+    if (needNobodyOption() || rulesType == PrivacySettings.Mode.NOBODY) {
       items.add(new ListItem(ListItem.TYPE_SEPARATOR_FULL));
-      items.add(new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_nobody, 0, R.string.Nobody, null, R.id.btn_privacyRadio, rulesType == PrivacySettings.MODE_NOBODY));
+      items.add(new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_nobody, 0, R.string.Nobody, null, R.id.btn_privacyRadio, rulesType == PrivacySettings.Mode.NOBODY));
     }
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
 
@@ -346,11 +359,9 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
       items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.CustomShareSettingsHelp));
     }
 
-    if (getArgumentsStrict().getConstructor() == TdApi.UserPrivacySettingShowProfilePhoto.CONSTRUCTOR) {
-      items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
-      items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_setProfilePhoto, 0, R.string.PublicPhoto));
-      items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
-      items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.PublicPhotoHint));
+    if (needExtraToggle(privacyRules)) {
+      List<ListItem> extraItems = newExtraToggleItems();
+      items.addAll(extraItems);
     }
 
     /*if (privacyKey.getConstructor() == TdApi.UserPrivacySettingAllowCalls.CONSTRUCTOR) {
@@ -383,7 +394,7 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
         if (i != -1) {
           boolean changed;
           ListItem item = adapter.getItems().get(i);
-          if (mode == PrivacySettings.MODE_EVERYBODY && !StringUtils.isEmpty(additionalLink)) {
+          if (mode == PrivacySettings.Mode.EVERYBODY && !StringUtils.isEmpty(additionalLink)) {
             changed = item.setStringIfChanged(Lang.getString(R.string.WhoCanFindByPhoneInfoEveryoneLink, (target, argStart, argEnd, argIndex, needFakeBold) -> new NoUnderlineClickableSpan() {
               @Override
               public void onClick (@NonNull View widget) {
@@ -391,7 +402,7 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
               }
             }, additionalLink));
           } else {
-            changed = item.setStringIfChanged(mode == PrivacySettings.MODE_EVERYBODY ? R.string.WhoCanFindByPhoneInfoEveryone : R.string.WhoCanFindByPhoneInfoContacts);
+            changed = item.setStringIfChanged(mode == PrivacySettings.Mode.EVERYBODY ? R.string.WhoCanFindByPhoneInfoEveryone : R.string.WhoCanFindByPhoneInfoContacts);
           }
           if (changed) {
             adapter.notifyItemChanged(i);
@@ -409,6 +420,10 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
       return;
     }
 
+    updateExtraToggle(newPrivacySettings);
+
+    final boolean isShowStatus = getArgumentsStrict().getConstructor() == TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR;
+
     boolean prevHadNever = adapter.indexOfViewById(R.id.btn_neverAllow) != -1;
     boolean prevHadAlways = adapter.indexOfViewById(R.id.btn_alwaysAllow) != -1;
     boolean prevHadSeparator = prevHadAlways && prevHadNever;
@@ -420,8 +435,8 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
     List<ListItem> items = adapter.getItems();
     int index = adapter.indexOfViewByType(ListItem.TYPE_VALUED_SETTING_COMPACT);
 
-    final int alwaysString = getArgumentsStrict().getConstructor() == TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR ? R.string.AlwaysShareWith : R.string.AlwaysAllow;
-    final int neverString = getArgumentsStrict().getConstructor() == TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR ? R.string.NeverShareWith : R.string.NeverAllow;
+    final int alwaysString = isShowStatus ? R.string.AlwaysShareWith : R.string.AlwaysAllow;
+    final int neverString = isShowStatus ? R.string.NeverShareWith : R.string.NeverAllow;
 
     if (nowHasSeparator == prevHadSeparator) {
       if (!nowHasSeparator) {
@@ -453,6 +468,88 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
     }
   }
 
+  private boolean needExtraToggle (PrivacySettings privacyRules) {
+    switch (getArgumentsStrict().getConstructor()) {
+      case TdApi.UserPrivacySettingShowProfilePhoto.CONSTRUCTOR:
+      case TdApi.UserPrivacySettingShowBirthdate.CONSTRUCTOR:
+        return true;
+      case TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR:
+        return privacyRules.getMode() != PrivacySettings.Mode.EVERYBODY || privacyRules.getMinusUserIdCount() > 0;
+      case TdApi.UserPrivacySettingAllowChatInvites.CONSTRUCTOR:
+        return privacyRules.getMode() != PrivacySettings.Mode.EVERYBODY;
+    }
+    return false;
+  }
+
+  private int getExtraItemCount () {
+    if (getArgumentsStrict().getConstructor() == TdApi.UserPrivacySettingShowBirthdate.CONSTRUCTOR) {
+      return 3;
+    } else {
+      return 4;
+    }
+  }
+
+  private List<ListItem> newExtraToggleItems () {
+    switch (getArgumentsStrict().getConstructor()) {
+      case TdApi.UserPrivacySettingShowProfilePhoto.CONSTRUCTOR: {
+        return Arrays.asList(
+          new ListItem(ListItem.TYPE_SHADOW_TOP),
+          new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_togglePermission, 0, R.string.PublicPhoto),
+          new ListItem(ListItem.TYPE_SHADOW_BOTTOM),
+          new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.PublicPhotoHint)
+        );
+      }
+      case TdApi.UserPrivacySettingShowBirthdate.CONSTRUCTOR: {
+        return Arrays.asList(
+          new ListItem(ListItem.TYPE_SHADOW_TOP),
+          new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_togglePermission, 0, R.string.Birthdate),
+          new ListItem(ListItem.TYPE_SHADOW_BOTTOM)
+        );
+      }
+      case TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR: {
+        return Arrays.asList(
+          new ListItem(ListItem.TYPE_SHADOW_TOP),
+          new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_togglePermission, 0, R.string.HideReadTime),
+          new ListItem(ListItem.TYPE_SHADOW_BOTTOM),
+          new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.HideReadTimeDesc)
+        );
+      }
+      case TdApi.UserPrivacySettingAllowChatInvites.CONSTRUCTOR: {
+        return Arrays.asList(
+          new ListItem(ListItem.TYPE_SHADOW_TOP),
+          new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_togglePermission, 0, Lang.getMarkdownString(this, R.string.AllowPremiumInvite)),
+          new ListItem(ListItem.TYPE_SHADOW_BOTTOM),
+          new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getMarkdownString(this, R.string.AllowPremiumInviteDesc))
+        );
+      }
+      default:
+        throw new IllegalStateException();
+    }
+  }
+
+  private void updateExtraToggle (PrivacySettings newPrivacySettings) {
+    if (newPrivacySettings == null) {
+      // Primary privacy information isn't yet loaded.
+      return;
+    }
+    int index = adapter.indexOfViewById(R.id.btn_togglePermission);
+    boolean prevHadExtraToggle = index != -1;
+    boolean nowHasExtraToggle = needExtraToggle(newPrivacySettings);
+    if (prevHadExtraToggle != nowHasExtraToggle) {
+      if (nowHasExtraToggle) {
+        List<ListItem> extraItems = newExtraToggleItems();
+        int atIndex = adapter.getItems().size();
+        adapter.getItems().addAll(extraItems);
+        adapter.notifyItemRangeInserted(atIndex, extraItems.size());
+        loadExtraToggle();
+      } else {
+        adapter.removeRange(index - 1, getExtraItemCount());
+      }
+    } else if (nowHasExtraToggle) {
+      adapter.updateValuedSettingByPosition(index);
+    }
+  }
+
   @Override
   public boolean needAsynchronousAnimation () {
     return privacyRules == null || loadingLink;
@@ -460,8 +557,8 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
 
   @Override
   public void onPrivacySettingRulesChanged (TdApi.UserPrivacySetting setting, TdApi.UserPrivacySettingRules rules) {
-    tdlib.ui().post(() -> {
-      if (!isDestroyed() && getArgumentsStrict().getConstructor() == setting.getConstructor()) {
+    runOnUiThreadOptional(() -> {
+      if (getArgumentsStrict().getConstructor() == setting.getConstructor()) {
         setPrivacyRules(rules);
       }
     });
@@ -483,12 +580,45 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
           view.setData(count > 0 ? Lang.plural(R.string.xUsers, count) : Lang.getString(R.string.PrivacyAddUsers));
         }
 
-        if (itemId == R.id.btn_setProfilePhoto) {
-          final TdApi.UserFullInfo myUserFull = tdlib.myUserFull();
-          final boolean hasAvatar = myUserFull != null && myUserFull.publicPhoto != null;
+        if (itemId == R.id.btn_togglePermission) {
+          switch (getArgumentsStrict().getConstructor()) {
+            case TdApi.UserPrivacySettingShowProfilePhoto.CONSTRUCTOR: {
+              final TdApi.UserFullInfo myUserFull = tdlib.myUserFull();
+              final boolean hasAvatar = myUserFull != null && myUserFull.publicPhoto != null;
 
-          view.setData(Lang.getString(hasAvatar ? R.string.PublicPhotoSet : R.string.PublicPhotoNoSet));
-          view.setDrawModifier(new ProfilePhotoDrawModifier().requestFiles(view.getComplexReceiver(), tdlib));
+              view.setData(Lang.getString(hasAvatar ? R.string.PublicPhotoSet : R.string.PublicPhotoNoSet));
+              view.setDrawModifier(new ProfilePhotoDrawModifier().requestFiles(view.getComplexReceiver(), tdlib));
+              break;
+            }
+            case TdApi.UserPrivacySettingShowBirthdate.CONSTRUCTOR: {
+              final TdApi.UserFullInfo myUserFull = tdlib.myUserFull();
+              if (myUserFull != null) {
+                if (myUserFull.birthdate != null) {
+                  view.setName(R.string.UserBirthdate);
+                  view.setData(Lang.getBirthdate(myUserFull.birthdate, true, true));
+                } else {
+                  view.setName(Lang.getString(R.string.ReminderSetBirthdateText));
+                  view.setData(Lang.getString(R.string.ReminderSetBirthdate));
+                }
+              } else {
+                view.setData(R.string.LoadingInformation);
+              }
+              break;
+            }
+            case TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR: {
+              view.setEnabledAnimated(readDatePrivacySetting != null, isUpdate);
+              view.getToggler().setRadioEnabled(readDatePrivacySetting != null && !readDatePrivacySetting.showReadDate, isUpdate);
+              break;
+            }
+            case TdApi.UserPrivacySettingAllowChatInvites.CONSTRUCTOR: {
+              view.getToggler().setRadioEnabled(currentRules().needPlusPremium(), isUpdate);
+              break;
+            }
+            default: {
+              Td.assertUserPrivacySetting_39dfff4d();
+              throw Td.unsupported(getArgumentsStrict());
+            }
+          }
         } else {
           view.setDrawModifier(null);
         }
@@ -502,20 +632,14 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
       }
     };
     recyclerView.setAdapter(adapter);
-    tdlib.client().send(new TdApi.GetUserPrivacySettingRules(getArgumentsStrict()), result -> tdlib.ui().post(() -> {
-      if (!isDestroyed()) {
-        switch (result.getConstructor()) {
-          case TdApi.UserPrivacySettingRules.CONSTRUCTOR: {
-            setPrivacyRules((TdApi.UserPrivacySettingRules) result);
-            break;
-          }
-          case TdApi.Error.CONSTRUCTOR: {
-            UI.showError(result);
-            break;
-          }
-        }
+    tdlib.send(new TdApi.GetUserPrivacySettingRules(getArgumentsStrict()), (rules, error) -> runOnUiThreadOptional(() -> {
+      if (error != null) {
+        UI.showError(error);
+      } else {
+        setPrivacyRules(rules);
       }
     }));
+    loadExtraToggle();
 
     subscribedToUserId = tdlib.myUserId();
     tdlib.cache().addUserDataListener(subscribedToUserId, this);
@@ -524,11 +648,24 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
 
   @Override
   public void onUserFullUpdated (long userId, TdApi.UserFullInfo userFull) {
-    UI.post(() -> {
-      if (userId == tdlib.myUserId() && !isDestroyed()) {
-        adapter.updateValuedSettingById(R.id.btn_setProfilePhoto);
+    runOnUiThreadOptional(() -> {
+      if (userId == tdlib.myUserId()) {
+        adapter.updateValuedSettingById(R.id.btn_togglePermission);
       }
     });
+  }
+
+  private void loadExtraToggle () {
+    if (getArgumentsStrict().getConstructor() == TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR) {
+      tdlib.send(new TdApi.GetReadDatePrivacySettings(), (readDatePrivacySetting, error) -> runOnUiThreadOptional(() -> {
+        if (error != null) {
+          UI.showError(error);
+        } else {
+          this.readDatePrivacySetting = readDatePrivacySetting;
+          updateExtraToggle(currentRules());
+        }
+      }));
+    }
   }
 
   @Override
@@ -546,8 +683,7 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
       return;
     }
     TdApi.UserPrivacySettingRules newRules = changedPrivacyRules.toRules();
-
-    tdlib.client().send(new TdApi.SetUserPrivacySettingRules(getArgumentsStrict(), newRules), tdlib.okHandler());
+    tdlib.send(new TdApi.SetUserPrivacySettingRules(getArgumentsStrict(), newRules), tdlib.typedOkHandler());
   }
 
   @Override
@@ -611,11 +747,16 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
           throw Td.unsupported(entry.senderId);
       }
     }
+    long[] pickedUserIds = userIds.get();
+    long[] pickedChatIds = chatIds.get();
     if (userPickMode == R.id.btn_alwaysAllow) {
-      setAllowUsers(userIds.get(), chatIds.get());
+      setAllowUsers(pickedUserIds, pickedChatIds);
     } else if (userPickMode == R.id.btn_neverAllow) {
-      setNeverAllow(userIds.get(), chatIds.get());
+      setNeverAllow(pickedUserIds, pickedChatIds);
+    } else {
+      return;
     }
+    updateExtraToggle(changedPrivacyRules);
   }
 
   @Override
@@ -632,33 +773,63 @@ public class SettingsPrivacyKeyController extends RecyclerViewController<TdApi.U
         final int desiredMode;
         final int modeId = adapter.getCheckIntResults().get(item.getCheckId());
         if (modeId == R.id.btn_everybody) {
-          desiredMode = PrivacySettings.MODE_EVERYBODY;
+          desiredMode = PrivacySettings.Mode.EVERYBODY;
         } else if (modeId == R.id.btn_contacts) {
-          desiredMode = PrivacySettings.MODE_CONTACTS;
+          desiredMode = PrivacySettings.Mode.CONTACTS;
         } else if (modeId == R.id.btn_nobody) {
-          desiredMode = PrivacySettings.MODE_NOBODY;
+          desiredMode = PrivacySettings.Mode.NOBODY;
         } else {
           return;
         }
         int prevMode = currentRules().getMode();
-        changedPrivacyRules = PrivacySettings.valueOf(currentRules().toggleGlobal(desiredMode));
+        boolean plusPremium = getArgumentsStrict().getConstructor() == TdApi.UserPrivacySettingAllowChatInvites.CONSTRUCTOR && desiredMode == PrivacySettings.Mode.CONTACTS;
+        changedPrivacyRules = PrivacySettings.valueOf(currentRules().toggleGlobal(desiredMode, plusPremium));
         updateRulesState(changedPrivacyRules);
       }
-    } else if (viewId == R.id.btn_setProfilePhoto) {
-      getAvatarPickerManager().showMenuForProfile(null, true);
+    } else if (viewId == R.id.btn_togglePermission) {
+      switch (getArgumentsStrict().getConstructor()) {
+        case TdApi.UserPrivacySettingShowProfilePhoto.CONSTRUCTOR: {
+          getAvatarPickerManager().showMenuForProfile(null, true);
+          break;
+        }
+        case TdApi.UserPrivacySettingShowBirthdate.CONSTRUCTOR: {
+          tdlib.ui().openBirthdateEditor(SettingsPrivacyKeyController.this, v, TdlibUi.BirthdateOpenOrigin.PRIVACY_SETTINGS);
+          break;
+        }
+        case TdApi.UserPrivacySettingShowStatus.CONSTRUCTOR: {
+          if (readDatePrivacySetting != null) {
+            readDatePrivacySetting.showReadDate = !adapter.toggleView(v);
+            TdApi.ReadDatePrivacySettings newPrivacySettings = new TdApi.ReadDatePrivacySettings(readDatePrivacySetting.showReadDate);
+            tdlib.send(new TdApi.SetReadDatePrivacySettings(newPrivacySettings), tdlib.typedOkHandler(() -> {
+              tdlib.listeners().updateReadDatePrivacySettings(newPrivacySettings);
+            }));
+          }
+          break;
+        }
+        case TdApi.UserPrivacySettingAllowChatInvites.CONSTRUCTOR: {
+          boolean plusPremium = adapter.toggleView(v);
+          PrivacySettings rules = currentRules();
+          changedPrivacyRules = PrivacySettings.valueOf(rules.togglePlusPremium(plusPremium));
+          updateRulesState(changedPrivacyRules);
+          break;
+        }
+        default: {
+          throw new IllegalStateException();
+        }
+      }
     }
   }
 
   @Override
   public void onActivityResult (int requestCode, int resultCode, Intent data) {
-    getAvatarPickerManager().handleActivityResult(requestCode, resultCode, data, TdlibUi.AvatarPickerManager.MODE_PROFILE_PUBLIC, null, null);
+    getAvatarPickerManager().handleActivityResult(requestCode, resultCode, data, AvatarPickerManager.MODE_PROFILE_PUBLIC, null, null);
   }
 
-  private TdlibUi.AvatarPickerManager avatarPickerManager;
+  private AvatarPickerManager avatarPickerManager;
 
-  private TdlibUi.AvatarPickerManager getAvatarPickerManager () {
+  private AvatarPickerManager getAvatarPickerManager () {
     if (avatarPickerManager == null) {
-      avatarPickerManager = new TdlibUi.AvatarPickerManager(this);
+      avatarPickerManager = new AvatarPickerManager(this);
     }
     return avatarPickerManager;
   }

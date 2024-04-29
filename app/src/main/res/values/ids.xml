@@ -425,6 +425,8 @@
   <item type="id" name="btn_hidden" />
   <item type="id" name="btn_visible" />
   <item type="id" name="btn_channelType" />
+  <item type="id" name="btn_botDescription" />
+  <item type="id" name="btn_botEdit" />
   <item type="id" name="btn_linkedChat" />
   <item type="id" name="btn_paintType" />
   <item type="id" name="btn_recentActions" />
@@ -529,6 +531,8 @@
   <item type="id" name="btn_night" />
   <item type="id" name="btn_bubble" />
   <item type="id" name="btn_notifications" />
+  <item type="id" name="btn_birthdate" />
+  <item type="id" name="btn_addBirthdate" />
   <item type="id" name="btn_groupsInCommon" />
   <item type="id" name="btn_chatBackground" />
   <item type="id" name="btn_forcePlainChannels" />
@@ -543,6 +547,9 @@
   <item type="id" name="btn_blockedSenders" />
   <item type="id" name="btn_sessions" />
   <item type="id" name="btn_2fa" />
+  <item type="id" name="btn_loginEmail" />
+  <item type="id" name="btn_changeEmail" />
+  <item type="id" name="btn_suggestion" />
   <item type="id" name="btn_accountTTL" />
   <item type="id" name="btn_loggedWebsites" />
   <item type="id" name="btn_clearPaymentAndShipping" />
@@ -553,6 +560,7 @@
   <item type="id" name="btn_declineCall" />
   <item type="id" name="btn_lastSeen" />
   <item type="id" name="btn_privacyRule" />
+  <item type="id" name="btn_extraPrivacyRule" />
   <item type="id" name="btn_forwardLink" />
   <item type="id" name="btn_profilePhoto" />
   <item type="id" name="btn_calls" />
@@ -1005,8 +1013,9 @@
   <item type="id" name="btn_log_tags" />
   <item type="id" name="btn_log_android" />
 
-  <!--<item type="id" name="btn_ton" />-->
   <item type="id" name="btn_tdlib" />
+  <item type="id" name="btn_webrtc" />
+  <item type="id" name="btn_tgcalls" />
   <item type="id" name="btn_pushService" />
   <item type="id" name="btn_tdlib_verbosity" />
   <item type="id" name="btn_tdlib_resetLogSettings" />
@@ -1131,6 +1140,7 @@
   <item type="id" name="btn_messageStickerSet" />
   <item type="id" name="btn_messageEdit" />
   <item type="id" name="btn_messageCall" />
+  <item type="id" name="btn_messageShareCallLogs" />
   <item type="id" name="btn_messageRetractVote" />
   <item type="id" name="btn_messagePollStop" />
   <item type="id" name="btn_messageApplyLocalization" />

@@ -76,12 +76,13 @@ import me.vkryl.core.StringUtils;
 import me.vkryl.core.lambda.RunnableData;
 import me.vkryl.td.Td;
 
+// TODO: Rework properly from scratch with the app redesign.
 public class PasswordController extends ViewController<PasswordController.Args> implements View.OnClickListener, FactorAnimator.Target, MaterialEditTextGroup.EmptyListener, MaterialEditTextGroup.DoneListener, MaterialEditTextGroup.TextChangeListener, AuthorizationListener, Handler.Callback {
   public static final int MODE_EDIT = 0;
   public static final int MODE_NEW = 1;
   public static final int MODE_UNLOCK_EDIT = 2;
   public static final int MODE_EMAIL_RECOVERY = 3;
-  public static final int MODE_EMAIL_CHANGE = 4;
+  public static final int MODE_2FA_RECOVERY_EMAIL_CHANGE = 4;
   public static final int MODE_LOGIN = 5;
   public static final int MODE_LOGIN_EMAIL_RECOVERY = 6;
   public static final int MODE_CODE = 7;
@@ -92,6 +93,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
   public static final int MODE_CODE_EMAIL = 12;
   public static final int MODE_EMAIL_LOGIN = 13;
   public static final int MODE_CUSTOM_CONFIRM = 14;
+  public static final int MODE_LOGIN_EMAIL_CHANGE = 15;
 
   private final Handler handler = new Handler(this);
 
@@ -263,8 +265,11 @@ public class PasswordController extends ViewController<PasswordController.Args> 
       case MODE_CODE_PHONE_CONFIRM: {
         return Lang.getString(R.string.CancelAccountReset);
       }
-      case MODE_EMAIL_CHANGE: {
+      case MODE_2FA_RECOVERY_EMAIL_CHANGE: {
         return Lang.getString(R.string.ChangeRecoveryEmail);
+      }
+      case MODE_LOGIN_EMAIL_CHANGE: {
+        return Lang.getString(R.string.LoginEmail);
       }
     }
     return null; // UI.getString(mode == MODE_EMAIL_RECOVERY ? R.string.PasswordRecovery : mode == MODE_UNLOCK_EDIT ? R.string.EnterPassword : R.string.YourPassword);
@@ -305,7 +310,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
 
   private int getDoneIcon () {
     switch (mode) {
-      case MODE_EMAIL_CHANGE:
+      case MODE_2FA_RECOVERY_EMAIL_CHANGE:
       case MODE_CODE_CHANGE:
       case MODE_CODE_PHONE_CONFIRM:
       case MODE_CONFIRM:
@@ -313,6 +318,8 @@ public class PasswordController extends ViewController<PasswordController.Args> 
         return R.drawable.baseline_check_24;
       case MODE_CUSTOM_CONFIRM:
         return confirmDelegate.needNext() ? R.drawable.baseline_arrow_forward_24 : R.drawable.baseline_check_24;
+      case MODE_LOGIN_EMAIL_CHANGE:
+        return R.drawable.baseline_arrow_forward_24;
     }
     return R.drawable.baseline_arrow_forward_24;
   }
@@ -338,7 +345,8 @@ public class PasswordController extends ViewController<PasswordController.Args> 
     editText.setEmptyListener(this);
     editText.setTextListener(this);
     switch (mode) {
-      case MODE_EMAIL_CHANGE:
+      case MODE_2FA_RECOVERY_EMAIL_CHANGE:
+      case MODE_LOGIN_EMAIL_CHANGE:
       case MODE_EMAIL_LOGIN: {
         editText.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
         break;
@@ -382,8 +390,12 @@ public class PasswordController extends ViewController<PasswordController.Args> 
         editText.setHint(R.string.EnterEmail);
         break;
       }
-      case MODE_EMAIL_CHANGE: {
+      case MODE_2FA_RECOVERY_EMAIL_CHANGE: {
         editText.setHint(R.string.EnterANewEmail);
+        break;
+      }
+      case MODE_LOGIN_EMAIL_CHANGE: {
+        editText.setHint(R.string.ChangeEmailHint);
         break;
       }
       case MODE_NEW: {
@@ -511,8 +523,12 @@ public class PasswordController extends ViewController<PasswordController.Args> 
         hint = Lang.getString(R.string.LoginEmailInfo);
         break;
       }
-      case MODE_EMAIL_CHANGE: {
+      case MODE_2FA_RECOVERY_EMAIL_CHANGE: {
         hint = Lang.getString(R.string.YourEmailInfo);
+        break;
+      }
+      case MODE_LOGIN_EMAIL_CHANGE: {
+        hint = Lang.getMarkdownString(this, R.string.ChangeEmailInfo);
         break;
       }
     }
@@ -639,16 +655,26 @@ public class PasswordController extends ViewController<PasswordController.Args> 
           executeOnUiThreadOptional(onAttestationFailure);
         } else {
           TDLib.Tag.safetyNet("Attestation success: %s", attestationResult);
-          tdlib.client().send(new TdApi.SendAuthenticationFirebaseSms(attestationResult), result -> {
+          TdApi.Function<TdApi.Ok> function;
+          switch (mode) {
+            case MODE_CODE_PHONE_CONFIRM:
+            case MODE_CODE_CHANGE:
+              function = new TdApi.SendPhoneNumberFirebaseSms(attestationResult);
+              break;
+            default:
+              function = new TdApi.SendAuthenticationFirebaseSms(attestationResult);
+              break;
+          }
+          tdlib.send(function, (ok, error) -> {
             runOnUiThreadOptional(() -> {
-              if (result.getConstructor() == TdApi.Ok.CONSTRUCTOR) {
+              if (error != null) {
+                lastSafetyNetError = TD.toErrorString(error);
+                TDLib.Tag.safetyNet("Attestation failed by server, retrying once: %s", TD.toErrorString(error));
+                requestNextCodeType(false, true);
+              } else {
                 isFirebaseSmsSent = true;
                 updateAuthState();
                 TDLib.Tag.safetyNet("Attestation finished successfully");
-              } else {
-                lastSafetyNetError = TD.toErrorString(result);
-                TDLib.Tag.safetyNet("Attestation failed by server, retrying once: %s", TD.toErrorString(result));
-                requestNextCodeType(false, true);
               }
             });
           });
@@ -744,8 +770,14 @@ public class PasswordController extends ViewController<PasswordController.Args> 
   @Override
   public void onTextChanged (MaterialEditTextGroup v, CharSequence charSequence) {
     String text = charSequence.toString();
-    if (mode == MODE_NEW && step == STEP_EMAIL_RECOVERY) {
+    if ((mode == MODE_NEW && step == STEP_EMAIL_RECOVERY)) {
       setIsInputOK(Strings.isValidEmail(text));
+    } else if (mode == MODE_LOGIN_EMAIL_CHANGE) {
+      if (emailAddressAuthenticationCodeInfo != null) {
+        setIsInputOK(!StringUtils.isEmpty(text));
+      } else {
+        setIsInputOK(Strings.isValidEmail(text));
+      }
     } else if (mode == MODE_EMAIL_RECOVERY || mode == MODE_LOGIN_EMAIL_RECOVERY) {
       setIsInputOK(Strings.getNumber(text).length() >= 6);
     } else if ((mode == MODE_CODE || mode == MODE_CODE_CHANGE || mode == MODE_CODE_PHONE_CONFIRM || mode == MODE_CODE_EMAIL) && Strings.getNumberLength(text) >= TD.getCodeLength(authState)) {
@@ -762,7 +794,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
     if (ignoreNextEmpty) {
       ignoreNextEmpty = false;
     } else {
-      if ((mode != MODE_NEW || step != STEP_EMAIL_RECOVERY) && mode != MODE_EMAIL_RECOVERY && mode != MODE_LOGIN_EMAIL_RECOVERY) {
+      if ((mode != MODE_NEW || step != STEP_EMAIL_RECOVERY) && mode != MODE_EMAIL_RECOVERY && mode != MODE_LOGIN_EMAIL_RECOVERY && mode != MODE_LOGIN_EMAIL_CHANGE) {
         animateNextFactor(isEmpty && ((mode != MODE_NEW && mode != MODE_EDIT) || step != STEP_PASSWORD_HINT) ? 0f : 1f);
       }
     }
@@ -897,8 +929,8 @@ public class PasswordController extends ViewController<PasswordController.Args> 
     setForgetText(Lang.getString(res));
   }
 
-  private void setForgetText (@Nullable String forgetText) {
-    if (forgetText == null || forgetText.isEmpty()) {
+  private void setForgetText (@Nullable CharSequence forgetText) {
+    if (StringUtils.isEmpty(forgetText)) {
       animateForget(0f);
       if (forgotView.getAlpha() == 0f) {
         forgotView.setText("");
@@ -1000,10 +1032,8 @@ public class PasswordController extends ViewController<PasswordController.Args> 
     TdApi.Function<?> function;
     switch (mode) {
       case MODE_CODE_PHONE_CONFIRM:
-        function = new TdApi.ResendPhoneNumberConfirmationCode();
-        break;
       case MODE_CODE_CHANGE:
-        function = new TdApi.ResendChangePhoneNumberCode();
+        function = new TdApi.ResendPhoneNumberCode();
         break;
       default:
         function = new TdApi.ResendAuthenticationCode();
@@ -1110,7 +1140,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
           state.pendingResetDate = 0;
           ViewController<?> c = findLastStackItemById(R.id.controller_privacySettings);
           if (c instanceof SettingsPrivacyController) {
-            tdlib.client().send(new TdApi.GetPasswordState(), ((SettingsPrivacyController) c));
+            ((SettingsPrivacyController) c).reloadPasswordState();
           }
           navigateBack();
           openAlert(R.string.ResetPassword, R.string.RestorePasswordResetPasswordOk);
@@ -1136,6 +1166,11 @@ public class PasswordController extends ViewController<PasswordController.Args> 
         }
         case TdApi.Error.CONSTRUCTOR: {
           context().tooltipManager().builder(forgotView).show(tdlib, TD.toErrorString(object));
+          break;
+        }
+        default: {
+          Td.assertResetPasswordResult_7d1022f2();
+          break;
         }
       }
     }));
@@ -1414,33 +1449,37 @@ public class PasswordController extends ViewController<PasswordController.Args> 
 
   private boolean isInputOK;
 
-  private void setIsInputOK (boolean isEmail) {
-    if (this.isInputOK != isEmail) {
-      this.isInputOK = isEmail;
-      animateNextFactor(isEmail ? 1f : 0f);
+  private void setIsInputOK (boolean isInputOK) {
+    if (this.isInputOK != isInputOK) {
+      this.isInputOK = isInputOK;
+      animateNextFactor(isInputOK ? 1f : 0f);
     }
   }
 
-  private void setNewRecoveryEmail (String email) {
+  private void proceedOptionally (Runnable act) {
     if (inProgress) {
       return;
     }
-
     if (tdlib.context().watchDog().isOffline()) {
       UI.showNetworkPrompt();
       return;
     }
-
     setInProgress(true);
-    final String oldPassword = getArguments() != null ? getArguments().oldPassword : null;
-    tdlib.send(new TdApi.SetRecoveryEmailAddress(oldPassword, email), (passwordState, error) -> runOnUiThreadOptional(() -> {
-      setInProgress(false);
-      if (error != null) {
-        setHintText(TD.toErrorString(error), true);
-      } else {
-        processNewPasswordState(passwordState, oldPassword);
-      }
-    }));
+    act.run();
+  }
+
+  private void setNewRecoveryEmail (String email) {
+    proceedOptionally(() -> {
+      final String oldPassword = getArguments() != null ? getArguments().oldPassword : null;
+      tdlib.send(new TdApi.SetRecoveryEmailAddress(oldPassword, email), (passwordState, error) -> runOnUiThreadOptional(() -> {
+        setInProgress(false);
+        if (error != null) {
+          setHintText(TD.toErrorString(error), true);
+        } else {
+          processNewPasswordState(passwordState, oldPassword);
+        }
+      }));
+    });
   }
 
   private void nextPasswordStep () {
@@ -1507,12 +1546,11 @@ public class PasswordController extends ViewController<PasswordController.Args> 
     TdApi.Function<?> function;
     switch (mode) {
       case MODE_CODE_PHONE_CONFIRM:
-        function = new TdApi.CheckPhoneNumberConfirmationCode(code);
-        break;
       case MODE_CODE_CHANGE:
-        function = new TdApi.CheckChangePhoneNumberCode(code);
+        function = new TdApi.CheckPhoneNumberCode(code);
         break;
       case MODE_CODE_EMAIL:
+      case MODE_LOGIN_EMAIL_CHANGE:
         // TODO sign in with Google (+ Apple ID?)
         function = new TdApi.CheckAuthenticationEmailCode(new TdApi.EmailAddressAuthenticationCode(code));
         break;
@@ -1651,7 +1689,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
         }
         break;
       }
-      case MODE_EMAIL_CHANGE: {
+      case MODE_2FA_RECOVERY_EMAIL_CHANGE: {
         if (Strings.isValidEmail(input) && getArguments() != null) {
           if (input.equals(getArguments().email) && (state == null || state.recoveryEmailAddressCodeInfo == null)) {
             setHintText(R.string.EmailMatchesOldOne, true);
@@ -1659,6 +1697,45 @@ public class PasswordController extends ViewController<PasswordController.Args> 
             setNewRecoveryEmail(input);
           }
         }
+        break;
+      }
+      case MODE_LOGIN_EMAIL_CHANGE: {
+        if (!isInputOK) {
+          return;
+        }
+        proceedOptionally(() -> {
+          if (emailAddressAuthenticationCodeInfo != null) {
+            tdlib.send(new TdApi.CheckLoginEmailAddressCode(new TdApi.EmailAddressAuthenticationCode(input)), (ok, error) -> runOnUiThreadOptional(() -> {
+              setInProgress(false);
+              if (error != null) {
+                setHintText(TD.toErrorString(error), true);
+              } else {
+                ViewController<?> c = findLastStackItemById(R.id.controller_privacySettings);
+                if (c instanceof SettingsPrivacyController) {
+                  ((SettingsPrivacyController) c).reloadPasswordState();
+                }
+                navigateBack();
+              }
+            }));
+          } else {
+            tdlib.send(new TdApi.SetLoginEmailAddress(input), (emailAddressAuthenticationCodeInfo, error) -> runOnUiThreadOptional(() -> {
+              setInProgress(false);
+              if (error != null) {
+                setHintText(TD.toErrorString(error), true);
+              } else {
+                this.emailAddressAuthenticationCodeInfo = emailAddressAuthenticationCodeInfo;
+                ignoreNextEmpty = true;
+                animateNextFactor(0f);
+                editText.resetWithHint(R.string.EnterCode, false, () -> {
+                  nextButton.setIcon(R.drawable.baseline_check_24);
+                  editText.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
+                  setForgetText(R.string.ChangeEmailResend);
+                  setHintText(Lang.getStringBold(R.string.ChangeEmailConfirmCode, input), false);
+                });
+              }
+            }));
+          }
+        });
         break;
       }
       case MODE_EMAIL_LOGIN: {
@@ -1673,8 +1750,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
       case MODE_CODE_CHANGE:
       case MODE_CODE_PHONE_CONFIRM:
       case MODE_CODE_EMAIL: {
-        String number = Strings.getNumber(input);
-        sendCode(number);
+        sendCode(input);
         break;
       }
       case MODE_NEW:
@@ -1684,6 +1760,21 @@ public class PasswordController extends ViewController<PasswordController.Args> 
       }
     }
   }
+
+  private boolean hasUnsavedChanges () {
+    return (mode == MODE_LOGIN_EMAIL_CHANGE && emailAddressAuthenticationCodeInfo != null);
+  }
+
+  @Override
+  public boolean onBackPressed (boolean fromTop) {
+    if (hasUnsavedChanges()) {
+      showUnsavedChangesPromptBeforeLeaving(this::navigateBack);
+      return true;
+    }
+    return super.onBackPressed(fromTop);
+  }
+
+  private TdApi.EmailAddressAuthenticationCodeInfo emailAddressAuthenticationCodeInfo;
 
   private void showNoRecoveryEmailAlert () {
     openAlert(R.string.Warning, R.string.YourEmailSkipWarningText, (dialog, which) -> setPassword(currentPassword, passwordHint, null));
@@ -1718,6 +1809,18 @@ public class PasswordController extends ViewController<PasswordController.Args> 
         showNoRecoveryEmailAlert();
         break;
       }
+      case MODE_LOGIN_EMAIL_CHANGE: {
+        if (emailAddressAuthenticationCodeInfo != null) {
+          tdlib.send(new TdApi.ResendLoginEmailAddressCode(), (emailAddressAuthenticationCodeInfo, error) -> runOnUiThreadOptional(() -> {
+            if (error != null) {
+              showErrorTooltip(forgotView, TD.toErrorString(error));
+            } else {
+              showInfoTooltip(forgotView, Lang.getStringBold(R.string.ChangeEmailResendConfirm, emailAddressAuthenticationCodeInfo.emailAddressPattern));
+            }
+          }));
+        }
+        break;
+      }
     }
   }
 
@@ -1737,7 +1840,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
 
   @Override
   public boolean canSlideBackFrom (NavigationController navigationController, float x, float y) {
-    return !inProgress;
+    return !inProgress && !hasUnsavedChanges();
   }
 
   private void setPassword (final String password, final String passwordHint, String email) {
@@ -1782,7 +1885,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
         navigateTo(c);
         return;
       }
-    } else if (mode == MODE_EDIT || mode == MODE_EMAIL_CHANGE) {
+    } else if (mode == MODE_EDIT || mode == MODE_2FA_RECOVERY_EMAIL_CHANGE) {
       c = findLastStackItemById(R.id.controller_2faSettings);
       if (c instanceof Settings2FAController) {
         ((Settings2FAController) c).updatePasswordState(state, password);

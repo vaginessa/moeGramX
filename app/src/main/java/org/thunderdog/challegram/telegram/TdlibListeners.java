@@ -1029,6 +1029,20 @@ public class TdlibListeners {
     listChange.list.onUpdateChatPosition(listChange.chat, listChange.change);
   }
 
+  // updateChatAddedToList, updateChatRemovedFromList
+
+  void updateChatAddedToList (TdApi.UpdateChatAddedToList update) {
+    runChatUpdate(update.chatId, listener ->
+      listener.onChatAddedToList(update.chatId, update.chatList)
+    );
+  }
+
+  void updateChatRemovedFromList (TdApi.UpdateChatRemovedFromList update) {
+    runChatUpdate(update.chatId, listener ->
+      listener.onChatRemovedFromList(update.chatId, update.chatList)
+    );
+  }
+
   // updateChatPermissions
 
   private static void updateChatPermissions (long chatId, TdApi.ChatPermissions permissions, @Nullable Iterator<ChatListener> list) {
@@ -1105,17 +1119,18 @@ public class TdlibListeners {
 
   // updateChatActionBar
 
-  private static void updateChatActionBar (TdApi.UpdateChatActionBar update, @Nullable Iterator<ChatListener> list) {
-    if (list != null) {
-      while (list.hasNext()) {
-        list.next().onChatActionBarChanged(update.chatId, update.actionBar);
-      }
-    }
+  void updateChatActionBar (TdApi.UpdateChatActionBar update) {
+    runChatUpdate(update.chatId, listener ->
+      listener.onChatActionBarChanged(update.chatId, update.actionBar)
+    );
   }
 
-  void updateChatActionBar (TdApi.UpdateChatActionBar update) {
-    updateChatActionBar(update, chatListeners.iterator());
-    updateChatActionBar(update, specificChatListeners.iterator(update.chatId));
+  // updateChatBusinessBotManagerBar
+
+  void updateChatBusinessBotManageBar (TdApi.UpdateChatBusinessBotManageBar update) {
+    runChatUpdate(update.chatId, listener ->
+      listener.onChatBusinessBotManageBarChanged(update.chatId, update.businessBotManageBar)
+    );
   }
 
   // updateChatHasScheduledMessages
@@ -1708,6 +1723,13 @@ public class TdlibListeners {
     }
   }
 
+  @AnyThread
+  public void updateReadDatePrivacySettings (TdApi.ReadDatePrivacySettings settings) {
+    for (PrivacySettingsListener listener : privacySettingsListeners) {
+      listener.onReadDatePrivacySettingsChanged(settings);
+    }
+  }
+
   // updateFile
 
   void updateFile (TdApi.UpdateFile update) {
@@ -1890,6 +1912,18 @@ public class TdlibListeners {
   void updateSuggestedActions (TdApi.UpdateSuggestedActions update) {
     for (TdlibOptionListener listener : optionListeners) {
       listener.onSuggestedActionsChanged(update.addedActions, update.removedActions);
+    }
+  }
+
+  void updateSpeedLimitNotification (TdApi.UpdateSpeedLimitNotification update) {
+    for (TdlibOptionListener listener : optionListeners) {
+      listener.onSpeedLimitNotification(update.isUpload);
+    }
+  }
+
+  void updateContactCloseBirthdayUsers (TdApi.UpdateContactCloseBirthdays update) {
+    for (TdlibOptionListener listener : optionListeners) {
+      listener.onContactCloseBirthdayUsersChanged(update.closeBirthdayUsers);
     }
   }
 }

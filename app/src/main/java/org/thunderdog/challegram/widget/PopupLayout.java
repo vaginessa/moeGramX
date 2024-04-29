@@ -29,10 +29,12 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
 
 import org.thunderdog.challegram.BaseActivity;
 import org.thunderdog.challegram.Log;
+import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.config.Config;
 import org.thunderdog.challegram.config.Device;
 import org.thunderdog.challegram.core.Lang;
@@ -266,6 +268,16 @@ public class PopupLayout extends RootFrameLayout implements FactorAnimator.Targe
     }
   }
 
+  public boolean dismissOtherPopUps = true;
+
+  public void setDismissOtherPopUps (boolean dismissOtherPopUps) {
+    this.dismissOtherPopUps = dismissOtherPopUps;
+  }
+
+  public boolean needDismissOtherPopUps () {
+    return dismissOtherPopUps;
+  }
+
   private static boolean patchPopupWindow (View container, boolean needFullScreen, boolean disallowScreenshots) {
     WindowManager.LayoutParams p = (WindowManager.LayoutParams) container.getLayoutParams();
     int newFlags = p.flags;
@@ -414,8 +426,15 @@ public class PopupLayout extends RootFrameLayout implements FactorAnimator.Targe
     }
   }
 
+  private boolean isDestroyed;
+
+  public boolean isDestroyed () {
+    return isDestroyed;
+  }
+
   @Override
   public void performDestroy () {
+    isDestroyed = true;
     for (int i = getChildCount() - 1; i >= 0; i--) {
       View view = getChildAt(i);
       if (view instanceof Destroyable) {
@@ -930,6 +949,24 @@ public class PopupLayout extends RootFrameLayout implements FactorAnimator.Targe
       });
     }
     return tooltipOverlayView;
+  }
+
+  public final TooltipOverlayView.TooltipInfo showErrorTooltip (ViewController<?> context, View view, CharSequence text) {
+    return showTooltip(context, view, R.drawable.baseline_error_24, text);
+  }
+
+  public final TooltipOverlayView.TooltipInfo showWarningTooltip (ViewController<?> context, View view, CharSequence text) {
+    return showTooltip(context, view, R.drawable.baseline_warning_24, text);
+  }
+
+  public final TooltipOverlayView.TooltipInfo showInfoTooltip (ViewController<?> context, View view, CharSequence text) {
+    return showTooltip(context, view, R.drawable.baseline_info_24, text);
+  }
+
+  public final TooltipOverlayView.TooltipInfo showTooltip (ViewController<?> context, View view, @DrawableRes int icon, CharSequence text) {
+    return tooltipManager()
+      .builder(view)
+      .show(context, null, icon, text);
   }
 
   public static PopupLayout parentOf (View view) {

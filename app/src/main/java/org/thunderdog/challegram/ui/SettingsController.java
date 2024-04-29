@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.collection.SparseArrayCompat;
@@ -33,6 +34,7 @@ import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.BuildConfig;
 import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.U;
+import org.thunderdog.challegram.component.attach.AvatarPickerManager;
 import org.thunderdog.challegram.component.attach.MediaLayout;
 import org.thunderdog.challegram.component.base.SettingView;
 import org.thunderdog.challegram.config.Config;
@@ -62,6 +64,7 @@ import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.telegram.TdlibCache;
 import org.thunderdog.challegram.telegram.TdlibManager;
 import org.thunderdog.challegram.telegram.TdlibNotificationManager;
+import org.thunderdog.challegram.telegram.TdlibOptionListener;
 import org.thunderdog.challegram.telegram.TdlibUi;
 import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.Theme;
@@ -79,6 +82,8 @@ import org.thunderdog.challegram.util.text.Text;
 import org.thunderdog.challegram.util.text.TextColorSets;
 import org.thunderdog.challegram.util.text.TextWrapper;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -100,16 +105,17 @@ public class SettingsController extends ViewController<Void> implements
   View.OnClickListener, ComplexHeaderView.Callback,
   Menu, MoreDelegate, OptionDelegate,
   TdlibCache.MyUserDataChangeListener, ConnectionListener, StickersListener, MediaLayout.MediaGalleryCallback,
-  ActivityResultHandler, View.OnLongClickListener, SessionListener, GlobalTokenStateListener {
+  ActivityResultHandler, View.OnLongClickListener, SessionListener, GlobalTokenStateListener, TdlibCache.UserDataChangeListener,
+  TdlibOptionListener {
 
-  private final TdlibUi.AvatarPickerManager avatarPickerManager;
+  private final AvatarPickerManager avatarPickerManager;
   private ComplexHeaderView headerCell;
   private ComplexRecyclerView contentView;
   private SettingsAdapter adapter;
 
   public SettingsController (Context context, Tdlib tdlib) {
     super(context, tdlib);
-    avatarPickerManager = new TdlibUi.AvatarPickerManager(this);
+    avatarPickerManager = new AvatarPickerManager(this);
   }
 
   @Override
@@ -199,7 +205,7 @@ public class SettingsController extends ViewController<Void> implements
   @Override
   protected void onFloatingButtonPressed () {
     EditNameController editNameController = new EditNameController(context, tdlib);
-    editNameController.setMode(EditNameController.MODE_RENAME_SELF);
+    editNameController.setMode(EditNameController.Mode.RENAME_SELF);
     navigateTo(editNameController);
   }
 
@@ -258,7 +264,7 @@ public class SettingsController extends ViewController<Void> implements
 
   @Override
   public void onActivityResult (int requestCode, int resultCode, Intent data) {
-    avatarPickerManager.handleActivityResult(requestCode, resultCode, data, TdlibUi.AvatarPickerManager.MODE_PROFILE, null, null);
+    avatarPickerManager.handleActivityResult(requestCode, resultCode, data, AvatarPickerManager.MODE_PROFILE, null, null);
   }
 
   private boolean hasNotificationError;
@@ -523,17 +529,38 @@ public class SettingsController extends ViewController<Void> implements
               view.setData(notificationErrorDescriptionRes);
             }
           }
-        } else if (itemId == R.id.btn_changePhoneNumber) {
-          view.setText(obtainWrapper(Lang.getStringBold(R.string.ReminderCheckPhoneNumberText, originalPhoneNumber != null ? myPhone : Strings.ELLIPSIS), ID_RATIONALE_PHONE_NUMBER));
-        } else if (itemId == R.id.btn_2fa) {
-          view.setText(obtainWrapper(Lang.getString(R.string.ReminderCheckTfaPasswordText), ID_RATIONALE_PASSWORD));
+        } else if (itemId == R.id.btn_suggestion) {
+          TdApi.SuggestedAction action = (TdApi.SuggestedAction) item.getData();
+          switch (action.getConstructor()) {
+            case TdApi.SuggestedActionCheckPhoneNumber.CONSTRUCTOR:
+              view.setText(obtainWrapper(Lang.getStringBold(R.string.ReminderCheckPhoneNumberText, originalPhoneNumber != null ? myPhone : Strings.ELLIPSIS), action.getConstructor()));
+              break;
+            case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR:
+              view.setText(obtainWrapper(Lang.getString(R.string.ReminderCheckTfaPasswordText), action.getConstructor()));
+              break;
+            case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
+              view.setText(obtainWrapper(Lang.getString(R.string.ReminderSetBirthdateText), action.getConstructor()));
+              break;
+            default:
+              Td.assertSuggestedAction_b50c1148();
+              throw Td.unsupported(action);
+          }
+        } else if (itemId == R.id.btn_birthdate) {
+          if (userFull == null) {
+            view.setData(R.string.LoadingInformation);
+          } else if (userFull.birthdate == null) {
+            view.setData(R.string.SetBirthdate);
+          } else {
+            view.setData(Lang.getBirthdate(userFull.birthdate, true, true));
+          }
         } else if (itemId == R.id.btn_username) {
           if (myUsernames == null) {
             view.setData(R.string.LoadingUsername);
           } else if (StringUtils.isEmpty(myUsernames.editableUsername)) {
             view.setData(R.string.SetUpUsername);
           } else {
-            view.setData("@" + myUsernames.editableUsername); // TODO multi-username support
+            int collectibleCount = Td.secondaryUsernamesCount(myUsernames);
+            view.setData("@" + myUsernames.editableUsername + (collectibleCount != 0 ? " + " + Lang.pluralBold(R.string.xOtherUsernames, collectibleCount) : "")); // TODO multi-username support
           }
         } else if (itemId == R.id.btn_peer_id) {
           view.setData(Strings.buildCounter(tdlib.myUserId(true)));
@@ -551,7 +578,7 @@ public class SettingsController extends ViewController<Void> implements
               text = about;
             }
           }
-          view.setText(obtainWrapper(text, ID_BIO));
+          view.setText(obtainWrapper(text, TdApi.SetBio.CONSTRUCTOR));
         }
       }
     };
@@ -568,6 +595,10 @@ public class SettingsController extends ViewController<Void> implements
     items.add(new ListItem(ListItem.TYPE_INFO_SETTING, R.id.btn_username, R.drawable.baseline_alternate_email_24, R.string.Username).setContentStrings(R.string.LoadingUsername, R.string.SetUpUsername));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR));
     items.add(new ListItem(ListItem.TYPE_INFO_SETTING, R.id.btn_phone, R.drawable.baseline_phone_24, R.string.Phone));
+    if (userFull != null && userFull.birthdate != null) {
+      items.add(new ListItem(ListItem.TYPE_SEPARATOR));
+      items.add(newBirthdateItem());
+    }
     items.add(new ListItem(ListItem.TYPE_SEPARATOR));
     items.add(new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_bio, R.drawable.baseline_info_24, R.string.UserBio).setContentStrings(R.string.LoadingInformation, R.string.BioNone));
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
@@ -579,16 +610,7 @@ public class SettingsController extends ViewController<Void> implements
         continue;
       }
       items.add(new ListItem(addedActionItems == 0 ? ListItem.TYPE_SHADOW_TOP : ListItem.TYPE_SEPARATOR));
-      switch (action.getConstructor()) {
-        case TdApi.SuggestedActionCheckPhoneNumber.CONSTRUCTOR: {
-          items.add(new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_changePhoneNumber, R.drawable.baseline_sim_card_alert_24, R.string.ReminderCheckPhoneNumber));
-          break;
-        }
-        case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR: {
-          items.add(new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_2fa, R.drawable.baseline_gpp_maybe_24, R.string.ReminderCheckTfaPassword));
-          break;
-        }
-      }
+      items.add(newSuggestionItem(action));
       addedActionItems++;
     }
     if (addedActionItems > 0) {
@@ -699,8 +721,10 @@ public class SettingsController extends ViewController<Void> implements
     this.contentView.setAdapter(adapter);
 
     tdlib.cache().addMyUserListener(this);
+    setMyUserId(tdlib.myUserId());
     tdlib.listeners().subscribeToConnectivityUpdates(this);
     tdlib.listeners().subscribeToSessionUpdates(this);
+    tdlib.listeners().addOptionsListener(this);
     TGLegacyManager.instance().addEmojiListener(adapter);
     TdlibManager.instance().global().addTokenStateListener(this);
 
@@ -783,9 +807,6 @@ public class SettingsController extends ViewController<Void> implements
     }
   }
 
-  private static final int ID_BIO = R.id.btn_bio;
-  private static final int ID_RATIONALE_PASSWORD = R.id.btn_2fa;
-  private static final int ID_RATIONALE_PHONE_NUMBER = R.id.btn_changePhoneNumber;
   private final SparseArrayCompat<TextWrapper> textWrappers = new SparseArrayCompat<>();
   private final SparseArrayCompat<TdApi.FormattedText> currentTexts = new SparseArrayCompat<>();
 
@@ -805,15 +826,62 @@ public class SettingsController extends ViewController<Void> implements
     return textWrapper;
   }
 
+  private @Nullable TdApi.UserFullInfo userFull;
+
   private void processUserFull (final TdApi.UserFullInfo userFull) {
     if (userFull == null) {
       return;
     }
-    tdlib.uiExecute(() -> {
-      if (!isDestroyed()) {
-        setBio(userFull.bio);
-      }
+    executeOnUiThreadOptional(() -> {
+      this.userFull = userFull;
+      checkBirthdate();
+      setBio(userFull.bio);
     });
+  }
+
+  private static ListItem newBirthdateItem () {
+    return new ListItem(ListItem.TYPE_INFO_SETTING, R.id.btn_birthdate, R.drawable.baseline_cake_variant_24, R.string.Birthdate).setContentStrings(R.string.LoadingInformation, R.string.SetBirthdate);
+  }
+
+  private static ListItem newSuggestionItem (TdApi.SuggestedAction action) {
+    ListItem item;
+    switch (action.getConstructor()) {
+      case TdApi.SuggestedActionCheckPhoneNumber.CONSTRUCTOR:
+        item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_sim_card_alert_24, R.string.ReminderCheckPhoneNumber);
+        break;
+      case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR:
+        item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_gpp_maybe_24, R.string.ReminderCheckTfaPassword);
+        break;
+      case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
+        item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_cake_variant_24, R.string.ReminderSetBirthdate);
+        break;
+      default:
+        Td.assertSuggestedAction_b50c1148();
+        throw Td.unsupported(action);
+    }
+    item
+      .setData(action)
+      .setLongId(action.getConstructor());
+    return item;
+  }
+
+  private void checkBirthdate () {
+    int position = adapter.indexOfViewById(R.id.btn_birthdate);
+    boolean hadBirthdate = position != -1;
+    boolean hasBirthdate = userFull != null && userFull.birthdate != null;
+    if (hadBirthdate != hasBirthdate) {
+      if (hasBirthdate) {
+        position = adapter.indexOfViewById(R.id.btn_phone);
+        adapter.addItems(position + 1,
+          new ListItem(ListItem.TYPE_SEPARATOR),
+          newBirthdateItem()
+        );
+      } else {
+        adapter.removeRange(position - 1, 2);
+      }
+    } else if (hasBirthdate) {
+      adapter.updateValuedSettingByPosition(position);
+    }
   }
 
   private void setBio (@Nullable TdApi.FormattedText about) {
@@ -827,12 +895,26 @@ public class SettingsController extends ViewController<Void> implements
   }
 
   @Override
+  public void onSuggestedActionsChanged (TdApi.SuggestedAction[] addedActions, TdApi.SuggestedAction[] removedActions) {
+    executeOnUiThreadOptional(() -> {
+      for (TdApi.SuggestedAction action : addedActions) {
+        addSuggestionToList(action);
+      }
+      for (TdApi.SuggestedAction action : removedActions) {
+        removeSuggestionFromList(action);
+      }
+    });
+  }
+
+  @Override
   public void destroy () {
     super.destroy();
     tdlib.cache().removeMyUserListener(this);
+    setMyUserId(0);
     tdlib.listeners().unsubscribeFromConnectivityUpdates(this);
     tdlib.listeners().unsubscribeFromStickerUpdates(this);
     tdlib.listeners().unsubscribeFromSessionUpdates(this);
+    tdlib.listeners().removeOptionListener(this);
     TGLegacyManager.instance().removeEmojiListener(adapter);
     TdlibManager.instance().global().removeTokenStateListener(this);
     headerCell.performDestroy();
@@ -858,12 +940,37 @@ public class SettingsController extends ViewController<Void> implements
 
   // Callbacks
 
+  private long myUserId;
+
+  private void setMyUserId (long myUserId) {
+    long oldMyUserId = this.myUserId;
+    if (oldMyUserId != myUserId) {
+      this.myUserId = myUserId;
+      if (oldMyUserId != 0) {
+        tdlib.cache().removeUserDataListener(oldMyUserId, this);
+      }
+      if (myUserId != 0) {
+        tdlib.cache().addUserDataListener(myUserId, this);
+      }
+    }
+  }
+
+  @Override
+  public void onUserFullUpdated (long userId, TdApi.UserFullInfo userFull) {
+    runOnUiThreadOptional(() -> {
+      if (myUserId == userId) {
+        processUserFull(userFull);
+      }
+    });
+  }
+
   @Override
   public void onMyUserUpdated (final TdApi.User myUser) {
     if (myUser == null) { // Ignoring log-out update
       return;
     }
     runOnUiThreadOptional(() -> {
+      setMyUserId(myUser.id);
       updateHeader();
       if (setUsername(myUser)) {
         adapter.updateValuedSettingById(R.id.btn_username);
@@ -952,14 +1059,40 @@ public class SettingsController extends ViewController<Void> implements
     tdlib.ui().openUrl(this, url, new TdlibUi.UrlOpenParameters().disableInstantView());
   }
 
-  private void viewSourceCode (boolean isTdlib) {
+  @Retention(RetentionPolicy.SOURCE)
+  @IntDef({
+    SourceCodeType.TELEGRAM_X,
+    SourceCodeType.TDLIB,
+    SourceCodeType.TGCALLS,
+    SourceCodeType.WEBRTC
+  })
+  private @interface SourceCodeType {
+    int TELEGRAM_X = 0, TDLIB = 1, TGCALLS = 2, WEBRTC = 3;
+  }
+
+  private void viewSourceCode (@SourceCodeType int sourceCodeType) {
     String url;
-    if (isTdlib) {
-      String tdlibCommitHash = Td.tdlibCommitHashFull();
-      url = AppBuildInfo.tdlibCommitUrl(tdlibCommitHash);
-    } else {
-      AppBuildInfo appBuildInfo = Settings.instance().getCurrentBuildInformation();
-      url = appBuildInfo.commitUrl();
+    switch (sourceCodeType) {
+      case SourceCodeType.TELEGRAM_X: {
+        AppBuildInfo appBuildInfo = Settings.instance().getCurrentBuildInformation();
+        url = appBuildInfo.commitUrl();
+        break;
+      }
+      case SourceCodeType.TDLIB: {
+        String tdlibCommitHash = Td.tdlibCommitHashFull();
+        url = AppBuildInfo.tdlibCommitUrl(tdlibCommitHash);
+        break;
+      }
+      case SourceCodeType.TGCALLS: {
+        url = BuildConfig.TGCALLS_COMMIT_URL;
+        break;
+      }
+      case SourceCodeType.WEBRTC: {
+        url = BuildConfig.WEBRTC_COMMIT_URL;
+        break;
+      }
+      default:
+        throw new IllegalArgumentException(Integer.toString(sourceCodeType));
     }
     if (!StringUtils.isEmpty(url)) {
       tdlib.ui().openUrl(this,
@@ -980,6 +1113,8 @@ public class SettingsController extends ViewController<Void> implements
       EditBioController c = new EditBioController(context, tdlib);
       c.setArguments(new EditBioController.Arguments(about != null ? about.text : "", 0));
       navigateTo(c);
+    } else if (viewId == R.id.btn_birthdate) {
+      tdlib.ui().openBirthdateEditor(this, v, TdlibUi.BirthdateOpenOrigin.PROFILE);
     } else if (viewId == R.id.btn_peer_id) {
       long selfId = tdlib.myUserId(true);
       if (selfId == 0) return;
@@ -1006,7 +1141,7 @@ public class SettingsController extends ViewController<Void> implements
       AppBuildInfo appBuildInfo = Settings.instance().getCurrentBuildInformation();
       tdlib.ui().openUrl(this, appBuildInfo.changesUrlFrom(previousBuildInfo), new TdlibUi.UrlOpenParameters().disableInstantView());
     } else if (viewId == R.id.btn_tdlib) {
-      viewSourceCode(true);
+      viewSourceCode(SourceCodeType.TDLIB);
     } else if (viewId == R.id.btn_sourceCode) {
       AppBuildInfo appBuildInfo = Settings.instance().getCurrentBuildInformation();
       PullRequest specificPullRequest = (PullRequest) ((ListItem) v.getTag()).getData();
@@ -1021,13 +1156,21 @@ public class SettingsController extends ViewController<Void> implements
         if (appBuildInfo.getTdlibCommitFull() != null) {
           b.item(new OptionItem(R.id.btn_tdlib, Lang.getCharSequence(R.string.format_commit, "TDLib " + Td.tdlibVersion(), Td.tdlibCommitHash()), OptionColor.NORMAL, R.drawable.baseline_tdlib_24));
         }
+        b.item(new OptionItem(R.id.btn_tgcalls, Lang.getCharSequence(R.string.format_commit, "tgcalls", BuildConfig.TGCALLS_COMMIT), OptionColor.NORMAL, R.drawable.baseline_phone_in_talk_24));
+        b.item(new OptionItem(R.id.btn_webrtc, Lang.getCharSequence(R.string.format_commit, "WebRTC", BuildConfig.WEBRTC_COMMIT), OptionColor.NORMAL, R.drawable.baseline_webrtc_24));
         int i = 0;
         for (PullRequest pullRequest : appBuildInfo.getPullRequests()) {
           b.item(new OptionItem(i++, Lang.getString(R.string.format_commit, Lang.getString(R.string.PullRequestCommit, pullRequest.getId()), pullRequest.getCommit()), OptionColor.NORMAL, R.drawable.templarian_baseline_source_merge_24));
         }
         showOptions(b.build(), (view, id) -> {
-          if (id == R.id.btn_sourceCode || id == R.id.btn_tdlib) {
-            viewSourceCode(id == R.id.btn_tdlib);
+          if (id == R.id.btn_sourceCode) {
+            viewSourceCode(SourceCodeType.TELEGRAM_X);
+          } else if (id == R.id.btn_tdlib) {
+            viewSourceCode(SourceCodeType.TDLIB);
+          } else if (id == R.id.btn_webrtc) {
+            viewSourceCode(SourceCodeType.WEBRTC);
+          } else if (id == R.id.btn_tgcalls) {
+            viewSourceCode(SourceCodeType.TGCALLS);
           } else if (id >= 0 && id < appBuildInfo.getPullRequests().size()) {
             PullRequest pullRequest = appBuildInfo.getPullRequests().get(id);
             tdlib.ui().openUrl(this, pullRequest.getCommitUrl(), new TdlibUi.UrlOpenParameters().disableInstantView());
@@ -1057,10 +1200,9 @@ public class SettingsController extends ViewController<Void> implements
       tdlib.ui().openUrl(this, Lang.getString(R.string.url_faq), new TdlibUi.UrlOpenParameters().forceInstantView());
     } else if (viewId == R.id.btn_privacyPolicy) {
       tdlib.ui().openUrl(this, Lang.getStringSecure(R.string.url_privacyPolicy), new TdlibUi.UrlOpenParameters().forceInstantView());
-    } else if (viewId == R.id.btn_changePhoneNumber) {
-      showSuggestionPopup(new TdApi.SuggestedActionCheckPhoneNumber());
-    } else if (viewId == R.id.btn_2fa) {
-      showSuggestionPopup(new TdApi.SuggestedActionCheckPassword());
+    } else if (viewId == R.id.btn_suggestion) {
+      ListItem listItem = (ListItem) v.getTag();
+      showSuggestionPopup(v, (TdApi.SuggestedAction) listItem.getData());
     } else if (viewId == R.id.btn_build) {
       if (Settings.instance().hasLogsEnabled()) {
         showBuildOptions(true);
@@ -1072,7 +1214,10 @@ public class SettingsController extends ViewController<Void> implements
     }
   }
 
-  private void showSuggestionPopup (TdApi.SuggestedAction suggestedAction) {
+  public void showSuggestionPopup (View suggestionView, TdApi.SuggestedAction suggestedAction) {
+    if (!tdlib.isSettingSuggestion(suggestedAction)) {
+      return;
+    }
     CharSequence info = null;
     IntList ids = new IntList(3);
     StringList titles = new StringList(3);
@@ -1115,6 +1260,14 @@ public class SettingsController extends ViewController<Void> implements
 
         break;
       }
+      case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR: {
+        tdlib.ui().openBirthdateEditor(this, suggestionView, TdlibUi.BirthdateOpenOrigin.SUGGESTED_ACTION);
+        return;
+      }
+      default: {
+        Td.assertSuggestedAction_b50c1148();
+        throw Td.unsupported(suggestedAction);
+      }
     }
 
     showOptions(info, ids.get(), titles.get(), colors.get(), icons.get(), (view, id) -> {
@@ -1144,26 +1297,31 @@ public class SettingsController extends ViewController<Void> implements
     });
   }
 
-  private void dismissSuggestion (TdApi.SuggestedAction suggestedAction) {
+  private void addSuggestionToList (TdApi.SuggestedAction suggestedAction) {
+    if (!tdlib.isSettingSuggestion(suggestedAction))
+      return;
+    int index = adapter.indexOfViewByIdReverse(R.id.btn_suggestion);
+    if (index != -1) {
+      // add separator & item
+      adapter.addItems(index + 1,
+        new ListItem(ListItem.TYPE_SEPARATOR_FULL),
+        newSuggestionItem(suggestedAction)
+      );
+    } else {
+      index = adapter.indexOfViewById(R.id.btn_bio);
+      adapter.addItems(index + 2,
+        new ListItem(ListItem.TYPE_SHADOW_TOP),
+        newSuggestionItem(suggestedAction),
+        new ListItem(ListItem.TYPE_SHADOW_BOTTOM)
+      );
+    }
+  }
+
+  private void removeSuggestionFromList (TdApi.SuggestedAction suggestedAction) {
     if (!tdlib.isSettingSuggestion(suggestedAction))
       return;
 
-    int removalIndex;
-
-    switch (suggestedAction.getConstructor()) {
-      case TdApi.SuggestedActionCheckPhoneNumber.CONSTRUCTOR: {
-        removalIndex = adapter.indexOfViewById(R.id.btn_changePhoneNumber);
-        break;
-      }
-      case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR: {
-        removalIndex = adapter.indexOfViewById(R.id.btn_2fa);
-        break;
-      }
-      default: {
-        return;
-      }
-    }
-
+    int removalIndex = adapter.indexOfViewByLongId(suggestedAction.getConstructor());
     if (removalIndex == -1)
       return;
     ListItem previousItem = adapter.getItem(removalIndex - 1);
@@ -1188,7 +1346,9 @@ public class SettingsController extends ViewController<Void> implements
         break;
       }
     }
+  }
 
+  private void dismissSuggestion (TdApi.SuggestedAction suggestedAction) {
     tdlib.client().send(new TdApi.HideSuggestedAction(suggestedAction), tdlib.okHandler());
   }
 

@@ -116,8 +116,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import me.vkryl.android.AnimatorUtils;
 import me.vkryl.android.ViewUtils;
@@ -146,7 +148,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
   private static final int MODE_MESSAGES = 0;
   private static final int MODE_TEXT = 1;
   private static final int MODE_GAME = 2;
-  private static final int MODE_FILE = 3;
+  private static final int MODE_FILES = 3;
   private static final int MODE_CONTACT = 4;
   private static final int MODE_STICKER = 5;
   private static final int MODE_CUSTOM = 6;
@@ -157,6 +159,16 @@ public class ShareController extends TelegramViewController<ShareController.Args
     void generateFunctionsForChat (long chatId, TdApi.Chat chat, TdApi.MessageSendOptions sendOptions, ArrayList<TdApi.Function<?>> functions);
     CharSequence generateErrorMessageForChat (long chatId);
   }
+
+  public static class FileInfo {
+    public final String path, mimeType;
+
+    public FileInfo (String path, String mimeType) {
+      this.path = path;
+      this.mimeType = mimeType;
+    }
+  }
+
   public static class Args {
     private final int mode;
 
@@ -176,7 +188,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
 
     private TdApi.InputMessageContent customContent;
 
-    private String filePath, fileMimeType;
+    private FileInfo[] files;
 
     private TdApi.User contactUser;
 
@@ -230,9 +242,12 @@ public class ShareController extends TelegramViewController<ShareController.Args
     }
 
     public Args (String filePath, String mimeType) {
-      this.mode = MODE_FILE;
-      this.filePath = filePath;
-      this.fileMimeType = mimeType;
+      this(new FileInfo[] {new FileInfo(filePath, mimeType)});
+    }
+
+    public Args (FileInfo[] files) {
+      this.mode = MODE_FILES;
+      this.files = files;
     }
 
     public Args (TdApi.User contactUser) {
@@ -639,7 +654,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
         }
         tdlib.ui().post(() -> {
           if (!isDestroyed()) {
-            exportFile(file, "text/x-vcard", Lang.getString(R.string.ShareTitleContact));
+            exportSingleFile(file, "text/x-vcard", Lang.getString(R.string.ShareTitleContact));
           }
         });
       } catch (IOException t) {
@@ -648,7 +663,32 @@ public class ShareController extends TelegramViewController<ShareController.Args
     });
   }
 
-  private void exportFile (File file, String mimeType, String title) {
+  private void exportFiles (FileInfo[] files, String title) {
+    if (files.length == 1) {
+      FileInfo file = files[0];
+      exportSingleFile(new File(file.path), file.mimeType, title);
+      return;
+    }
+    ArrayList<Uri> uris = new ArrayList<>();
+    Intent intent = new Intent();
+    intent.setAction(Intent.ACTION_SEND_MULTIPLE);
+    Set<String> fileTypes = new LinkedHashSet<>();
+    for (FileInfo info : files) {
+      fileTypes.add(info.mimeType);
+    }
+    if (fileTypes.size() == 1) {
+      intent.setType(fileTypes.iterator().next());
+    } else {
+      intent.setType("*/*");
+    }
+    for (FileInfo info : files) {
+      File file = new File(info.path);
+      uris.add(U.contentUriFromFile(file));
+    }
+    intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+  }
+
+  private void exportSingleFile (File file, String mimeType, String title) {
     Uri uri = U.contentUriFromFile(file);
     if (uri == null)
       return;
@@ -741,7 +781,6 @@ public class ShareController extends TelegramViewController<ShareController.Args
               title2Res = R.string.ShareTitleMediaX;
               textRes = R.string.ShareTextPlain;
               break;
-            case 0:
             default:
               title1Res = R.string.ShareTitleMedia;
               title2Res = R.string.ShareTitleMediaX;
@@ -825,8 +864,8 @@ public class ShareController extends TelegramViewController<ShareController.Args
           exportFiles(files, mimeType, null, args.telegramExportCaption);
           break;
         }
-        case MODE_FILE: {
-          exportFile(new File(args.filePath), args.fileMimeType, Lang.getString(R.string.ShareTitleFile));
+        case MODE_FILES: {
+          exportFiles(args.files, args.files.length > 1 ? Lang.plural(R.string.ShareTitleFiles, args.files.length) : Lang.getString(R.string.ShareTitleFile));
           break;
         }
         case MODE_CONTACT: {
@@ -1779,7 +1818,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
       case MODE_TEXT: {
         return tdlib.getBasicMessageRestrictionText(chat);
       }
-      case MODE_FILE: {
+      case MODE_FILES: {
         return tdlib.getDefaultRestrictionText(chat, RightId.SEND_DOCS);
       }
       case MODE_STICKER: {
@@ -2266,6 +2305,10 @@ public class ShareController extends TelegramViewController<ShareController.Args
   private PopupLayout popupLayout;
 
   public void show () {
+    show(false);
+  }
+
+  public void show (boolean overlayStatusBar) {
     if (tdlib == null) {
       if (getExportContentState() == EXPORT_AVAILABLE) {
         exportContent();
@@ -2286,6 +2329,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
     // popupLayout.set®(View.LAYER_TYPE_HARDWARE, Views.LAYER_PAINT);
     popupLayout.setBoundController(this);
     popupLayout.setPopupHeightProvider(this);
+    popupLayout.setOverlayStatusBar(overlayStatusBar);
     popupLayout.init(false);
     popupLayout.setHideKeyboard();
     popupLayout.setNeedRootInsets();
@@ -3097,7 +3141,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
         }
         return EXPORT_AVAILABLE;
       }
-      case MODE_FILE:
+      case MODE_FILES:
       case MODE_CONTACT: {
         return EXPORT_AVAILABLE;
       }
@@ -3267,8 +3311,19 @@ public class ShareController extends TelegramViewController<ShareController.Args
           functions.add(new TdApi.SendMessage(chatId, 0, null, sendOptions, null, new TdApi.InputMessageForwarded(args.botMessage.chatId, args.botMessage.id, args.withUserScore, null)));
           break;
         }
-        case MODE_FILE: {
-          functions.add(new TdApi.SendMessage(chatId, 0, null, sendOptions, null, new TdApi.InputMessageDocument(TD.createInputFile(args.filePath), null, false, null)));
+        case MODE_FILES  : {
+          List<TdApi.InputMessageContent> contents = new ArrayList<>(args.files.length);
+          for (FileInfo fileInfo : args.files) {
+            TdApi.InputMessageDocument document = new TdApi.InputMessageDocument(TD.createInputFile(fileInfo.path), null, false, null);
+            contents.add(document);
+          }
+          TdApi.Function<?> function;
+          if (contents.size() == 1) {
+            function = new TdApi.SendMessage(chatId, 0, null, sendOptions, null, contents.get(0));
+          } else {
+            function = new TdApi.SendMessageAlbum(chatId, 0, null, sendOptions, contents.toArray(new TdApi.InputMessageContent[0]));
+          }
+          functions.add(function);
           break;
         }
         case MODE_CONTACT: {

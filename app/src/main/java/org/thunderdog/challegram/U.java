@@ -1411,6 +1411,23 @@ public class U {
     });
   }
 
+  public static boolean toGalleryFile (TdApi.Message message, RunnableData<ImageGalleryFile> callback) {
+    final TdApi.File file = TD.getFile(message);
+    if (!TD.isFileLoaded(file)) {
+      return false;
+    }
+
+    final boolean isVideo = message.content.getConstructor() == TdApi.MessageVideo.CONSTRUCTOR;
+    toGalleryFile(new File(file.local.path), isVideo, imageGalleryFile -> {
+      if (imageGalleryFile != null) {
+        imageGalleryFile.setCaption(Td.textOrCaption(message.content));
+      }
+      callback.runWithData(imageGalleryFile);
+    });
+
+    return true;
+  }
+
   public static String getFileName (String path) {
     int i = path.lastIndexOf('/');
     return i != -1 ? path.substring(i + 1) : path;
@@ -2382,6 +2399,8 @@ public class U {
     String metadata = Lang.getAppBuildAndVersion(tdlib) + " (" + BuildConfig.COMMIT + ")\n" +
       (!buildInfo.getPullRequests().isEmpty() ? "PRs: " + buildInfo.pullRequestsList() + "\n" : "") +
       "TDLib: " + Td.tdlibVersion() + " (tdlib/td@" + Td.tdlibCommitHash() + ")\n" +
+      "tgcalls: TGX-Android/tgcalls@" + BuildConfig.TGCALLS_COMMIT + "\n" +
+      "WebRTC: TGX-Android/webrtc@" + BuildConfig.WEBRTC_COMMIT + "\n" +
       "Android: " + SdkVersion.getPrettyName() + " (" + Build.VERSION.SDK_INT + ")" + "\n" +
       "Device: " + Build.MANUFACTURER + " " + Build.BRAND + " " + Build.MODEL + " (" + Build.DISPLAY + ")\n" +
       "Screen: " + Screen.widestSide() + "x" + Screen.smallestSide() + " (density: " + Screen.density() + ", fps: " + Screen.refreshRate() + ")" + "\n" +
@@ -3689,5 +3708,14 @@ public class U {
     long[] result = Arrays.copyOf(first, first.length + second.length);
     System.arraycopy(second, 0, result, first.length, second.length);
     return result;
+  }
+
+  @SuppressWarnings("deprecation")
+  public static String getCpuAbi () {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      return Build.SUPPORTED_ABIS[0];
+    } else {
+      return Build.CPU_ABI;
+    }
   }
 }

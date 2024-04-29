@@ -57,6 +57,7 @@ import org.thunderdog.challegram.util.text.Text;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -151,15 +152,80 @@ public class Lang {
     return keys;
   }
 
+  public static String escapeMarkdown (String str) {
+    if (str == null || str.isEmpty()) {
+      return str;
+    }
+    return str.replaceAll("([_~|*`\\[\\]()])", "\u200B$1");
+  }
+
+  public static CharSequence escapeMarkdown (CharSequence cs) {
+    if (cs == null) {
+      return null;
+    }
+    if (cs instanceof String) {
+      return escapeMarkdown((String) cs);
+    }
+    SpannableStringBuilder b = new SpannableStringBuilder(cs);
+    int index = b.length() - 1;
+    while (index >= 0) {
+      char c = b.charAt(index);
+      if (needMarkdownEscape(c)) {
+        b.insert(index, "\u200B");
+      }
+      index--;
+    }
+    return b;
+  }
+
+  private static boolean needMarkdownEscape (char c) {
+    switch (c) {
+      case '_':
+      case '~':
+      case '|':
+      case '*':
+      case '`':
+      case '[': case ']': case '(': case ')':
+        return true;
+    }
+    return false;
+  }
+
+
+  private static void sanitizeMarkdownFormatArgs (Object[] args) {
+    if (args == null || args.length == 0) {
+      return;
+    }
+    for (int i = 0; i < args.length; i++) {
+      Object arg = args[i];
+      if (arg instanceof CharSequence) {
+        args[i] = escapeMarkdown((CharSequence) arg);
+      }
+    }
+  }
+
+  public static CharSequence getMarkdownPlural (TdlibDelegate context, @StringRes int resId, long num, Object... formatArgs) {
+    sanitizeMarkdownFormatArgs(formatArgs);
+    return Strings.buildMarkdown(context, Lang.plural(resId, num, formatArgs), null);
+  }
+
+  public static CharSequence getMarkdownPlural (TdlibDelegate context, @StringRes int resId, long num, SpanCreator spanCreator, Object... formatArgs) {
+    sanitizeMarkdownFormatArgs(formatArgs);
+    return Strings.buildMarkdown(context, Lang.plural(resId, num, spanCreator, formatArgs), null);
+  }
+
   public static CharSequence getMarkdownString (TdlibDelegate context, @StringRes int resId, SpanCreator spanCreator, Object... formatArgs) {
+    sanitizeMarkdownFormatArgs(formatArgs);
     return Strings.buildMarkdown(context, Lang.getString(resId, spanCreator, formatArgs), null);
   }
 
   public static CharSequence getMarkdownString (TdlibDelegate context, @StringRes int resId, Object... formatArgs) {
+    sanitizeMarkdownFormatArgs(formatArgs);
     return Strings.buildMarkdown(context, Lang.getString(resId, formatArgs), null);
   }
 
   public static CharSequence getMarkdownStringSecure (TdlibDelegate context, @StringRes int resId, Object... formatArgs) {
+    sanitizeMarkdownFormatArgs(formatArgs);
     return Strings.buildMarkdown(context, Lang.getStringSecure(resId, formatArgs), null);
   }
 
@@ -2298,12 +2364,62 @@ public class Lang {
 
   // Dates
 
+  public static CharSequence getBirthdate (@NonNull TdApi.Birthdate birthdate, boolean includeAge, boolean isSelf) {
+    Calendar c = Calendar.getInstance();
+    c.set(Calendar.DAY_OF_MONTH, birthdate.day);
+    c.set(Calendar.MONTH, birthdate.month - 1);
+    String date;
+    if (birthdate.year != 0) {
+      c.set(Calendar.YEAR, birthdate.year);
+      date = dateYearShort(c);
+    } else {
+      date = dateShort(c);
+    }
+    int ageYears = -1;
+    int daysTillBirthday = 0;
+    if (birthdate.year != 0) {
+      Calendar now = DateUtils.getNowCalendar();
+      ageYears = now.get(Calendar.YEAR) - c.get(Calendar.YEAR);
+      int today = now.get(Calendar.DAY_OF_YEAR);
+      int birthday = c.get(Calendar.DAY_OF_YEAR);
+      if (today < birthday) {
+        ageYears--;
+      }
+      daysTillBirthday = birthday - today;
+    }
+    if (includeAge && ageYears > 0) {
+      CharSequence age;
+      @StringRes int formatRes = R.string.format_birthdateAndAge;
+      if (daysTillBirthday == 1 && !isSelf) {
+        age = Lang.pluralBold(R.string.turnsTomorrow, ageYears + 1);
+        formatRes = R.string.format_birthdateAndTurns;
+      } else if (daysTillBirthday == 0) {
+        age = Lang.pluralBold(isSelf ? R.string.turnSelfToday : R.string.turnsToday, ageYears);
+        formatRes = R.string.format_birthdateAndTurns;
+      } else {
+        age = Lang.pluralBold(R.string.age, ageYears);
+      }
+      return Lang.getCharSequence(formatRes, date, age);
+    } else {
+      return date;
+    }
+  }
+
   public static String getDate (long unixDate, TimeUnit unit) {
     if (DateUtils.isThisYear(unixDate, unit)) {
       return dateFull(unixDate, unit);
     } else {
       return dateYearFull(unixDate, unit);
     }
+  }
+
+  public static String[] getMonths (Locale locale) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      try {
+        return android.icu.text.DateFormatSymbols.getInstance(locale).getMonths();
+      } catch (Throwable ignored) { }
+    }
+    return DateFormatSymbols.getInstance(locale).getMonths();
   }
 
   public static String getUntilDate (long unixTime, TimeUnit unit) {

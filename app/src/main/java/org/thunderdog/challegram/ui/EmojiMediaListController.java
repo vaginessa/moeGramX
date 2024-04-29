@@ -583,6 +583,7 @@ public class EmojiMediaListController extends ViewController<EmojiLayout> implem
   public void destroy () {
     super.destroy();
     tdlib.listeners().unsubscribeFromGlobalUpdates(this);
+    MoexConfig.instance().removeNewSettingsListener(this);
     stickersController.destroy();
     trendingSetsController.destroy();
   }

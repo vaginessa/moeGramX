@@ -4349,6 +4349,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
       }
       tdlib.settings().removeJoinRequestsDismissListener(this);
       TGLegacyManager.instance().removeEmojiListener(this);
+      MoexConfig.instance().removeNewSettingsListener(this);
       if (emojiLayout != null) {
         emojiLayout.destroy();
       }

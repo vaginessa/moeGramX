@@ -10820,7 +10820,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         int buildNo = 0;
         String version = null;
         String commit = null;
-        final String prefix = "Moegram-X-";
+        final String prefix = "moeGramX-";
         if (!StringUtils.isEmpty(document.fileName) && document.fileName.startsWith(prefix)) {
           int i = document.fileName.indexOf('-', prefix.length());
           version = document.fileName.substring(prefix.length(), i == -1 ? document.fileName.length() : i);

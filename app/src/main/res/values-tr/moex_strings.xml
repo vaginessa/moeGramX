@@ -6,7 +6,7 @@
   <string name="ChatsMoexSettings">Sohbetler</string>
   <string name="MoexLinks">Bağlantılar</string>
   <string name="MoexChatText">Sohbet</string>
-  <string name="MoexUpdatesText">Güncellemeler</string>
+  <string name="MoexChannelText">Güncellemeler</string>
   <string name="MoexSourceText">Kaynak</string>
   <string name="MoexCategories">Kategoriler</string>
   <string name="MoexHideButtons">Mesaj paneli</string>

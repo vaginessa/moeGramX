@@ -6,7 +6,7 @@
   <string name="ChatsMoexSettings">聊天</string>
   <string name="MoexLinks">链接</string>
   <string name="MoexChatText">聊天</string>
-  <string name="MoexUpdatesText">最新动态</string>
+  <string name="MoexChannelText">最新动态</string>
   <string name="MoexSourceText">源代码</string>
   <string name="MoexCategories">类别</string>
   <string name="MoexHideButtons">消息界面</string>

@@ -73,8 +73,8 @@ public class SettingsMoexController extends RecyclerViewController<SettingsMoexC
       tdlib.ui().openUrl(this, Lang.getString(R.string.MoexCrowdinLink), new TdlibUi.UrlOpenParameters());
     } else if (viewId == R.id.btn_moexChatLink) {
       tdlib.ui().openUrl(this, Lang.getString(R.string.MoexChatLink), new TdlibUi.UrlOpenParameters().forceInstantView());
-    } else if (viewId == R.id.btn_moexUpdatesLink) {
-      tdlib.ui().openUrl(this, Lang.getString(R.string.MoexUpdatesLink), new TdlibUi.UrlOpenParameters().forceInstantView());
+    } else if (viewId == R.id.btn_moexChannelLink) {
+      tdlib.ui().openUrl(this, Lang.getString(R.string.MoexChannelLink), new TdlibUi.UrlOpenParameters().forceInstantView());
     } else if (viewId == R.id.btn_moexSourceLink) {
       tdlib.ui().openUrl(this, Lang.getString(R.string.MoexSourceLink), new TdlibUi.UrlOpenParameters());
     } else if (viewId == R.id.btn_build) {
@@ -216,8 +216,8 @@ public class SettingsMoexController extends RecyclerViewController<SettingsMoexC
           view.setData(R.string.MoexCrowdinText);
         } else if (itemId == R.id.btn_moexChatLink) {
           view.setData(R.string.moexChat);
-        } else if (itemId == R.id.btn_moexUpdatesLink) {
-          view.setData(R.string.moexUpdates);
+        } else if (itemId == R.id.btn_moexChannelLink) {
+          view.setData(R.string.moexChannel);
         } else if (itemId == R.id.btn_moexSourceLink) {
           view.setData(R.string.moexGithub);
         } else if (itemId == R.id.btn_hidePhone) {
@@ -336,11 +336,11 @@ public class SettingsMoexController extends RecyclerViewController<SettingsMoexC
         items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
         items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexCrowdinLink, R.drawable.baseline_translate_24, R.string.Translate));
         items.add(new ListItem(ListItem.TYPE_SEPARATOR));
-        items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexChatLink, R.drawable.baseline_forum_24, R.string.MoexChatText));
+        items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexChatLink, R.drawable.outline_forum_24, R.string.MoexChatText));
         items.add(new ListItem(ListItem.TYPE_SEPARATOR));
-        items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexUpdatesLink, R.drawable.baseline_update_24, R.string.MoexUpdatesText));
+        items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexChannelLink, R.drawable.baseline_link_24, R.string.MoexChannelText));
         items.add(new ListItem(ListItem.TYPE_SEPARATOR));
-        items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexSourceLink, R.drawable.baseline_github_24, R.string.MoexSourceText));
+        items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_moexSourceLink, R.drawable.baseline_code_24, R.string.MoexSourceText));
         items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
 
         items.add(new ListItem(ListItem.TYPE_BUILD_NO, R.id.btn_build, 0, R.string.MoexVer, false));

@@ -5,7 +5,7 @@
   <string name="ChatsMoexSettings">Czaty</string>
   <string name="MoexLinks">Linki</string>
   <string name="MoexChatText">Czat</string>
-  <string name="MoexUpdatesText">Aktualizacje</string>
+  <string name="MoexChannelText">Aktualizacje</string>
   <string name="MoexSourceText">Kod źródłowy</string>
   <string name="MoexCategories">Kategorie</string>
   <string name="MoexHideButtons">Panel wiadomości</string>

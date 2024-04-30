@@ -7,13 +7,12 @@
   <string name="MoexLinks">Links</string>
   <string name="MoexCrowdinText" translatable="false">Crowdin</string>
   <string name="MoexChatText">Chat</string>
-  <string name="MoexUpdatesText">Updates</string>
+  <string name="MoexChannelText">Channel</string>
   <string name="MoexSourceText">Source</string>
   <string name="MoexCategories">Categories</string>
   <string name="MoexChannelLink" translatable="false">https://t.me/moegramx</string>
   <string name="MoexCrowdinLink" translatable="false">https://kiri.su/crowdin</string>
   <string name="MoexChatLink" translatable="false">https://t.me/moe_chat</string>
-  <string name="MoexUpdatesLink" translatable="false">https://t.me/moex_log</string>
   <string name="MoexSourceLink" translatable="false">https://kiri.su/moexgit</string>
   <string name="MoexHideButtons">Message panel</string>
   <string name="DisableCommandsButton">Commands</string>
@@ -40,7 +39,6 @@
   <string name="hideMessagesBadge">Hide unread messages badge</string>
   <string name="moexChannel" translatable="false">\@moeGramX</string>
   <string name="moexChat" translatable="false">\@moe_chat</string>
-  <string name="moexUpdates" translatable="false">\@moex_log</string>
   <string name="moexGithub" translatable="false">GitHub</string>
   <string name="MoexCuteSettings">A little moe goes a long way ~</string>
   <string name="px800" translatable="false">800px</string>

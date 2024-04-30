@@ -6,7 +6,7 @@
   <string name="ChatsMoexSettings">Чаты</string>
   <string name="MoexLinks">Ссылки</string>
   <string name="MoexChatText">Чат</string>
-  <string name="MoexUpdatesText">Обновления</string>
+  <string name="MoexChannelText">Обновления</string>
   <string name="MoexSourceText">Исходный код</string>
   <string name="MoexCategories">Категории</string>
   <string name="MoexHideButtons">Поле ввода сообщений</string>

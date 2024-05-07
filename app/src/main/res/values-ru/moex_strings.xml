@@ -6,29 +6,29 @@
   <string name="ChatsMoexSettings">Чаты</string>
   <string name="MoexLinks">Ссылки</string>
   <string name="MoexChatText">Чат</string>
-  <string name="MoexChannelText">Обновления</string>
+  <string name="MoexChannelText">Канал</string>
   <string name="MoexSourceText">Исходный код</string>
   <string name="MoexCategories">Категории</string>
   <string name="MoexHideButtons">Поле ввода сообщений</string>
-  <string name="DisableCommandsButton">Скрыть кнопку команд</string>
-  <string name="DisableCameraButton">Скрыть кнопку камеры</string>
-  <string name="DisableRecordButton">Скрыть кнопку медиасообщений</string>
+  <string name="DisableCommandsButton">Команды</string>
+  <string name="DisableCameraButton">Камера</string>
+  <string name="DisableRecordButton">Медиа</string>
   <string name="MoexChatsSettings">Чаты</string>
   <string name="MoexStickersCount">Стикеры</string>
   <string name="DisableStickerTimestamp">Скрыть время на стикерах</string>
   <string name="RoundedStickers">Закругление стикеров</string>
   <string name="DrawerOptions">Настройки бокового меню</string>
   <string name="hidePhoneNumber">Скрыть номер телефона</string>
-  <string name="EnableFeatures">Показать тестовые настройки</string>
-  <string name="FeaturesButtonInfo">Эта функция включает отображение скрытого пункта с тестируемыми функциями в боковом меню</string>
+  <string name="EnableFeatures">Разрешить тестовые опции</string>
+  <string name="FeaturesButtonInfo">Показать экспериментальные функции, такие как тестовый DC, переключатель временных настроек и другое</string>
   <string name="ExperimentalOptions">Нестабильные настройки</string>
   <string name="PhoneHidden">Телефон скрыт</string>
   <string name="showIdProfile">Показывать ID в профиле</string>
-  <string name="DisableSendAsButton">Скрыть кнопку отправки от канала</string>
+  <string name="DisableSendAsButton">Каналы</string>
   <string name="MobileHidden">Номер скрыт</string>
   <string name="MoexAbout">О нас</string>
   <string name="MoexAboutText" formatted="true">**moeGramX** — это милый клиент c расширенной функциональностью, основанный на официальном исходном коде и TDlib. Присоединяйтесь к нашему чату, где вы можете предложить новые функции или указать на ошибки!</string>
-  <string name="HideCameraButtonInfo">Опция выше также так же добавляет плавающую кнопку камеры в меню отправки медиа.</string>
+  <string name="HideCameraButtonInfo">Скрытие кнопки камеры на самом деле просто перемещает её в экран прикрепления вложения</string>
   <string name="IncreaseRecents">Увеличить количество недавних</string>
   <string name="hideMessagesBadge">Скрыть метку с кнопки меню</string>
   <string name="MoexCuteSettings">Попробуйте что-нибудь интересное ~</string>
@@ -45,5 +45,10 @@
   <string name="MoexBlurDrawer">Размыть аватар</string>
   <string name="MoexChatsHeader">Список чатов</string>
   <string name="TypingInstead">Отправлять статус выбора стикера</string>
-  <string name="TypingInsteadInfo" formatted="true">Статус **Печатает** будет отправлен вместо **Выбирает стикер**</string>
+  <string name="TypingInsteadInfo" formatted="true">Включите, чтобы отправить статус **Выбирает стикер** обратно</string>
+  <string name="DisableReactions">Скрыть реакции</string>
+  <string name="HideMessagePanelButtons">Скрыть кнопки панели сообщений</string>
+  <string name="ProfileOptions">Профиль</string>
+  <string name="ActivityOptions">Активность</string>
+  <string name="HideBottomBar">Скрыть нижнюю панель</string>
 </resources>

@@ -6,29 +6,29 @@
   <string name="ChatsMoexSettings">Conversas</string>
   <string name="MoexLinks">Links</string>
   <string name="MoexChatText">Conversar</string>
-  <string name="MoexChannelText">Atualizações</string>
+  <string name="MoexChannelText">Canal</string>
   <string name="MoexSourceText">Código-fonte</string>
   <string name="MoexCategories">Categorias</string>
   <string name="MoexHideButtons">Painel de mensagem</string>
-  <string name="DisableCommandsButton">Ocultar botão de comandos</string>
-  <string name="DisableCameraButton">Ocultar botão da câmera</string>
-  <string name="DisableRecordButton">Ocultar botão de gravação de áudio</string>
+  <string name="DisableCommandsButton">Comandos</string>
+  <string name="DisableCameraButton">Câmera</string>
+  <string name="DisableRecordButton">Mídia</string>
   <string name="MoexChatsSettings">Opções de conversas</string>
   <string name="MoexStickersCount">Stickers</string>
   <string name="DisableStickerTimestamp">Ocultar horário nos Stickers</string>
   <string name="RoundedStickers">Stickers arredondados</string>
   <string name="DrawerOptions">Opções do menu lateral</string>
   <string name="hidePhoneNumber">Ocultar número do telefone</string>
-  <string name="EnableFeatures">Ativar opções de recurso</string>
-  <string name="FeaturesButtonInfo">Mostrar botão de configurações experimentais na barra lateral</string>
+  <string name="EnableFeatures">Permitir opções de depuração</string>
+  <string name="FeaturesButtonInfo">Mostrar recursos experimentais como testar o DC ou um botão de recurso em vários cenários</string>
   <string name="ExperimentalOptions">Opções experimentais</string>
   <string name="PhoneHidden">Telefone oculto</string>
   <string name="showIdProfile">Mostrar o ID do usuário nos perfis</string>
-  <string name="DisableSendAsButton">Ocultar botão \"Enviar como Canal\"</string>
+  <string name="DisableSendAsButton">Canais</string>
   <string name="MobileHidden">Número oculto</string>
   <string name="MoexAbout">Sobre</string>
   <string name="MoexAboutText" formatted="true">**moeGramX** — é um recurso bonito rico em um pouco experimental com base nas fontes oficiais e TDlib. Sinta-se à vontade para sugerir alguns recursos, relatar problemas ou apenas conversar no nosso grupo de discussões!</string>
-  <string name="HideCameraButtonInfo">Esta opção move o botão da câmera do painel de mensagem para o menu de anexação</string>
+  <string name="HideCameraButtonInfo">Ocultar a opção do botão da câmera também adiciona um botão da câmera ao menu de anexo</string>
   <string name="IncreaseRecents">Aumentar stickers recentes</string>
   <string name="hideMessagesBadge">Ocultar emblema de mensagens não lidas</string>
   <string name="MoexCuteSettings">Uma lua vai de um longo caminho ~</string>
@@ -45,5 +45,10 @@
   <string name="MoexBlurDrawer">Desfocar o avatar</string>
   <string name="MoexChatsHeader">Lista de conversas</string>
   <string name="TypingInstead">Enviar status de escolhendo um sticker</string>
-  <string name="TypingInsteadInfo" formatted="true">Isto irá enviar o status **digitando** em vez de **escolhendo um** sticker</string>
+  <string name="TypingInsteadInfo" formatted="true">Ative para trazer o status **Escolhendo sticker** para seu antigo lugar</string>
+  <string name="DisableReactions">Ocultar reações</string>
+  <string name="HideMessagePanelButtons">Ocultar botões do painel de mensagem</string>
+  <string name="ProfileOptions">Perfil</string>
+  <string name="ActivityOptions">Atividade</string>
+  <string name="HideBottomBar">Ocultar barra inferior</string>
 </resources>

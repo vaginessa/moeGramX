@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="MoexSettings">Opciones de moeGramX</string>
-  <string name="GeneralMoexSettings">General</string>
   <string name="InterfaceMoexSettings">Interfaz</string>
-  <string name="ChatsMoexSettings">Chats</string>
   <string name="MoexLinks">Enlaces</string>
-  <string name="MoexChatText">Chat</string>
   <string name="MoexChannelText">Actualizaciones</string>
   <string name="MoexSourceText">Fuente</string>
   <string name="MoexCategories">Categorías</string>
@@ -14,7 +11,6 @@
   <string name="DisableCameraButton">Ocultar botón de cámara</string>
   <string name="DisableRecordButton">Ocultar botón de grabación</string>
   <string name="MoexChatsSettings">Opciones de chat</string>
-  <string name="MoexStickersCount">Stickers</string>
   <string name="DisableStickerTimestamp">Ocultar hora en stickers</string>
   <string name="RoundedStickers">Stickers redondeados</string>
   <string name="DrawerOptions">Opciones del cajón</string>

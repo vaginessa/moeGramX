@@ -1311,6 +1311,10 @@
   <string name="NewNumber">New Number</string>
   <string name="RegionNotFound">Country code not found</string>
   <string name="ConfirmationCode">Confirmation Code</string>
+  <string name="SentSmsWord">We\'ve sent you an SMS with a secret word to your phone %1$s.</string>
+  <string name="SentSmsWordHint">We\'ve sent you an SMS with a secret word that starts with \"%2$s\" to your phone %1$s.</string>
+  <string name="SentSmsPhrase">We\'ve sent you an SMS with a secret phrase to your phone %1$s.</string>
+  <string name="SentSmsPhraseHint">We\'ve sent you an SMS with a secret phrase that starts with \"%2$s\" to your phone %1$s.</string>
   <string name="SentSmsCode">We\'ve sent an SMS with an activation code to your phone **%1$s**.</string>
   <string name="SendingSmsCode">We are sending an SMS with an activation code to your phone **%1$s**…</string>
   <string name="SentAppCode">We\'ve sent the code to the **Telegram** app on your other device.</string>
@@ -1866,6 +1870,12 @@
   <string name="QuickReactionEnableDesc">Some groups and channels may not allow specific reactions.</string>
 
   <string name="ReactionsDisabledDesc">Allow members to react to group messages</string>
+  <string name="xReactionsLimit_one">%1$s reaction</string>
+  <string name="xReactionsLimit_other">%1$s reactions</string>
+  <string name="ReactionsLimitChannel">Maximum number of reactions</string>
+  <string name="ReactionsLimitChannelDesc">Limit the number of different reactions that can be added to a post, including already published ones.</string>
+  <string name="ReactionsLimitChat">Maximum number of reactions</string>
+  <string name="ReactionsLimitChatDesc">Limit the number of different reactions that can be added to a message, including already sent ones.</string>
   <string name="AvailableReactions">Available reactions</string>
   <string name="PremiumReactions">Premium reactions</string>
   <string name="PremiumReactionsLocked">Subscribe to **Telegram Premium** to be able to use reactions below.</string>
@@ -3371,6 +3381,8 @@
   <string name="NotificationsGuideFirebaseError">**Firebase Services** have failed to function properly due to error: %1$s\n\nNotifications may arrive with big delays or not arrive at all without them.\n\nPlease make sure:\n• Google Play Services are installed and up-to-date: https://support.google.com/googleplay/answer/9037938?hl=en\n• moeGramX is up-to-date\n• Firebase services are enabled\n• They are not blocked by your Internet service or DNS provider\n• If you have firewall or ad blocking software, Firebase domains are whitelisted\n• You can see 404 message in a browser on this page: https://firebaseinstallations.googleapis.com/\n• System date and time is correct\n• Problem doesn\'t go away after restarting your device\n• All system updates are installed\n• You are using the **official** version of moeGramX: @moex_log\n\nIf the steps above do not help, try again with VPN that you trust, as it might be caused by Internet censorship applied by authorities in your region.</string>
   <string name="NotificationsGuideError">**moeGramX** was unable to display some notifications for this account due to an unknown system error.\n\nPlease make sure:\n• All system updates are installed\n• moeGramX is up-to-date\n• There are no notification restrictions in system settings.\n\nIf the steps above do not help, you might want to share the detailed error report to @tgandroidtests, or look up for troubleshooting tips for your device.</string>
   <string name="NotificationsGuideErrorChat">**moeGramX** was unable to display some notifications from %1$s due to an unknown system error.\n\nPlease make sure:\n• All system updates are installed\n• moeGramX is up-to-date\n• There are no notification restrictions in system settings.\n\nIf the steps above do not help, you might want to share the detailed error report to @tgandroidtests, or look up for troubleshooting tips for your device.</string>
+  <string name="NotificationsGuideCategoryLimit">**Telegram X** was unable to display some notifications for this account due to notification categories system limit.\n\nPlease make sure:\n• All system updates are installed\n• Telegram X is up-to-date\n• There are no notification restrictions in system settings.\n\nIf the steps above do not help, you might want to ask @tgandroidtests for troubleshooting tips for your device, or re-install Telegram X, which should help resolving this error, but requires logging in to your account again.</string>
+  <string name="NotificationsGuideCategoryLimitErrorChat">**Telegram X** was unable to display some notifications from %1$s due to notification categories system limit.\n\nPlease make sure:\n• All system updates are installed\n• Telegram X is up-to-date\n• There are no notification restrictions in system settings.\n\nIf the steps above do not help, you might want to ask @tgandroidtests for troubleshooting tips for your device, or re-install Telegram X, which should help resolving this error, but requires logging in to your account again.</string>
   <string name="TurnSyncOnApp">Turn on data sync</string>
   <string name="TurnSyncOnSystem">Turn on data sync</string>
   <string name="InstallGooglePlayServices">Get Google Play Services</string>
@@ -4807,6 +4819,8 @@
   <string name="xPRs_one">%1$s PR</string>
   <string name="xPRs_other">%1$s PRs</string>
   <string name="PR">PR #%1$d</string>
+
+  <string name="OpenSourceGuide">**Telegram X** is open source. You can view the exact source code used to make the version you have installed.</string>
 
   <string name="ResetPasswordWait">You recently requested a password reset that was canceled. Please wait %1$s before making a new request.</string>
   <string name="RestorePasswordNoEmailText2">Since you didn’t provide a recovery email when setting up your password, your remaining options are either to remember your password or wait 7 days until your password is reset.</string>

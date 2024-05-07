@@ -713,6 +713,7 @@
   <item type="id" name="btn_useInAppBrowser" />
   <item type="id" name="btn_switchRtl" />
   <item type="id" name="btn_debugSwitchRtl" />
+  <item type="id" name="btn_debugLtrEmoji" />
   <item type="id" name="btn_mediaWiFiLimits" />
   <item type="id" name="btn_mediaRoamingLimits" />
   <item type="id" name="btn_stopAllLiveLocations" />
@@ -1015,6 +1016,7 @@
 
   <item type="id" name="btn_tdlib" />
   <item type="id" name="btn_webrtc" />
+  <item type="id" name="btn_ffmpeg" />
   <item type="id" name="btn_tgcalls" />
   <item type="id" name="btn_pushService" />
   <item type="id" name="btn_tdlib_verbosity" />
@@ -1036,6 +1038,7 @@
   <item type="id" name="reactions_enabled_classic" />
   <item type="id" name="reactions_enabled" />
   <item type="id" name="reactions_premium_locked" />
+  <item type="id" name="reactions_limit" />
 
   <item type="id" name="theme_chat" />
   <item type="id" name="theme_chat_modern" />

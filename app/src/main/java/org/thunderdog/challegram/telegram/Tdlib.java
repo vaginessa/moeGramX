@@ -3765,34 +3765,6 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     return Td.getSenderUserId(msg);
   }
 
-  public String sponsorName (TdApi.MessageSponsor sponsor) {
-    switch (sponsor.type.getConstructor()) {
-      case TdApi.MessageSponsorTypeBot.CONSTRUCTOR: {
-        TdApi.MessageSponsorTypeBot bot = (TdApi.MessageSponsorTypeBot) sponsor.type;
-        return cache().userName(bot.botUserId);
-      }
-      case TdApi.MessageSponsorTypeWebApp.CONSTRUCTOR: {
-        TdApi.MessageSponsorTypeWebApp webApp = (TdApi.MessageSponsorTypeWebApp) sponsor.type;
-        return webApp.webAppTitle;
-      }
-      case TdApi.MessageSponsorTypePublicChannel.CONSTRUCTOR: {
-        TdApi.MessageSponsorTypePublicChannel publicChannel = (TdApi.MessageSponsorTypePublicChannel) sponsor.type;
-        return chatTitle(publicChannel.chatId);
-      }
-      case TdApi.MessageSponsorTypePrivateChannel.CONSTRUCTOR: {
-        TdApi.MessageSponsorTypePrivateChannel privateChannel = (TdApi.MessageSponsorTypePrivateChannel) sponsor.type;
-        return privateChannel.title;
-      }
-      case TdApi.MessageSponsorTypeWebsite.CONSTRUCTOR: {
-        TdApi.MessageSponsorTypeWebsite website = (TdApi.MessageSponsorTypeWebsite) sponsor.type;
-        return website.name;
-      }
-      default:
-        Td.assertMessageSponsorType_cdabde01();
-        throw Td.unsupported(sponsor.type);
-    }
-  }
-
   public long senderUserId (@NonNull TdApi.MessageSender senderId) {
     switch (senderId.getConstructor()) {
       case TdApi.MessageSenderChat.CONSTRUCTOR: {
@@ -4369,7 +4341,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       reactionTypes[index] = TD.toReactionType(reactionKey);
       index++;
     }
-    ensureReactionsAvailable(new TdApi.ChatAvailableReactionsSome(reactionTypes), after);
+    ensureReactionsAvailable(new TdApi.ChatAvailableReactionsSome(reactionTypes, 0), after);
   }
 
   public void ensureReactionsAvailable (@NonNull TdApi.AvailableReactions reactions, @Nullable RunnableBool after) {
@@ -4387,7 +4359,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     for (TdApi.AvailableReaction availableReaction : reactions.popularReactions) {
       reactionTypes.add(availableReaction.type);
     }
-    ensureReactionsAvailable(new TdApi.ChatAvailableReactionsSome(reactionTypes.toArray(new TdApi.ReactionType[0])), after);
+    ensureReactionsAvailable(new TdApi.ChatAvailableReactionsSome(reactionTypes.toArray(new TdApi.ReactionType[0]), 0), after);
   }
 
   public void ensureReactionsAvailable (@NonNull TdApi.ChatAvailableReactions reactions, @Nullable RunnableBool after) {
@@ -5893,6 +5865,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       false, // TODO transparently request permission & enter flash call
       true,
       false, // TODO check if passed phone number is inserted in the current phone
+      true,  // TODO check current phone number when possible
       false, // TODO for faster login when SMS method is chosen
       firebaseAuthenticationSettings,
       Settings.instance().getAuthenticationTokens()
@@ -8865,6 +8838,11 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
   }
 
   @TdlibThread
+  private void updateReactionNotificationSettings (TdApi.UpdateReactionNotificationSettings update) {
+    listeners.updateReactionNotificationSettings(update);
+  }
+
+  @TdlibThread
   private void onUpdateSavedNotificationSounds (TdApi.UpdateSavedNotificationSounds update) {
     // TODO
   }
@@ -9287,6 +9265,11 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       chat.emojiStatus = update.emojiStatus,
       listeners::updateChatEmojiStatus
     );
+  }
+
+  @TdlibThread
+  private void updateChatRevenueAmount (TdApi.UpdateChatRevenueAmount update) {
+    listeners.updateChatRevenueAmount(update);
   }
 
   @AnyThread
@@ -10224,6 +10207,10 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         updateNotificationSettings((TdApi.UpdateScopeNotificationSettings) update);
         break;
       }
+      case TdApi.UpdateReactionNotificationSettings.CONSTRUCTOR: {
+        updateReactionNotificationSettings((TdApi.UpdateReactionNotificationSettings) update);
+        break;
+      }
       case TdApi.UpdateUserPrivacySettingRules.CONSTRUCTOR: {
         updatePrivacySettingRules((TdApi.UpdateUserPrivacySettingRules) update);
         break;
@@ -10438,6 +10425,10 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         updateChatEmojiStatus((TdApi.UpdateChatEmojiStatus) update);
         break;
       }
+      case TdApi.UpdateChatRevenueAmount.CONSTRUCTOR: {
+        updateChatRevenueAmount((TdApi.UpdateChatRevenueAmount) update);
+        break;
+      }
 
       // File generation
       case TdApi.UpdateFileGenerationStart.CONSTRUCTOR: {
@@ -10473,7 +10464,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         throw Td.unsupported(update);
       }
       default: {
-        Td.assertUpdate_dd796769();
+        Td.assertUpdate_e5cb3327();
         throw Td.unsupported(update);
       }
     }
@@ -11832,7 +11823,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         return true;
       }
       default: {
-        Td.assertSuggestedAction_b50c1148();
+        Td.assertSuggestedAction_96dcb962();
         break;
       }
     }
@@ -11925,7 +11916,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
           return ResolvableProblem.SET_BIRTHDATE;
         default:
-          Td.assertSuggestedAction_b50c1148();
+          Td.assertSuggestedAction_96dcb962();
           throw Td.unsupported(singleAction);
       }
     }

@@ -7049,7 +7049,7 @@ public class Settings {
   }
 
   public boolean chatFoldersEnabled () {
-    return Config.CHAT_FOLDERS_ENABLED/* && isExperimentEnabled(EXPERIMENT_FLAG_ENABLE_FOLDERS)*/;
+    return Config.CHAT_FOLDERS_ENABLED && isExperimentEnabled(EXPERIMENT_FLAG_ENABLE_FOLDERS);
   }
 
   public boolean showPeerIds () {

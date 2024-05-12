@@ -20,6 +20,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Build;
 import android.os.SystemClock;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -52,6 +53,7 @@ import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.telegram.TdlibUi;
 import org.thunderdog.challegram.theme.ThemeDelegate;
 import org.thunderdog.challegram.tool.EmojiBidUtil;
+import org.thunderdog.challegram.tool.EmojiBidUtilLegacy;
 import org.thunderdog.challegram.tool.EmojiCode;
 import org.thunderdog.challegram.tool.Paints;
 import org.thunderdog.challegram.tool.Screen;
@@ -1643,7 +1645,7 @@ public class Text implements Runnable, Emoji.CountLimiter, CounterAnimator.TextD
         } else if (newEnd - currentEnd == 1 && lastCodePointWidth != -1 && lastCodePoint == codePoint) {
           charWidth = lastCodePointWidth;
         } else {
-          charWidth = U.measureText(in, currentEnd, newEnd, paint);
+          charWidth = BiDiUtils.measureTextRun(bidiEntity, in, currentEnd, newEnd, paint); //    U.measureText(in, currentEnd, newEnd, paint);
           if (newEnd - currentEnd == 1) {
             lastCodePoint = codePoint;
             lastCodePointWidth = charWidth;
@@ -3125,7 +3127,7 @@ public class Text implements Runnable, Emoji.CountLimiter, CounterAnimator.TextD
 
     bidiStart = 0;
     bidiLength = in.length();
-    bidiRequired = Strings.requiresBidi(in, 0, bidiLength);
+    bidiRequired = BiDiUtils.requiresBidi(in, 0, bidiLength);
 
     if (bidiRequired) {
       bidiTmpChars = new char[bidiLength];
@@ -3146,7 +3148,7 @@ public class Text implements Runnable, Emoji.CountLimiter, CounterAnimator.TextD
 
     bidiStart = start;
     bidiLength = end - start;
-    bidiRequired = Strings.requiresBidi(in, start, end);
+    bidiRequired = BiDiUtils.requiresBidi(in, start, end);
 
     if (bidiRequired) {
       if (bidiTmpChars == null || bidiTmpChars.length < bidiLength) {
@@ -3289,6 +3291,9 @@ public class Text implements Runnable, Emoji.CountLimiter, CounterAnimator.TextD
       boolean replaceWithNeutralDirectionChar = false;
       if (neutralizeEmoji) {
         int ltrEmojiCharCount = EmojiBidUtil.ltrEmojiCharCount(codePoint, count, in, a, end);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP && ltrEmojiCharCount == 0) {
+          ltrEmojiCharCount = EmojiBidUtilLegacy.ltrEmojiCharCountLegacy(codePoint, count);
+        }
         if (ltrEmojiCharCount > 0) {
           count = ltrEmojiCharCount;
           replaceWithNeutralDirectionChar = true;

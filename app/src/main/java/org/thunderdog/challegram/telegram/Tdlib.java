@@ -67,6 +67,7 @@ import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.ui.EditRightsController;
 import org.thunderdog.challegram.unsorted.Passcode;
 import org.thunderdog.challegram.unsorted.Settings;
+import org.thunderdog.challegram.util.ChangeLogList;
 import org.thunderdog.challegram.util.DrawableProvider;
 import org.thunderdog.challegram.util.UserProvider;
 import org.thunderdog.challegram.util.WrapperProvider;
@@ -108,8 +109,6 @@ import me.vkryl.core.FileUtils;
 import me.vkryl.core.MathUtils;
 import me.vkryl.core.ObjectUtils;
 import me.vkryl.core.StringUtils;
-import me.vkryl.core.collection.LongList;
-import me.vkryl.core.collection.LongSet;
 import me.vkryl.core.collection.LongSparseIntArray;
 import me.vkryl.core.collection.LongSparseLongArray;
 import me.vkryl.core.lambda.CancellableRunnable;
@@ -467,7 +466,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
   private int chatFolderMaxCount = 10, folderChosenChatMaxCount = 100;
   private int addedShareableChatFolderMaxCount = 2, chatFolderInviteLinkMaxCount = 3;
   private long chatFolderUpdatePeriod = 300; // Seconds
-  private int activeStoryCountMax = 100, weeklySentStoryCountMax = 700,monthlySentStoryCountMax = 3000;
+  private int pinnedStoryCountMax = 3, activeStoryCountMax = 100, weeklySentStoryCountMax = 700,monthlySentStoryCountMax = 3000;
   private boolean canUseTextEntitiesInStoryCaptions;
   private int storyCaptionLengthMax = 2048;
   private int storySuggestedReactionAreaCountMax = 5;
@@ -1420,29 +1419,6 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     updateUtcTimeOffset();
   }
 
-  private static TdApi.FormattedText makeUpdateText (String version, String changeLog) {
-    String text = Lang.getStringSecure(R.string.ChangeLogText, version, changeLog);
-    TdApi.FormattedText formattedText = new TdApi.FormattedText(text, null);
-    //noinspection UnsafeOptInUsageError
-    Td.parseMarkdown(formattedText);
-    return formattedText;
-  }
-
-  private static void makeUpdateText (int major, int agesSinceBirthdate, int monthsSinceLastBirthday, int buildNo, String changeLogUrl, List<TdApi.Function<?>> functions, List<TdApi.InputMessageContent> messages, boolean isLast) {
-    // TODO (?) replace agesSinceBirthdate & monthsSinceLastBirthday with the commit date
-    /*if (isLast) {
-      version = BuildConfig.OVERRIDEN_VERSION_NAME;
-      int i = version.indexOf('-');
-      if (i != -1) {
-        version = version.substring(0, i);
-      }
-    }*/
-    TdApi.FormattedText text = makeUpdateText(String.format(Locale.US, "%d.%d.%d.%d", major, agesSinceBirthdate, monthsSinceLastBirthday, buildNo), changeLogUrl);
-    functions.add(new TdApi.GetWebPagePreview(text, new TdApi.LinkPreviewOptions(false, changeLogUrl, false, false, false)));
-    functions.add(new TdApi.GetWebPageInstantView(changeLogUrl, false));
-    messages.add(new TdApi.InputMessageText(text, null, false));
-  }
-
   private boolean isOptimizing;
 
   public boolean isOptimizing () {
@@ -1459,10 +1435,6 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       this.isOptimizing = isOptimizing;
     }
     context().global().notifyOptimizing(this, isOptimizing);
-  }
-
-  private static boolean checkVersion (int version, int checkVersion, boolean isTest) {
-    return version < checkVersion && (checkVersion <= BuildConfig.ORIGINAL_VERSION_CODE || isTest || BuildConfig.DEBUG) && checkVersion < Integer.MAX_VALUE;
   }
 
   private static @Status int getStatus (TdApi.AuthorizationState state) {
@@ -1504,57 +1476,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     if (prevVersion != BuildConfig.ORIGINAL_VERSION_CODE) {
       List<TdApi.InputMessageContent> updates = new ArrayList<>();
       List<TdApi.Function<?>> functions = new ArrayList<>();
-      // TODO refactor to make it prettier & ready to grow
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2018_MARCH, test)) {
-        makeUpdateText(0, 20, 6, APP_RELEASE_VERSION_2018_MARCH, "http://telegra.ph/Telegram-X-03-26", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2018_JULY, test)) {
-        makeUpdateText(0, 20, 10, APP_RELEASE_VERSION_2018_JULY, "http://telegra.ph/Telegram-X-07-27", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2018_OCTOBER, test)) {
-        makeUpdateText(0, 21, 1, APP_RELEASE_VERSION_2018_OCTOBER,  "https://telegra.ph/Telegram-X-10-14", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2018_OCTOBER_2, test)) {
-        // makeUpdateText("0.21.1." + APP_RELEASE_VERSION_OCTOBER_2,  "https://t.me/tgx_android/129", functions, updates);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2019_APRIL, test)) {
-        makeUpdateText(0, 21, 7, APP_RELEASE_VERSION_2019_APRIL, "https://telegra.ph/Telegram-X-04-25", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2020_JANUARY, test)) {
-        makeUpdateText(0, 22, 4, APP_RELEASE_VERSION_2020_JANUARY, "https://telegra.ph/Telegram-X-01-23-2", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2020_FEBRUARY, test)) {
-        makeUpdateText(0, 22, 5, APP_RELEASE_VERSION_2020_FEBRUARY, "https://telegra.ph/Telegram-X-02-29", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2020_SPRING, test)) {
-        makeUpdateText(0, 22, 8, APP_RELEASE_VERSION_2020_SPRING, "https://telegra.ph/Telegram-X-04-23", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2021_NOVEMBER, test)) {
-        makeUpdateText(0, 24, 2, APP_RELEASE_VERSION_2021_NOVEMBER, "https://telegra.ph/Telegram-X-11-08", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2022_JUNE, test)) {
-        makeUpdateText(0, 24, 9, APP_RELEASE_VERSION_2022_JUNE, "https://telegra.ph/Telegram-X-06-11", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2022_OCTOBER, test)) {
-        makeUpdateText(0, 25, 1, APP_RELEASE_VERSION_2022_OCTOBER, "https://telegra.ph/Telegram-X-10-06", functions, updates, false);
-      }
-      boolean haveMarch2023ChangeLog = false;
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2023_MARCH, test)) {
-        makeUpdateText(0, 25, 6, APP_RELEASE_VERSION_2023_MARCH, "https://telegra.ph/Telegram-X-03-08", functions, updates, false);
-        haveMarch2023ChangeLog = true;
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2023_MARCH_2, test) && !haveMarch2023ChangeLog) {
-        makeUpdateText(0, 25, 6, APP_RELEASE_VERSION_2023_MARCH_2, "https://t.me/tgx_android/305", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2023_APRIL, test)) {
-        makeUpdateText(0, 25, 6, APP_RELEASE_VERSION_2023_APRIL, "https://telegra.ph/Telegram-X-04-02", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2023_AUGUST, test)) {
-        makeUpdateText(0, 25, 10, APP_RELEASE_VERSION_2023_AUGUST, "https://telegra.ph/Telegram-X-08-02", functions, updates, false);
-      }
-      if (checkVersion(prevVersion, APP_RELEASE_VERSION_2023_DECEMBER, test)) {
-        makeUpdateText(0, 26, 3, APP_RELEASE_VERSION_2023_DECEMBER, "https://telegra.ph/Telegram-X-2023-12-31", functions, updates, true);
-      }
+      ChangeLogList.collectChangeLogs(prevVersion, functions, updates, test);
       if (!updates.isEmpty()) {
         incrementReferenceCount(REFERENCE_TYPE_JOB); // starting task
         functions.add(new TdApi.CreatePrivateChat(TdConstants.TELEGRAM_ACCOUNT_ID, false));
@@ -1590,30 +1512,6 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     }
     return true;
   }
-
-  private static final int APP_RELEASE_VERSION_2018_MARCH = 906; // 31st March, 2018: http://telegra.ph/Telegram-X-03-26
-  private static final int APP_RELEASE_VERSION_2018_JULY = 967; // 27th July, 2018: http://telegra.ph/Telegram-X-07-27
-  private static final int APP_RELEASE_VERSION_2018_OCTOBER = 1005; // 15th October, 2018: https://telegra.ph/Telegram-X-10-14
-  private static final int APP_RELEASE_VERSION_2018_OCTOBER_2 = 1010; // 21th October, 2018: https://t.me/tgx_android/129
-
-  private static final int APP_RELEASE_VERSION_2019_APRIL = 1149; // 26th April, 2019: https://telegra.ph/Telegram-X-04-25
-  private static final int APP_RELEASE_VERSION_2019_SEPTEMBER = 1205; // 21st September, 2019: https://telegra.ph/Telegram-X-09-21
-
-  private static final int APP_RELEASE_VERSION_2020_JANUARY = 1270; // 23 January, 2020: https://telegra.ph/Telegram-X-01-23-2
-  private static final int APP_RELEASE_VERSION_2020_FEBRUARY = 1302; // 3 March, 2020: https://telegra.ph/Telegram-X-02-29 // 6th, Actually. Production version is 1305
-  private static final int APP_RELEASE_VERSION_2020_SPRING = 1361; // 15 May, 2020: https://telegra.ph/Telegram-X-04-23
-
-  private static final int APP_RELEASE_VERSION_2021_NOVEMBER = 1470; // 12 November, 2021: https://telegra.ph/Telegram-X-11-08
-
-  private static final int APP_RELEASE_VERSION_2022_JUNE = 1530; // Going open source. 16 June, 2022: https://telegra.ph/Telegram-X-06-11
-
-  private static final int APP_RELEASE_VERSION_2022_OCTOBER = 1560; // Reactions. 7 October, 2022: https://telegra.ph/Telegram-X-10-06
-
-  private static final int APP_RELEASE_VERSION_2023_MARCH = 1605; // Dozens of stuff. 8 March, 2023: https://telegra.ph/Telegram-X-03-08
-  private static final int APP_RELEASE_VERSION_2023_MARCH_2 = 1615; // Bugfixes to the previous release. 15 March, 2023: https://t.me/tgx_android/305
-  private static final int APP_RELEASE_VERSION_2023_APRIL = 1624; // Emoji 15.0, more recent stickers & more + critical TDLIb upgrade. 2 April, 2023: https://telegra.ph/Telegram-X-04-02
-  private static final int APP_RELEASE_VERSION_2023_AUGUST = 1646; // Translation, Advanced Text Formatting, Emoji Status, tgcalls, reproducible TDLib & more. 3 August, 2023: https://telegra.ph/Telegram-X-08-02
-  private static final int APP_RELEASE_VERSION_2023_DECEMBER = 1674; // Custom emoji, select link preview, archive settings, in-app avatar picker, group chat tools, & more. 31st December, 2023 (full roll-out in January 2024): https://telegra.ph/Telegram-X-2023-12-31
 
   // Startup
 
@@ -9368,6 +9266,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   @TdlibThread
   private void updateOption (ClientHolder context, TdApi.UpdateOption update) {
+    // TODO: separate all fields from Tdlib to some TdlibOptions object.
     final String name = update.name;
 
     if (Log.isEnabled(Log.TAG_TDLIB_OPTIONS)) {
@@ -9552,6 +9451,9 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         this.maxBioLength = Td.intValue(update.value);
         break;
 
+      case "pinned_story_count_max":
+        this.pinnedStoryCountMax = Td.intValue(update.value);
+        break;
       case "active_story_count_max":
         this.activeStoryCountMax = Td.intValue(update.value);
         break;
@@ -11952,119 +11854,6 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   public @DrawableRes int chatFolderIconDrawable (TdApi.ChatFolder chatFolder, @DrawableRes int defaultIcon) {
     return TD.findFolderIcon(chatFolderIcon(chatFolder), defaultIcon);
-  }
-
-  public void addChatsToChatFolder (TdlibDelegate delegate, int chatFolderId, long[] chatIds) {
-    if (chatIds.length == 0) {
-      return;
-    }
-    send(new TdApi.GetChatFolder(chatFolderId), (chatFolder, error) -> {
-      if (error != null) {
-        UI.showError(chatFolder);
-      } else {
-        addChatsToChatFolder(delegate, chatFolderId, chatFolder, chatIds);
-      }
-    });
-  }
-
-  public void addChatsToChatFolder (TdlibDelegate delegate, int chatFolderId, TdApi.ChatFolder chatFolder, long[] chatIds) {
-    if (chatIds.length == 0) {
-      return;
-    }
-    LongSet pinnedChatIds = new LongSet(chatFolder.pinnedChatIds);
-    LongSet includedChatIds = new LongSet(chatFolder.includedChatIds);
-    for (long chatId : chatIds) {
-      if (pinnedChatIds.has(chatId) || includedChatIds.has(chatId)) {
-        continue;
-      }
-      includedChatIds.add(chatId);
-    }
-    if (includedChatIds.size() == chatFolder.includedChatIds.length) {
-      return;
-    }
-    int chatCount = pinnedChatIds.size() + includedChatIds.size();
-    int secretChatCount = 0;
-    for (long pinnedChatId : pinnedChatIds) {
-      if (ChatId.isSecret(pinnedChatId)) secretChatCount++;
-    }
-    for (long includedChatId : includedChatIds) {
-      if (ChatId.isSecret(includedChatId)) secretChatCount++;
-    }
-    int nonSecretChatCount = chatCount - secretChatCount;
-    long chosenChatCountMax = tdlib().chatFolderChosenChatCountMax();
-    if (secretChatCount > chosenChatCountMax || nonSecretChatCount > chosenChatCountMax) {
-      if (hasPremium()) {
-        CharSequence text = Lang.getMarkdownString(delegate, R.string.ChatsInFolderLimitReached, chosenChatCountMax);
-        UI.showCustomToast(text, Toast.LENGTH_LONG, 0);
-      } else {
-        send(new TdApi.GetPremiumLimit(new TdApi.PremiumLimitTypeChatFolderChosenChatCount()), (premiumLimit, error) -> {
-          CharSequence text;
-          if (error != null) {
-            text = Lang.getMarkdownString(delegate, R.string.ChatsInFolderLimitReached, chosenChatCountMax);
-          } else {
-            text = Lang.getMarkdownString(delegate, R.string.PremiumRequiredChatsInFolder, premiumLimit.defaultValue, premiumLimit.premiumValue);
-          }
-          UI.showCustomToast(text, Toast.LENGTH_LONG, 0);
-        });
-      }
-      return;
-    }
-    chatFolder.includedChatIds = includedChatIds.toArray();
-    chatFolder.excludedChatIds = ArrayUtils.removeAll(chatFolder.excludedChatIds, chatIds);
-    send(new TdApi.EditChatFolder(chatFolderId, chatFolder), (chatFolderInfo, error) -> {
-      if (error != null) {
-        UI.showError(error);
-      }
-    });
-  }
-
-  public void removeChatFromChatFolder (int chatFolderId, long chatId) {
-    removeChatsFromChatFolder(chatFolderId, new long[] {chatId});
-  }
-
-  public void removeChatsFromChatFolder (int chatFolderId, long[] chatIds) {
-    if (chatIds.length == 0) {
-      return;
-    }
-    send(new TdApi.GetChatFolder(chatFolderId), (chatFolder, error) -> {
-      if (error != null) {
-        UI.showError(error);
-      } else {
-        removeChatsFromChatFolder(chatFolderId, chatFolder, chatIds);
-      }
-    });
-  }
-
-  public void removeChatsFromChatFolder (int chatFolderId, TdApi.ChatFolder chatFolder, long[] chatIds) {
-    if (chatIds.length == 0) {
-      return;
-    }
-    LongList pinnedChatIds = new LongList(chatFolder.pinnedChatIds);
-    LongSet includedChatIds = new LongSet(chatFolder.includedChatIds);
-    LongSet excludedChatIds = new LongSet(chatFolder.excludedChatIds);
-    for (long chatId : chatIds) {
-       boolean removed = pinnedChatIds.remove(chatId) | includedChatIds.remove(chatId);
-       if (removed && Config.CHAT_FOLDERS_SMART_CHAT_DELETION_ENABLED) {
-         TdApi.Chat chat = chat(chatId);
-         boolean isBotChat = isBotChat(chat);
-         boolean isUserChat = isUserChat(chat) && !isBotChat;
-         boolean isContactChat = isUserChat && TD.isContact(chatUser(chat));
-         if (!chatFolder.includeContacts && isUserChat && isContactChat) continue;
-         if (!chatFolder.includeNonContacts && isUserChat && !isContactChat) continue;
-         if (!chatFolder.includeGroups && TD.isMultiChat(chat)) continue;
-         if (!chatFolder.includeChannels && isChannelChat(chat)) continue;
-         if (!chatFolder.includeBots && isBotChat) continue;
-       }
-       excludedChatIds.add(chatId);
-    }
-    chatFolder.pinnedChatIds = pinnedChatIds.get();
-    chatFolder.includedChatIds = includedChatIds.toArray();
-    chatFolder.excludedChatIds = excludedChatIds.toArray();
-    send(new TdApi.EditChatFolder(chatFolderId, chatFolder), (chatFolderInfo, error) -> {
-      if (error != null) {
-        UI.showError(error);
-      }
-    });
   }
 
   public void processChatFolderNewChats (int chatFolderId, long[] addedChatIds, ResultHandler<TdApi.Ok> resultHandler) {

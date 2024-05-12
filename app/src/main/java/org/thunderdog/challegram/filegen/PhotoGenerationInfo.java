@@ -319,13 +319,6 @@ public class PhotoGenerationInfo extends GenerationInfo {
       }
     }
 
-    if ((needMirrorVertical || needMirrorHorizontal) && paintState == null) {
-      //TODO?: this doesn't affect the output bitmap.
-      matrixEmpty = false;
-      matrix.preScale(needMirrorHorizontal ? -1.0f : 1.0f, needMirrorVertical ? -1.0f : 1.0f);
-      needMirrorVertical = needMirrorHorizontal = false;
-    }
-
     if (rotation != 0) {
       matrixEmpty = false;
       matrix.setRotate(rotation);
@@ -335,7 +328,7 @@ public class PhotoGenerationInfo extends GenerationInfo {
       matrix = null;
     }
 
-    if (paintState != null && !drawingComplete) {
+    if (paintState != null && !paintState.isEmpty() && !drawingComplete) {
       Bitmap altered = Bitmap.createBitmap(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);
       Canvas c = new Canvas(altered);
       if (needMirrorHorizontal || needMirrorVertical) {
@@ -458,7 +451,7 @@ public class PhotoGenerationInfo extends GenerationInfo {
     PaintState paintState = file.getPaintState();
     if (paintState != null && !paintState.isEmpty()) {
       b.append(",p:");
-      b.append(paintState.toString());
+      b.append(paintState.saveAndSerializeToString());
     }
 
     if (BuildConfig.DEBUG) {

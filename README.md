@@ -19,17 +19,17 @@ the **moest** client based on [Telegram-X](https://github.com/TGX-Android/Telegr
 
 ## Features
 
-- Message details
-- Ability to replace mobile number<sup>(with username/userid/hidden label)</sub></sup>
+- View message details
+- Hide phone number <sup>(or replace it with username/user ID)</sub></sup>
 - Hide reactions
-- Hide new messages counter<sup><sup>(in the drawer burger)</sup></sup>
-- Sent photos with high resolution <sup>(800px/1280px/2560px)</sup>
+- Hide new unread messages counter from drawer
+- Send photos with high resolution <sup>(800px/1280px/2560px)</sup>
 - Blur drawer background
-- Square avatars
-- Message panel buttons hiding
-- Remember message options <sup>(copy/silent/sound)
-- Do not send **choosing** sticker status<sup>typing status will be sent instead</sup>
-- Copy photo or document<sup><sup>(with photo)</sup></sup> option
+- Square profile pictures
+- Hide buttons from message context menu
+- Remember message forward options <sup>(copy/silent)</sup>
+- Do not send **choosing sticker** status <sup>(typing status will be sent instead)</sup>
+- Copy photo/document option
 - and a bit more...
 ---
 ## Installation
